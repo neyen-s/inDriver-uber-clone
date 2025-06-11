@@ -23,6 +23,7 @@ class _SignUpContentState extends State<SignUpContent> {
         AuthBackground(
           cardHeight: context.height,
           cardWidth: context.width,
+          borderRadius: BorderRadius.zero,
           padding: EdgeInsets.only(left: 12.w),
           gradientColors: const [
             Color.fromARGB(255, 12, 38, 145),
@@ -42,7 +43,6 @@ class _SignUpContentState extends State<SignUpContent> {
         AuthBackground(
           cardHeight: context.height * 0.95,
           cardWidth: context.width,
-
           gradientColors: const [
             Color.fromARGB(255, 14, 29, 106),
             Color.fromARGB(255, 30, 112, 227),
@@ -67,9 +67,12 @@ class _SignUpContentState extends State<SignUpContent> {
                         controller: TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
                         hintText: 'Name',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[100],
+                          fontSize: 16.sp,
+                        ),
+
                         prefixIcon: Icons.person,
-                        filled: true,
-                        fillColour: Colors.white,
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
@@ -77,9 +80,12 @@ class _SignUpContentState extends State<SignUpContent> {
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Last name',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[100],
+                          fontSize: 16.sp,
+                        ),
+
                         prefixIcon: Icons.person_2_outlined,
-                        filled: true,
-                        fillColour: Colors.white,
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
@@ -87,9 +93,12 @@ class _SignUpContentState extends State<SignUpContent> {
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Email',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[100],
+                          fontSize: 16.sp,
+                        ),
+
                         prefixIcon: Icons.email_outlined,
-                        filled: true,
-                        fillColour: Colors.white,
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
@@ -97,9 +106,12 @@ class _SignUpContentState extends State<SignUpContent> {
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Phone number',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[100],
+                          fontSize: 16.sp,
+                        ),
+
                         prefixIcon: Icons.phone_outlined,
-                        filled: true,
-                        fillColour: Colors.white,
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
@@ -107,9 +119,12 @@ class _SignUpContentState extends State<SignUpContent> {
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Password',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[100],
+                          fontSize: 16.sp,
+                        ),
+
                         prefixIcon: Icons.lock_outline,
-                        filled: true,
-                        fillColour: Colors.white,
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
@@ -117,9 +132,12 @@ class _SignUpContentState extends State<SignUpContent> {
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Confirm password',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[100],
+                          fontSize: 16.sp,
+                        ),
+
                         prefixIcon: Icons.lock_outline,
-                        filled: true,
-                        fillColour: Colors.white,
                       ),
 
                       DefaultButton(
@@ -185,9 +203,11 @@ class _SignUpContentState extends State<SignUpContent> {
     );
   }
 
-  Row _alreadyHaveAnAccount() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _alreadyHaveAnAccount() {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 4,
       children: [
         Text(
           'Already have an account?',
@@ -198,12 +218,12 @@ class _SignUpContentState extends State<SignUpContent> {
           onTap: () {
             Navigator.pushReplacementNamed(context, SignInPage.routeName);
           },
-          child: const Text(
+          child: Text(
             'sign in',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 16.sp,
             ),
           ),
         ),

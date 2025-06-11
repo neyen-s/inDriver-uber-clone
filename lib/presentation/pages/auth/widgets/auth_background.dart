@@ -7,6 +7,7 @@ class AuthBackground extends StatelessWidget {
     required this.cardWidth,
     required this.gradientColors,
     required this.child,
+    this.borderRadius,
     this.margin,
     this.padding,
     super.key,
@@ -18,6 +19,7 @@ class AuthBackground extends StatelessWidget {
   final double cardWidth;
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry? padding;
+  final BorderRadiusGeometry? borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +34,12 @@ class AuthBackground extends StatelessWidget {
           end: Alignment.bottomLeft,
           colors: gradientColors,
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(20.r),
-          topLeft: Radius.circular(20.r),
-        ),
+        borderRadius:
+            borderRadius ??
+            BorderRadius.only(
+              bottomLeft: Radius.circular(20.r),
+              topLeft: Radius.circular(20.r),
+            ),
       ),
       child: child,
     );
