@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:indriver_uber_clone/presentation/pages/auth/sign-in/sign_in_page.dart';
-import 'package:indriver_uber_clone/presentation/pages/auth/sign-up/sign_up_page.dart';
+import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
+import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/sign_up_page.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   print('generateRoute /');

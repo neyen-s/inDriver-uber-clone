@@ -2,11 +2,11 @@ import 'package:get_it/get_it.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
-import 'package:indriver_uber_clone/data/datasource/auth/sign-in/source/sign_in_remote_datasource.dart';
-import 'package:indriver_uber_clone/data/repositories/sign_in_repository_impl.dart';
-import 'package:indriver_uber_clone/domain/repository/auth/sign-in/sign_in_repository.dart';
-import 'package:indriver_uber_clone/domain/usecase/auth/sign_in_use_case.dart';
-import 'package:indriver_uber_clone/presentation/pages/auth/sign-in/bloc/sign_in_bloc.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/sign-in/source/sign_in_remote_datasource.dart';
+import 'package:indriver_uber_clone/src/auth/data/repositories/sign_in_repository_impl.dart';
+import 'package:indriver_uber_clone/src/auth/domain/repository/sign-in/sign_in_repository.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_in_use_case.dart';
+import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
