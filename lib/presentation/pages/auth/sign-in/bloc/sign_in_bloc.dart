@@ -1,11 +1,9 @@
-// sign_in_bloc.dart
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
 import 'package:indriver_uber_clone/domain/entities/auth/email_entity.dart';
 import 'package:indriver_uber_clone/domain/entities/auth/password_entity.dart';
-
-import '../../../../domain/use_cases/sign_in_use_case.dart';
+import 'package:indriver_uber_clone/domain/usecase/auth/sign_in_use_case.dart';
 
 part 'sign_in_event.dart';
 part 'sign_in_state.dart';
@@ -18,16 +16,15 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
   }
 
   final SignInUseCase signInUseCase;
-  void _onEmailChanged(SignInEmailChanged event, Emitter<SignInState> emit) {
-    final email = EmailEntity.dirty(event.email);
-    final password = state.password;
 
+  EmailEntity _email = const EmailEntity.pure();
+  PasswordEntity _password = const PasswordEntity.pure();
+
+  void _onEmailChanged(SignInEmailChanged event, Emitter<SignInState> emit) {
+    _email = EmailEntity.dirty(event.email);
+    final isValid = Formz.validate([_email, _password]);
     emit(
-      SignInValidating(
-        email: email,
-        password: password,
-        isValid: Formz.validate([email, password]),
-      ),
+      SignInValidating(email: _email, password: _password, isValid: isValid),
     );
   }
 
@@ -35,15 +32,10 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     SignInPasswordChanged event,
     Emitter<SignInState> emit,
   ) {
-    final password = PasswordEntity.dirty(event.password);
-    final email = state.email;
-
+    _password = PasswordEntity.dirty(event.password);
+    final isValid = Formz.validate([_email, _password]);
     emit(
-      SignInValidating(
-        email: email,
-        password: password,
-        isValid: Formz.validate([email, password]),
-      ),
+      SignInValidating(email: _email, password: _password, isValid: isValid),
     );
   }
 
@@ -51,22 +43,36 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     SignInSubmitted event,
     Emitter<SignInState> emit,
   ) async {
-    final email = EmailEntity.dirty(state.email.value);
-    final password = PasswordEntity.dirty(state.password.value);
-    final isValid = Formz.validate([email, password]);
+    _email = EmailEntity.dirty(_email.value);
+    _password = PasswordEntity.dirty(_password.value);
+
+    final isValid = Formz.validate([_email, _password]);
 
     if (!isValid) {
-      emit(SignInValidating(email: email, password: password, isValid: false));
+      emit(
+        SignInValidating(email: _email, password: _password, isValid: false),
+      );
       return;
     }
 
-    emit(SignInSubmitting(email: email, password: password));
+    emit(SignInSubmitting(email: _email, password: _password));
 
-    try {
-      await signInUseCase(email: email.value, password: password.value);
-      emit(SignInSuccess());
-    } catch (e) {
-      emit(SignInFailure(e.toString()));
-    }
+    final result = await signInUseCase(
+      SignInParams(email: _email.value, password: _password.value),
+    );
+    result.fold(
+      (failure) {
+        emit(
+          SignInFailure(
+            email: _email,
+            password: _password,
+            message: failure.errorMessage,
+          ),
+        );
+      },
+      (_) {
+        emit(SignInSuccess());
+      },
+    );
   }
 }

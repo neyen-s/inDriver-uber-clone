@@ -3,24 +3,26 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DefaultTextFieldOutlined extends StatelessWidget {
   const DefaultTextFieldOutlined({
-    required this.controller,
+    this.initialValue,
+    this.controller,
+    this.onChanged,
+    this.errorText,
     this.filled = false,
     this.obscureText = false,
     this.readOnly = false,
     super.key,
-    this.validator,
     this.fillColour,
     this.suffixIcon,
     this.prefixIcon,
     this.hintText,
     this.keyboardType,
     this.hintStyle,
-    this.overrideValidator = false,
     this.componentMargin,
   });
 
-  final String? Function(String?)? validator;
-  final TextEditingController controller;
+  final String? initialValue;
+  final ValueChanged<String>? onChanged;
+  final String? errorText;
   final bool filled;
   final Color? fillColour;
   final bool obscureText;
@@ -29,30 +31,22 @@ class DefaultTextFieldOutlined extends StatelessWidget {
   final IconData? prefixIcon;
   final String? hintText;
   final TextInputType? keyboardType;
-  final bool overrideValidator;
   final TextStyle? hintStyle;
   final EdgeInsetsGeometry? componentMargin;
+  final TextEditingController? controller;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: componentMargin ?? EdgeInsets.zero,
       child: TextFormField(
-        controller: controller,
-        validator: overrideValidator
-            ? validator
-            : (value) {
-                if (value == null || value.isEmpty) {
-                  return 'This field is required';
-                }
-                return validator?.call(value);
-              },
-        onTapOutside: (_) {
-          FocusScope.of(context).unfocus();
-        },
+        initialValue: initialValue,
+        onChanged: onChanged,
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
         keyboardType: keyboardType,
         obscureText: obscureText,
         readOnly: readOnly,
+        controller: controller,
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
           enabledBorder: const OutlineInputBorder(
@@ -67,7 +61,6 @@ class DefaultTextFieldOutlined extends StatelessWidget {
               width: 2,
             ),
           ),
-          // overwriting the default padding helps with that puffy look
           contentPadding: const EdgeInsets.symmetric(horizontal: 20),
           filled: filled,
           fillColor: fillColour,
@@ -88,6 +81,7 @@ class DefaultTextFieldOutlined extends StatelessWidget {
           hintStyle:
               hintStyle ??
               const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+          errorText: errorText,
         ),
       ),
     );

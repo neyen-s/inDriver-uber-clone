@@ -40,9 +40,15 @@ class SignInSuccess extends SignInState {
 }
 
 class SignInFailure extends SignInState {
-  const SignInFailure(this.message);
+  const SignInFailure({
+    required this.email,
+    required this.password,
+    required this.message,
+  });
+  final EmailEntity email;
+  final PasswordEntity password;
   final String message;
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [email, password, message];
 }

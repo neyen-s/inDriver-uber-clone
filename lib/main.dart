@@ -3,10 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:indriver_uber_clone/core/injection/bloc_providers.dart';
+import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/routes.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await init();
 
   runApp(
     DevicePreview(
@@ -16,7 +19,6 @@ void main() {
   );
 }
 
-/// Wrapper para inyectar `ScreenUtil` dentro del builder de DevicePreview
 class MyAppWrapper extends StatelessWidget {
   const MyAppWrapper({super.key});
 
@@ -25,7 +27,8 @@ class MyAppWrapper extends StatelessWidget {
     return ScreenUtilInit(
       minTextAdapt: true,
       splitScreenMode: true,
-      builder: (_, __) => const MyApp(),
+      builder: (_, _) =>
+          MultiBlocProvider(providers: BlocProviders.all, child: const MyApp()),
     );
   }
 }
@@ -33,12 +36,11 @@ class MyAppWrapper extends StatelessWidget {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      builder: DevicePreview.appBuilder, // ⬅️ esto aplica el layout simulado
-      locale: DevicePreview.locale(context), // 🗺️ simula localización
+      builder: DevicePreview.appBuilder,
+      locale: DevicePreview.locale(context),
       debugShowCheckedModeBanner: false,
       title: 'Mi App',
       initialRoute: '/',

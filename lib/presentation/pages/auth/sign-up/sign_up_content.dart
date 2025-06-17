@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field_outlined.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
-import 'package:indriver_uber_clone/presentation/pages/auth/login/sign_in_page.dart';
+import 'package:indriver_uber_clone/presentation/pages/auth/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/widgets/default_button.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/widgets/separator_or.dart';
@@ -64,7 +64,7 @@ class _SignUpContentState extends State<SignUpContent> {
                       _imageBanner(),
                       SizedBox(height: 30.h),
                       DefaultTextFieldOutlined(
-                        controller: TextEditingController(),
+                        //  controller: TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
                         hintText: 'Name',
                         hintStyle: TextStyle(
@@ -76,7 +76,7 @@ class _SignUpContentState extends State<SignUpContent> {
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
-                        controller: TextEditingController(),
+                        //   controller: TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Last name',
@@ -89,7 +89,7 @@ class _SignUpContentState extends State<SignUpContent> {
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
-                        controller: TextEditingController(),
+                        //  controller: TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Email',
@@ -102,7 +102,7 @@ class _SignUpContentState extends State<SignUpContent> {
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
-                        controller: TextEditingController(),
+                        //   controller: TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Phone number',
@@ -115,7 +115,7 @@ class _SignUpContentState extends State<SignUpContent> {
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
-                        controller: TextEditingController(),
+                        //   : TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Password',
@@ -128,7 +128,7 @@ class _SignUpContentState extends State<SignUpContent> {
                       ),
                       SizedBox(height: 12.h),
                       DefaultTextFieldOutlined(
-                        controller: TextEditingController(),
+                        //  controller: TextEditingController(),
                         componentMargin: EdgeInsets.symmetric(horizontal: 12.w),
 
                         hintText: 'Confirm password',
@@ -146,7 +146,7 @@ class _SignUpContentState extends State<SignUpContent> {
                           right: 30.w,
                           left: 30.w,
                         ),
-                        text: 'Create account',
+                        text: Text('Create account'),
                         onPressed: () {},
                       ),
 

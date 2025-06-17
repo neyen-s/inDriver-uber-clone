@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field_outlined.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
+import 'package:indriver_uber_clone/core/utils/core_utils.dart';
+import 'package:indriver_uber_clone/domain/entities/auth/email_entity.dart';
+import 'package:indriver_uber_clone/domain/entities/auth/password_entity.dart';
+import 'package:indriver_uber_clone/presentation/pages/auth/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/sign-up/sign_up_page.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/widgets/default_button.dart';
 import 'package:indriver_uber_clone/presentation/pages/auth/widgets/separator_or.dart';
-import 'package:indriver_uber_clone/presentation/pages/auth/widgets/sign_in_form.dart';
 
 class SignInContent extends StatefulWidget {
   const SignInContent({super.key});
@@ -16,14 +20,13 @@ class SignInContent extends StatefulWidget {
 }
 
 class _SignInContentState extends State<SignInContent> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+  late final _emailController = TextEditingController();
+  late final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -33,8 +36,7 @@ class _SignInContentState extends State<SignInContent> {
     final isKeyboardOpen = bottomInset > 0;
 
     return GestureDetector(
-      onTap: () =>
-          FocusScope.of(context).unfocus(), // cerrar teclado al tocar fuera
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Stack(
         children: [
           _backgroundButtons(context),
@@ -50,72 +52,120 @@ class _SignInContentState extends State<SignInContent> {
               margin: EdgeInsets.symmetric(horizontal: 25.w),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.only(bottom: bottomInset),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: IntrinsicHeight(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 10.h),
-                            _titleMessage(text: 'Welcome'),
-                            _titleMessage(text: 'back...'),
-                            _carImage(),
-                            _loginText(),
+                  return BlocConsumer<SignInBloc, SignInState>(
+                    listener: (context, state) {
+                      if (state is SignInFailure) {
+                        CoreUtils.showSnackBar(context, state.message);
+                      }
 
-                            /*  SignInForm(
-                              emailController: emailController,
-                              passwordController: passwordController,
-                              formKey: formKey,
-                            ), */
-                            SizedBox(height: 12.h),
+                      final vm = _SignInViewModel.fromState(state);
 
-                            DefaultTextFieldOutlined(
-                              controller: TextEditingController(),
-                              componentMargin: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                              ),
-
-                              hintText: 'Email Address',
-                              prefixIcon: Icons.person,
-                              filled: true,
-                              fillColour: Colors.white,
-                            ),
-                            SizedBox(height: 12.h),
-
-                            DefaultTextFieldOutlined(
-                              controller: TextEditingController(),
-                              componentMargin: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                              ),
-
-                              hintText: 'Password',
-                              prefixIcon: Icons.lock_outline,
-                              filled: true,
-                              fillColour: Colors.white,
-                            ),
-                            SizedBox(
-                              height: isKeyboardOpen ? 40.h : 10,
-                            ), // espacio solo si el teclado está abierto
-                            const Spacer(),
-                            DefaultButton(
-                              text: 'LOGIN',
-                              onPressed: () {
-                                // lógica de login
-                              },
-                            ),
-                            SizedBox(height: 15.h),
-                            const SeparatorOr(),
-                            SizedBox(height: 10.h),
-                            _dontHaveAnAccountSection(),
-                            SizedBox(height: 20.h),
-                          ],
+                      _emailController.value = TextEditingValue(
+                        text: vm.email.value,
+                        selection: TextSelection.collapsed(
+                          offset: vm.email.value.length,
                         ),
-                      ),
-                    ),
+                      );
+
+                      _passwordController.value = TextEditingValue(
+                        text: vm.password.value,
+                        selection: TextSelection.collapsed(
+                          offset: vm.password.value.length,
+                        ),
+                      );
+                    },
+                    builder: (context, state) {
+                      final vm = _SignInViewModel.fromState(state);
+
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.only(bottom: bottomInset),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 10.h),
+                                _titleMessage(text: 'Welcome'),
+                                _titleMessage(text: 'back...'),
+                                _carImage(),
+                                _loginText(),
+                                SizedBox(height: 12.h),
+                                DefaultTextFieldOutlined(
+                                  hintText: 'Email Address',
+                                  prefixIcon: Icons.person,
+                                  filled: true,
+                                  fillColour: Colors.white,
+                                  controller: _emailController,
+                                  errorText:
+                                      vm.email.isNotValid && !vm.email.isPure
+                                      ? 'Invalid email'
+                                      : null,
+                                  onChanged: (value) => context
+                                      .read<SignInBloc>()
+                                      .add(SignInEmailChanged(value)),
+                                ),
+                                SizedBox(height: 12.h),
+                                DefaultTextFieldOutlined(
+                                  hintText: 'Password',
+                                  prefixIcon: Icons.lock_outline,
+                                  filled: true,
+                                  fillColour: Colors.white,
+                                  obscureText: true,
+                                  controller: _passwordController,
+                                  errorText:
+                                      vm.password.isNotValid &&
+                                          !vm.password.isPure
+                                      ? 'Invalid password'
+                                      : null,
+                                  onChanged: (value) => context
+                                      .read<SignInBloc>()
+                                      .add(SignInPasswordChanged(value)),
+                                ),
+                                SizedBox(height: isKeyboardOpen ? 40.h : 10),
+                                const Spacer(),
+                                if (vm.error != null)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      vm.error!,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                DefaultButton(
+                                  text: vm.isSubmitting
+                                      ? const CircularProgressIndicator(
+                                          color: Colors.blueAccent,
+                                        )
+                                      : const Text(
+                                          'LOGIN',
+                                          style: TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                  onPressed: vm.isSubmitting || !vm.isValid
+                                      ? null
+                                      : () => context.read<SignInBloc>().add(
+                                          const SignInSubmitted(),
+                                        ),
+                                ),
+                                SizedBox(height: 15.h),
+                                const SeparatorOr(),
+                                SizedBox(height: 10.h),
+                                _dontHaveAnAccountSection(context),
+                                SizedBox(height: 20.h),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -126,7 +176,7 @@ class _SignInContentState extends State<SignInContent> {
     );
   }
 
-  Widget _dontHaveAnAccountSection() {
+  Widget _dontHaveAnAccountSection(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Wrap(
@@ -237,5 +287,48 @@ class _SignInContentState extends State<SignInContent> {
         fontWeight: FontWeight.bold,
       ),
     );
+  }
+}
+
+class _SignInViewModel {
+  final EmailEntity email;
+  final PasswordEntity password;
+  final bool isSubmitting;
+  final bool isValid;
+  final String? error;
+
+  const _SignInViewModel({
+    required this.email,
+    required this.password,
+    this.isSubmitting = false,
+    this.isValid = false,
+    this.error,
+  });
+
+  factory _SignInViewModel.fromState(SignInState state) {
+    if (state is SignInValidating) {
+      return _SignInViewModel(
+        email: state.email,
+        password: state.password,
+        isValid: state.isValid,
+      );
+    } else if (state is SignInSubmitting) {
+      return _SignInViewModel(
+        email: state.email,
+        password: state.password,
+        isSubmitting: true,
+      );
+    } else if (state is SignInFailure) {
+      return _SignInViewModel(
+        email: state.email,
+        password: state.password,
+        error: state.message,
+      );
+    } else {
+      return const _SignInViewModel(
+        email: EmailEntity.pure(),
+        password: PasswordEntity.pure(),
+      );
+    }
   }
 }

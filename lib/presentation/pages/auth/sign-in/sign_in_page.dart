@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:indriver_uber_clone/presentation/pages/auth/login/sign_in_content.dart';
+import 'package:indriver_uber_clone/presentation/pages/auth/sign-in/sign_in_content.dart';
 
 class SignInPage extends StatelessWidget {
   const SignInPage({super.key});
