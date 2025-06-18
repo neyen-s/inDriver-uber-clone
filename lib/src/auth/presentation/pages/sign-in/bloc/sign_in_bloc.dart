@@ -1,8 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/email_entity.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/password_entity.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/email_entity.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/password_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_in_use_case.dart';
 
 part 'sign_in_event.dart';
@@ -48,31 +48,27 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
     final isValid = Formz.validate([_email, _password]);
 
-    if (!isValid) {
-      emit(
-        SignInValidating(email: _email, password: _password, isValid: false),
-      );
-      return;
-    }
+    emit(
+      SignInValidating(email: _email, password: _password, isValid: isValid),
+    );
+
+    if (!isValid) return;
 
     emit(SignInSubmitting(email: _email, password: _password));
 
     final result = await signInUseCase(
       SignInParams(email: _email.value, password: _password.value),
     );
+
     result.fold(
-      (failure) {
-        emit(
-          SignInFailure(
-            email: _email,
-            password: _password,
-            message: failure.errorMessage,
-          ),
-        );
-      },
-      (_) {
-        emit(SignInSuccess());
-      },
+      (failure) => emit(
+        SignInFailure(
+          email: _email,
+          password: _password,
+          message: failure.errorMessage,
+        ),
+      ),
+      (_) => emit(SignInSuccess()),
     );
   }
 }

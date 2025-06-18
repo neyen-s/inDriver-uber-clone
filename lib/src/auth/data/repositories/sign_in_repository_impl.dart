@@ -7,10 +7,7 @@ import 'package:indriver_uber_clone/src/auth/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/repository/sign-in/sign_in_repository.dart';
 
 class SignInRepositoryImpl implements SignInRepository {
-  const SignInRepositoryImpl({
-    // Add any required dependencies here, such as data sources or services
-    required this.signInRemoteDataSource,
-  });
+  const SignInRepositoryImpl({required this.signInRemoteDataSource});
 
   final SignInRemoteDataSource signInRemoteDataSource;
 

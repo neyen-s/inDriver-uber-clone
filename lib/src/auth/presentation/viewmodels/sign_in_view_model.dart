@@ -1,5 +1,5 @@
-import 'package:indriver_uber_clone/src/auth/domain/entities/email_entity.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/password_entity.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/email_entity.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/password_entity.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 
 class SignInViewModel {

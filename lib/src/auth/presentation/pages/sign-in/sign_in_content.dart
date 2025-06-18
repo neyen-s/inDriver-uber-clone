@@ -11,6 +11,7 @@ import 'package:indriver_uber_clone/src/auth/presentation/viewmodels/sign_in_vie
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/default_button.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/separator_or.dart';
+import 'package:indriver_uber_clone/src/auth/presentation/widgets/sync_controller.dart';
 
 class SignInContent extends StatefulWidget {
   const SignInContent({super.key});
@@ -60,19 +61,8 @@ class _SignInContentState extends State<SignInContent> {
 
                       final vm = SignInViewModel.fromState(state);
 
-                      _emailController.value = TextEditingValue(
-                        text: vm.email.value,
-                        selection: TextSelection.collapsed(
-                          offset: vm.email.value.length,
-                        ),
-                      );
-
-                      _passwordController.value = TextEditingValue(
-                        text: vm.password.value,
-                        selection: TextSelection.collapsed(
-                          offset: vm.password.value.length,
-                        ),
-                      );
+                      syncController(_emailController, vm.email.value);
+                      syncController(_passwordController, vm.password.value);
                     },
                     builder: (context, state) {
                       final vm = SignInViewModel.fromState(state);
