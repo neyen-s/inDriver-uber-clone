@@ -2,12 +2,12 @@ import 'package:equatable/equatable.dart';
 import 'package:indriver_uber_clone/core/usecase/usecase.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/user_entity.dart';
-import 'package:indriver_uber_clone/src/auth/domain/repository/sign-up/sign_up_repository.dart';
+import 'package:indriver_uber_clone/src/auth/domain/repository/auth_repository.dart';
 
 class SignUpUseCase extends UsecaseWithParams<void, SignUpParams> {
   const SignUpUseCase(this._repository);
 
-  final SignUpRepository _repository;
+  final AuthRepository _repository;
 
   @override
   ResultFuture<UserEntity> call(SignUpParams params) {

@@ -1,4 +1,4 @@
-import 'package:indriver_uber_clone/src/auth/data/datasource/sign-in/remote/user_dto.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
 
 class AuthResponseDTO {
   const AuthResponseDTO({required this.user, required this.token});

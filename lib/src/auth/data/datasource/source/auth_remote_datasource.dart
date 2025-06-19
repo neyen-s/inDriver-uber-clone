@@ -1,14 +1,17 @@
+import 'dart:async';
+
 import 'package:indriver_uber_clone/core/network/api_client.dart';
-import 'package:indriver_uber_clone/src/auth/data/datasource/sign-in/remote/user_dto.dart';
+
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/auth_response_dto.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
+
 import 'package:indriver_uber_clone/src/auth/domain/entities/user_entity.dart';
 
-abstract class SignUpRemoteDataSource {
-  const SignUpRemoteDataSource();
+abstract class AuthRemoteDataSource {
+  const AuthRemoteDataSource();
 
-  /// Signs up a user with the provided [email], [password], and [name].
-  ///
-  /// Returns a [Future] containing a [UserEntity]
-  /// on success or an error on failure.
+  Future<UserEntity> signIn({required String email, required String password});
+
   Future<UserEntity> signUp({
     required String name,
     required String lastName,
@@ -18,9 +21,23 @@ abstract class SignUpRemoteDataSource {
   });
 }
 
-class SignUpRemoteDataSourceImpl extends SignUpRemoteDataSource {
-  const SignUpRemoteDataSourceImpl({required this.apiClient});
+class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
+  AuthRemoteDataSourceImpl({required this.apiClient});
   final ApiClient apiClient;
+
+  @override
+  Future<UserEntity> signIn({
+    required String email,
+    required String password,
+  }) async {
+    final data = await apiClient.post(
+      path: '/auth/login',
+      body: {'email': email, 'password': password},
+    );
+
+    final authResponse = AuthResponseDTO.fromJson(data);
+    return authResponse.user;
+  }
 
   @override
   Future<UserEntity> signUp({
