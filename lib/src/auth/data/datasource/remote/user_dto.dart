@@ -30,6 +30,19 @@ class UserDTO extends UserEntity {
     );
   }
 
+  factory UserDTO.fromEntity(UserEntity entity) {
+    return UserDTO(
+      id: entity.id,
+      name: entity.name,
+      lastname: entity.lastname,
+      email: entity.email,
+      phone: entity.phone,
+      image: entity.image,
+      notificationToken: entity.notificationToken,
+      roles: entity.roles,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

@@ -35,8 +35,11 @@ class SignInSubmitting extends SignInState {
 }
 
 class SignInSuccess extends SignInState {
+  const SignInSuccess({required this.authResponse});
+
+  final AuthResponseEntity authResponse;
   @override
-  List<Object> get props => [];
+  List<Object> get props => [authResponse];
 }
 
 class SignInFailure extends SignInState {

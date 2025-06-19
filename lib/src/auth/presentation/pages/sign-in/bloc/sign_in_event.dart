@@ -26,3 +26,8 @@ class SignInPasswordChanged extends SignInEvent {
 class SignInSubmitted extends SignInEvent {
   const SignInSubmitted();
 }
+
+class SaveUserSession extends SignInEvent {
+  const SaveUserSession({required this.authResponse});
+  final AuthResponseEntity authResponse;
+}

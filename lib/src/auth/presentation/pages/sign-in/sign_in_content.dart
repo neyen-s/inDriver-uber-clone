@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field_outlined.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
+import 'package:indriver_uber_clone/core/services/shared_prefs.dart';
 import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
@@ -23,6 +24,7 @@ class SignInContent extends StatefulWidget {
 class _SignInContentState extends State<SignInContent> {
   late final _emailController = TextEditingController();
   late final _passwordController = TextEditingController();
+  SharedPrefs sharedPrefs = SharedPrefs();
 
   @override
   void dispose() {
@@ -54,9 +56,19 @@ class _SignInContentState extends State<SignInContent> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return BlocConsumer<SignInBloc, SignInState>(
-                    listener: (context, state) {
+                    listener: (context, state) async {
                       if (state is SignInFailure) {
                         CoreUtils.showSnackBar(context, state.message);
+                      } else if (state is SignInSuccess) {
+                        final authResponse = state.authResponse;
+                        print('authResponse: $authResponse');
+
+                        context.read<SignInBloc>().add(
+                          SaveUserSession(authResponse: authResponse),
+                        );
+
+                        // Navegar a otra pantalla si querés
+                        // Navigator.pushReplacementNamed(context, '/home');
                       }
 
                       final vm = SignInViewModel.fromState(state);

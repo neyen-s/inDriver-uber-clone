@@ -1,7 +1,15 @@
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
 
-class AuthResponseDTO {
-  const AuthResponseDTO({required this.user, required this.token});
+class AuthResponseDTO extends AuthResponseEntity {
+  const AuthResponseDTO({required super.user, required super.token});
+
+  factory AuthResponseDTO.fromEntity(AuthResponseEntity entity) {
+    return AuthResponseDTO(
+      user: UserDTO.fromEntity(entity.user), // Necesitas este también
+      token: entity.token,
+    );
+  }
 
   factory AuthResponseDTO.fromJson(Map<String, dynamic> json) {
     return AuthResponseDTO(
@@ -10,10 +18,10 @@ class AuthResponseDTO {
     );
   }
 
-  final UserDTO user;
-  final String token;
-
-  Map<String, dynamic> toJson() => {'user': user.toJson(), 'token': token};
+  Map<String, dynamic> toJson() => {
+    'user': (user as UserDTO).toJson(),
+    'token': token,
+  };
 
   @override
   String toString() {
