@@ -88,4 +88,14 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(CacheFaliure(message: e.message, statusCode: e.statusCode));
     }
   }
+
+  @override
+  ResultFuture<void> signOut() async {
+    try {
+      await SharedPrefsAdapter.remove('user');
+      return const Right(null);
+    } on CacheException catch (e) {
+      return Left(CacheFaliure(message: e.message, statusCode: e.statusCode));
+    }
+  }
 }

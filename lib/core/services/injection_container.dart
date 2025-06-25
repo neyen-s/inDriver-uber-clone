@@ -11,6 +11,7 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart'
 import 'package:indriver_uber_clone/src/auth/domain/usecase/get_user_session_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/save_user_session_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_in_use_case.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_out_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
@@ -46,6 +47,9 @@ Future<void> _initAuth() async {
     ..registerLazySingleton<SaveUserSessionUseCase>(
       () => SaveUserSessionUseCase(authRepository: sl()),
     )
+    ..registerLazySingleton<SignOutUseCase>(
+      () => SignOutUseCase(authRepository: sl()),
+    )
     // UseCases (agrupated)
     ..registerLazySingleton<AuthUseCases>(
       () => AuthUseCases(
@@ -53,10 +57,11 @@ Future<void> _initAuth() async {
         signUpUseCase: sl(),
         getUserSessionUseCase: sl(),
         saveUserSessionUseCase: sl(),
+        signOutUseCase: sl(),
       ),
     )
     // Bloc
     ..registerFactory(() => SignInBloc(sl()))
     ..registerFactory(() => SignUpBloc(sl()))
-    ..registerFactory(ClientHomeBloc.new);
+    ..registerFactory(() => ClientHomeBloc(sl()));
 }

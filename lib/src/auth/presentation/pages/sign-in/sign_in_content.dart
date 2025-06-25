@@ -71,7 +71,9 @@ class _SignInContentState extends State<SignInContent> {
                           context,
                           ClientHomePage.routeName,
                         );
+                        return;
                       }
+                      if (!mounted) return;
 
                       final vm = SignInViewModel.fromState(state);
 

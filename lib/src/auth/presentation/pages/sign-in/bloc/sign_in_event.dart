@@ -35,3 +35,5 @@ class SaveUserSession extends SignInEvent {
 class CheckUserSession extends SignInEvent {
   const CheckUserSession();
 }
+
+final class SignOut extends SignInEvent {}

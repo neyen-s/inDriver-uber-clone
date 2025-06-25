@@ -1,6 +1,6 @@
 part of 'sign_in_bloc.dart';
 
-sealed class SignInState extends Equatable {
+abstract class SignInState extends Equatable {
   const SignInState();
 
   @override

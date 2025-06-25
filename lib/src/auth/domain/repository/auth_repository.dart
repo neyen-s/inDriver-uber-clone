@@ -30,4 +30,6 @@ abstract class AuthRepository {
   ResultFuture<AuthResponseDTO> getUserSession();
 
   ResultFuture<void> saveUserSession(AuthResponseEntity authResponse);
+
+  ResultFuture<void> signOut();
 }

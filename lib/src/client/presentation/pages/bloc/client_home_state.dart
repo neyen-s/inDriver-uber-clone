@@ -15,3 +15,7 @@ final class ClientHomeInitial extends ClientHomeState {
 final class ClientHomeChanged extends ClientHomeState {
   const ClientHomeChanged(super.section);
 }
+
+final class SignOutSuccess extends ClientHomeState {
+  const SignOutSuccess() : super(ClientHomeSection.profile);
+}
