@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
 import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
@@ -13,6 +14,7 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_in_use_case.dar
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/bloc/client_home_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -53,9 +55,8 @@ Future<void> _initAuth() async {
         saveUserSessionUseCase: sl(),
       ),
     )
-    /*     ..registerLazySingleton(() => SignInUseCase(sl()))
-    ..registerLazySingleton(() => SignUpUseCase(sl())) */
     // Bloc
     ..registerFactory(() => SignInBloc(sl()))
-    ..registerFactory(() => SignUpBloc(sl()));
+    ..registerFactory(() => SignUpBloc(sl()))
+    ..registerFactory(ClientHomeBloc.new);
 }
