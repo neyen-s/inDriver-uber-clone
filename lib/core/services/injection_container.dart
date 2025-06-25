@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
-import 'package:indriver_uber_clone/core/services/shared_prefs.dart';
+import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/source/auth_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/auth/data/repositories/auth_repository_impl.dart';
@@ -26,14 +26,14 @@ Future<void> _initAuth() async {
     ..registerLazySingleton<ApiClient>(
       () => HttpApiClient(baseUrl: API_PROJECT),
     )
-    ..registerLazySingleton<SharedPrefs>(SharedPrefs.new)
+    ..registerLazySingleton<SharedPrefsAdapter>(SharedPrefsAdapter.new)
     // Data source
     ..registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl(apiClient: sl()),
     )
     // Repository
     ..registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(authRemoteDataSource: sl(), sharedPrefs: sl()),
+      () => AuthRepositoryImpl(authRemoteDataSource: sl()),
     )
     //UseCases
     ..registerLazySingleton<SignInUseCase>(() => SignInUseCase(sl()))

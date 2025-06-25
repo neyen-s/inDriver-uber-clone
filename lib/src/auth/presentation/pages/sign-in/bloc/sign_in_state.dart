@@ -55,3 +55,13 @@ class SignInFailure extends SignInState {
   @override
   List<Object> get props => [email, password, message];
 }
+
+class SessionValid extends SignInState {
+  const SessionValid(this.authResponse);
+  final AuthResponseEntity authResponse;
+
+  @override
+  List<Object> get props => [authResponse];
+}
+
+class SessionInvalid extends SignInState {}

@@ -16,6 +16,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     on<SignInPasswordChanged>(_onPasswordChanged);
     on<SaveUserSession>(_onSaveUserSession);
     on<SignInSubmitted>(_onSubmitted);
+    on<CheckUserSession>(_onCheckUserSession);
   }
 
   final AuthUseCases authUseCases;
@@ -47,6 +48,18 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     Emitter<SignInState> emit,
   ) async {
     await authUseCases.saveUserSessionUseCase(event.authResponse);
+  }
+
+  Future<void> _onCheckUserSession(
+    CheckUserSession event,
+    Emitter<SignInState> emit,
+  ) async {
+    final result = await authUseCases.getUserSessionUseCase();
+
+    result.fold(
+      (_) => emit(SessionInvalid()),
+      (authResponse) => emit(SessionValid(authResponse)),
+    );
   }
 
   Future<void> _onSubmitted(

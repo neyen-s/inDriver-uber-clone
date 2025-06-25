@@ -1,3 +1,4 @@
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_role_dto.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/user_role_entity.dart';
 
@@ -25,7 +26,7 @@ class UserDTO extends UserEntity {
       image: json['image'] as String?,
       notificationToken: json['notificationToken'] as String?,
       roles: (json['roles'] as List<dynamic>)
-          .map((e) => UserRoleEntity.fromJson(e as Map<String, dynamic>))
+          .map((e) => UserRoleDTO.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
   }
@@ -52,7 +53,9 @@ class UserDTO extends UserEntity {
       'phone': phone,
       'image': image,
       'notificationToken': notificationToken,
-      'roles': roles.map((role) => role.toString()).toList(),
+      'roles': roles
+          .map((role) => UserRoleDTO.fromEntity(role).toJson())
+          .toList(),
     };
   }
 
@@ -64,7 +67,7 @@ class UserDTO extends UserEntity {
     String? phone,
     String? image,
     String? notificationToken,
-    List<UserRoleEntity>? roles,
+    List<UserRoleDTO>? roles,
   }) {
     return UserDTO(
       id: id ?? this.id,

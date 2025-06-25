@@ -54,10 +54,11 @@ final class SignUpSubmitting extends SignUpState {
 }
 
 final class SignUpSuccess extends SignUpState {
-  const SignUpSuccess();
+  const SignUpSuccess({required this.authResponse});
+  final AuthResponseEntity authResponse;
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [authResponse];
 }
 
 final class SignUpFailure extends SignUpState {

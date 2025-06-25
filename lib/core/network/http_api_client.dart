@@ -23,20 +23,20 @@ class HttpApiClient implements ApiClient {
     final requestHeaders = {'Content-Type': 'application/json', ...?headers};
 
     try {
-      print('POST Request: $uri');
+      debugPrint('POST Request: $uri');
       final response = await http
           .post(uri, headers: requestHeaders, body: jsonEncode(body))
           .timeout(timeout);
 
       return _handleResponse(response);
     } on SocketException {
-      print('No Internet connection. 503');
+      debugPrint('No Internet connection. 503');
       throw const ServerException(
         message: 'No Internet connection.',
         statusCode: '503',
       );
     } on TimeoutException {
-      print('Request timed out. 408');
+      debugPrint('Request timed out. 408');
       throw const ServerException(
         message: 'Request timed out.',
         statusCode: '408',
@@ -44,7 +44,7 @@ class HttpApiClient implements ApiClient {
     } on ServerException {
       rethrow; // Mantener los errores originales
     } catch (e) {
-      print('Unexpected error: $e');
+      debugPrint('Unexpected error: $e');
       throw ServerException(
         message: 'Unexpected client error: $e',
         statusCode: '500',
@@ -58,7 +58,7 @@ class HttpApiClient implements ApiClient {
     try {
       decoded = jsonDecode(response.body) as Map<String, dynamic>;
     } catch (_) {
-      print('Error decoding JSON response: ${response.body}');
+      debugPrint('Error decoding JSON response: ${response.body}');
       throw ServerException(
         message: 'Invalid JSON response',
         statusCode: response.statusCode.toString(),

@@ -6,10 +6,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/injection/bloc_providers.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/routes.dart';
+import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await init();
+  /*   final prefs = await SharedPreferences.getInstance();
+  await prefs.clear();  */
 
   runApp(
     DevicePreview(
@@ -43,7 +47,7 @@ class MyApp extends StatelessWidget {
       locale: DevicePreview.locale(context),
       debugShowCheckedModeBanner: false,
       title: 'Mi App',
-      initialRoute: '/',
+      initialRoute: SplashPage.routeName,
       onGenerateRoute: generateRoute,
     );
   }

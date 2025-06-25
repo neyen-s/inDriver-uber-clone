@@ -19,7 +19,7 @@ abstract class AuthRepository {
   /// Registers a new user with the provided
   ///  [name], [lastName], [email], [phone], and [password].
 
-  ResultFuture<UserEntity> signUp({
+  ResultFuture<AuthResponseEntity> signUp({
     required String name,
     required String lastName,
     required String email,

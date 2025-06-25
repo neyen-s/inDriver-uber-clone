@@ -55,6 +55,11 @@ final class SignUpConfirmPasswordChanged extends SignUpEvent {
   List<Object> get props => [confirmPassword];
 }
 
+class SaveUserSession extends SignUpEvent {
+  const SaveUserSession({required this.authResponse});
+  final AuthResponseEntity authResponse;
+}
+
 final class SignUpSubmitted extends SignUpEvent {
   const SignUpSubmitted();
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/sign_up_page.dart';
+import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
   print('generateRoute /');
@@ -14,10 +16,18 @@ Route<dynamic> generateRoute(RouteSettings settings) {
 
       return _pageBuilder((_) => const SignInPage(), settings: settings);
 
+    case SplashPage.routeName:
+      return _pageBuilder((_) => const SplashPage(), settings: settings);
+
     case SignUpPage.routeName:
       print('SignUpPage.routeName');
 
       return _pageBuilder((_) => const SignUpPage(), settings: settings);
+
+    case ClientHomePage.routeName:
+      print('ClientHomePage.routeName');
+      return _pageBuilder((_) => const ClientHomePage(), settings: settings);
+
     default:
       print('RUTA DEFAULT');
       return _pageBuilder((_) => const SignInPage(), settings: settings);

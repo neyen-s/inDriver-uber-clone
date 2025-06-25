@@ -11,6 +11,7 @@ import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_backgroun
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/default_button.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/separator_or.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/sync_controller.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
 
 class SignUpContent extends StatefulWidget {
   const SignUpContent({super.key});
@@ -40,9 +41,6 @@ class _SignUpContentState extends State<SignUpContent> {
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final isKeyboardOpen = bottomInset > 0;
-
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -82,9 +80,24 @@ class _SignUpContentState extends State<SignUpContent> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   return BlocConsumer<SignUpBloc, SignUpState>(
-                    listener: (context, state) {
+                    listener: (context, state) async {
+                      debugPrint('state: $state');
+
                       if (state is SignUpFailure) {
                         CoreUtils.showSnackBar(context, state.message);
+                      } else if (state is SignUpSuccess) {
+                        final authResponse = state.authResponse;
+                        debugPrint('authResponse: $authResponse');
+
+                        context.read<SignUpBloc>().add(
+                          SaveUserSession(authResponse: authResponse),
+                        );
+
+                        // Navegar a otra pantalla si querés
+                        await Navigator.pushReplacementNamed(
+                          context,
+                          ClientHomePage.routeName,
+                        );
                       }
 
                       final vm = SignUpViewModel.fromState(state);
@@ -330,6 +343,4 @@ class _SignUpContentState extends State<SignUpContent> {
       ),
     );
   }
-
-
 }

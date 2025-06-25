@@ -31,3 +31,7 @@ class SaveUserSession extends SignInEvent {
   const SaveUserSession({required this.authResponse});
   final AuthResponseEntity authResponse;
 }
+
+class CheckUserSession extends SignInEvent {
+  const CheckUserSession();
+}

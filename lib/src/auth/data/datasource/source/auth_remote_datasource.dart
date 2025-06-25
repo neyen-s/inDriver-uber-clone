@@ -3,9 +3,6 @@ import 'dart:async';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/auth_response_dto.dart';
-import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
-
-import 'package:indriver_uber_clone/src/auth/domain/entities/user_entity.dart';
 
 abstract class AuthRemoteDataSource {
   const AuthRemoteDataSource();
@@ -15,7 +12,7 @@ abstract class AuthRemoteDataSource {
     required String password,
   });
 
-  Future<UserEntity> signUp({
+  Future<AuthResponseDTO> signUp({
     required String name,
     required String lastName,
     required String email,
@@ -43,7 +40,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<UserEntity> signUp({
+  Future<AuthResponseDTO> signUp({
     required String name,
     required String lastName,
     required String email,
@@ -61,7 +58,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       },
     );
 
-    final response = UserDTO.fromJson(data);
+    final response = AuthResponseDTO.fromJson(data);
     return response;
   }
 }

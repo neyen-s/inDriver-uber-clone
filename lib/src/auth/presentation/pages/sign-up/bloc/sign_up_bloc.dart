@@ -1,28 +1,31 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/confirm_password_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/email_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/last_name_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/name_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/password_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/phone_entity.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 
 part 'sign_up_event.dart';
 part 'sign_up_state.dart';
 
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
-  SignUpBloc(this.signUpUseCase) : super(const SignUpInitial()) {
+  SignUpBloc(this.authUseCases) : super(const SignUpInitial()) {
     on<SignUpNameChanged>(_onNameChanged);
     on<SignUpLastNameChanged>(_onLastnameChanged);
     on<SignUpEmailChanged>(_onEmailChanged);
     on<SignUpPhoneChanged>(_onPhoneChanged);
     on<SignUpPasswordChanged>(_onPasswordChanged);
     on<SignUpConfirmPasswordChanged>(_onConfirmPasswordChanged);
+    on<SaveUserSession>(_onSaveUserSession);
     on<SignUpSubmitted>(_onSubmitted);
   }
-  final SignUpUseCase signUpUseCase;
+  final AuthUseCases authUseCases;
 
   NameEntity _name = const NameEntity.pure();
   LastnameEntity _lastname = const LastnameEntity.pure();
@@ -97,6 +100,13 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     );
   }
 
+  Future<void> _onSaveUserSession(
+    SaveUserSession event,
+    Emitter<SignUpState> emit,
+  ) async {
+    await authUseCases.saveUserSessionUseCase(event.authResponse);
+  }
+
   Future<void> _onSubmitted(
     SignUpSubmitted event,
     Emitter<SignUpState> emit,
@@ -146,7 +156,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       ),
     );
 
-    final result = await signUpUseCase(
+    final result = await authUseCases.signUpUseCase(
       SignUpParams(
         email: _email.value,
         password: _password.value,
@@ -168,7 +178,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
           message: failure.errorMessage,
         ),
       ),
-      (_) => emit(const SignUpSuccess()),
+      (response) => emit(SignUpSuccess(authResponse: response)),
     );
   }
 }
