@@ -66,16 +66,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     SignInSubmitted event,
     Emitter<SignInState> emit,
   ) async {
-    _email = EmailEntity.dirty(_email.value);
-    _password = PasswordEntity.dirty(_password.value);
-
-    final isValid = Formz.validate([_email, _password]);
-
-    emit(
-      SignInValidating(email: _email, password: _password, isValid: isValid),
-    );
-
-    if (!isValid) return;
+    if (!_isFormValid(emit)) return;
 
     emit(SignInSubmitting(email: _email, password: _password));
 
@@ -91,9 +82,18 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
           message: failure.errorMessage,
         ),
       ),
-      (response) {
-        emit(SignInSuccess(authResponse: response));
-      },
+      (response) => emit(SignInSuccess(authResponse: response)),
     );
+  }
+
+  bool _isFormValid(Emitter<SignInState> emit) {
+    _email = EmailEntity.dirty(_email.value);
+    _password = PasswordEntity.dirty(_password.value);
+
+    final isValid = Formz.validate([_email, _password]);
+    emit(
+      SignInValidating(email: _email, password: _password, isValid: isValid),
+    );
+    return isValid;
   }
 }
