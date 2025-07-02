@@ -28,6 +28,15 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       return Right(user);
+    } on TokenExpiredException catch (_) {
+      //TODO **************CONTINUE FROM HERE WORK ON EXPIRED TOKEN ********************
+      //navigator a signIn y borrado de datos aquí?
+      return const Left(
+        ServerFailure(
+          message: 'Session expired. Please login again.',
+          statusCode: '401',
+        ),
+      );
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {

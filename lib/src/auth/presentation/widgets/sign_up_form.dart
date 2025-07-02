@@ -35,12 +35,14 @@ class _SignUpFormState extends State<SignUpForm> {
             controller: widget.fullNameController,
             hintText: 'Full Name',
             keyboardType: TextInputType.name,
+            focusNode: FocusNode(), //TODO UPDATE THIS
           ),
           const SizedBox(height: 25),
           DefaultTextField(
             controller: widget.emailController,
             hintText: 'Email address',
             keyboardType: TextInputType.emailAddress,
+            focusNode: FocusNode(), //TODO UPDATE THIS
           ),
           const SizedBox(height: 25),
           DefaultTextField(
@@ -48,6 +50,7 @@ class _SignUpFormState extends State<SignUpForm> {
             hintText: 'Password',
             obscureText: obscurePassword,
             keyboardType: TextInputType.visiblePassword,
+            focusNode: FocusNode(), //TODO UPDATE THIS
 
             suffixIcon: IconButton(
               onPressed: () {
@@ -69,6 +72,8 @@ class _SignUpFormState extends State<SignUpForm> {
             keyboardType: TextInputType.visiblePassword,
             filled: true,
             fillColour: Colors.white,
+            focusNode: FocusNode(), //TODO UPDATE THIS
+
             suffixIcon: IconButton(
               onPressed: () {
                 setState(() {

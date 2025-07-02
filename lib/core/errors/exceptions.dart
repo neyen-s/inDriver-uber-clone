@@ -19,3 +19,15 @@ class CacheException extends Equatable implements Exception {
   @override
   List<Object?> get props => [message, statusCode];
 }
+
+class TokenExpiredException implements Exception {
+  const TokenExpiredException({required this.message, this.statusCode = 401});
+
+  final String message;
+  final int statusCode;
+
+  @override
+  String toString() => message;
+
+  List<Object?> get props => [message, statusCode];
+}

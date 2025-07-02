@@ -35,6 +35,7 @@ class _SignInFormState extends State<SignInForm> {
               controller: widget.emailController,
               hintText: 'Email Address',
               keyboardType: TextInputType.emailAddress,
+              focusNode: FocusNode(), //TODO UPDATE THIS
             ),
           ),
           const SizedBox(height: 25),
@@ -47,6 +48,7 @@ class _SignInFormState extends State<SignInForm> {
               hintText: 'Password',
               obscureText: obcurePassword,
               keyboardType: TextInputType.visiblePassword,
+              focusNode: FocusNode(), //TODO UPDATE THIS
               suffixIcon: IconButton(
                 icon: Icon(
                   obcurePassword ? Icons.visibility : Icons.visibility_off,

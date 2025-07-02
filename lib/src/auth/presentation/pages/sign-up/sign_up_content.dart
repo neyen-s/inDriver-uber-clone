@@ -10,7 +10,7 @@ import 'package:indriver_uber_clone/src/auth/presentation/viewmodels/sign_up_vie
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/default_button.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/separator_or.dart';
-import 'package:indriver_uber_clone/src/auth/presentation/widgets/sync_controller.dart';
+import 'package:indriver_uber_clone/core/common/widgets/sync_controller.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
 
 class SignUpContent extends StatefulWidget {

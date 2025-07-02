@@ -1,6 +1,5 @@
+import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_role_dto.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/user_entity.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/user_role_entity.dart';
 
 class UserDTO extends UserEntity {
   UserDTO({
@@ -14,7 +13,7 @@ class UserDTO extends UserEntity {
     required super.roles,
   });
 
-  const UserDTO.empty() : super.empty(); //TODO CHECK THIS
+  const UserDTO.empty() : super.empty();
 
   factory UserDTO.fromJson(Map<String, dynamic> json) {
     return UserDTO(
@@ -25,6 +24,7 @@ class UserDTO extends UserEntity {
       phone: json['phone'] as String,
       image: json['image'] as String?,
       notificationToken: json['notificationToken'] as String?,
+
       roles: (json['roles'] as List<dynamic>)
           .map((e) => UserRoleDTO.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -59,38 +59,16 @@ class UserDTO extends UserEntity {
     };
   }
 
-  UserDTO copyWith({
-    int? id,
-    String? name,
-    String? lastname,
-    String? email,
-    String? phone,
-    String? image,
-    String? notificationToken,
-    List<UserRoleDTO>? roles,
-  }) {
-    return UserDTO(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      lastname: lastname ?? this.lastname,
-      email: email ?? this.email,
-      phone: phone ?? this.phone,
-      image: image ?? this.image,
-      notificationToken: notificationToken ?? this.notificationToken,
-      roles: roles ?? this.roles,
-    );
-  }
-
   @override
   String toString() {
-    return 'UserDTO(id: $id, name: $name, lastname: $lastname,'
-        ' email: $email, phone: $phone, image: $image, '
-        ' notificationToken: $notificationToken, roles: $roles)';
+    return 'UserDTO(id: $id, name: $name, lastname: $lastname, email: $email,'
+        ' phone: $phone, image: $image, '
+        'notificationToken: $notificationToken, roles: $roles)';
   }
 
   /*   @override
   List<Object?> get props => [
-    id,
+    id,s
     name,
     lastname,
     email,

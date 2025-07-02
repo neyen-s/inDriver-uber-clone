@@ -1,4 +1,4 @@
-import 'package:indriver_uber_clone/src/auth/domain/entities/user_role_entity.dart';
+import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
 
 class UserRoleDTO extends UserRoleEntity {
   UserRoleDTO({

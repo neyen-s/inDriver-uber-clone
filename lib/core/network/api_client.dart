@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 
 abstract class ApiClient {
@@ -10,4 +12,13 @@ abstract class ApiClient {
 
   // Puedes agregar otros si necesitas:
   // Future<DataMap> get(...);
+
+  Future<DataMap> put({
+    required String path,
+    Map<String, String>? headers,
+    DataMap? body,
+    Map<String, String>? fields,
+    File? file,
+    Duration timeout = const Duration(seconds: 3),
+  });
 }

@@ -16,21 +16,36 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dar
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/bloc/client_home_bloc.dart';
+import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
+import 'package:indriver_uber_clone/src/profile/data/repositories/profile_repository_impl.dart';
+import 'package:indriver_uber_clone/src/profile/domain/repository/profile_repository.dart';
+import 'package:indriver_uber_clone/src/profile/domain/usecases/update_user_use_case.dart';
+import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
+import 'package:indriver_uber_clone/src/profile/presentation/pages/update/bloc/profile_update_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
 Future<void> init() async {
+  await _initCore();
   await _initAuth();
+  await _initClient();
+  await _initProfile();
 }
 
-Future<void> _initAuth() async {
+Future<void> _initCore() async {
   sl
-    // Core
     ..registerLazySingleton<ApiClient>(
       () => HttpApiClient(baseUrl: API_PROJECT),
     )
     ..registerLazySingleton<SharedPrefsAdapter>(SharedPrefsAdapter.new)
-    // Data source
+    ..registerLazySingleton<Client>(Client.new);
+}
+
+// AUTH
+
+Future<void> _initAuth() async {
+  // Data source
+  sl
     ..registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl(apiClient: sl()),
     )
@@ -38,7 +53,7 @@ Future<void> _initAuth() async {
     ..registerLazySingleton<AuthRepository>(
       () => AuthRepositoryImpl(authRemoteDataSource: sl()),
     )
-    //UseCases
+    // UseCases
     ..registerLazySingleton<SignInUseCase>(() => SignInUseCase(sl()))
     ..registerLazySingleton<SignUpUseCase>(() => SignUpUseCase(sl()))
     ..registerLazySingleton<GetUserSessionUseCase>(
@@ -50,7 +65,6 @@ Future<void> _initAuth() async {
     ..registerLazySingleton<SignOutUseCase>(
       () => SignOutUseCase(authRepository: sl()),
     )
-    // UseCases (agrupated)
     ..registerLazySingleton<AuthUseCases>(
       () => AuthUseCases(
         signInUseCase: sl(),
@@ -62,6 +76,30 @@ Future<void> _initAuth() async {
     )
     // Bloc
     ..registerFactory(() => SignInBloc(sl()))
-    ..registerFactory(() => SignUpBloc(sl()))
-    ..registerFactory(() => ClientHomeBloc(sl()));
+    ..registerFactory(() => SignUpBloc(sl()));
+}
+
+// CLIENT
+
+Future<void> _initClient() async {
+  sl.registerFactory(() => ClientHomeBloc(sl()));
+}
+
+// PROFILE
+
+Future<void> _initProfile() async {
+  sl
+    //data source
+    ..registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileRemoteDataSourceImpl(apiClient: sl()),
+    )
+    //repository
+    ..registerLazySingleton<ProfileRepository>(
+      () => ProfileRepositoryImpl(profileRemoteDataSource: sl()),
+    )
+    //usecases
+    ..registerLazySingleton<UpdateUserUseCase>(() => UpdateUserUseCase(sl()))
+    //bloc
+    ..registerFactory(() => ProfileInfoBloc(sl()))
+    ..registerFactory(() => ProfileUpdateBloc(sl(), sl()));
 }

@@ -6,15 +6,17 @@ class AuthResponseDTO extends AuthResponseEntity {
 
   factory AuthResponseDTO.fromEntity(AuthResponseEntity entity) {
     return AuthResponseDTO(
-      user: UserDTO.fromEntity(entity.user), // Necesitas este también
+      user: UserDTO.fromEntity(entity.user),
       token: entity.token,
     );
   }
 
   factory AuthResponseDTO.fromJson(Map<String, dynamic> json) {
+    final rawToken = json['token'] as String;
+    final cleanedToken = rawToken.replaceFirst('Bearer ', '');
     return AuthResponseDTO(
       user: UserDTO.fromJson(json['user'] as Map<String, dynamic>),
-      token: json['token'] as String,
+      token: cleanedToken,
     );
   }
 

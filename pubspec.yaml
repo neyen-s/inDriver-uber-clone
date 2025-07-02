@@ -24,6 +24,7 @@ dependencies:
   formz: ^0.8.0
   get_it: ^8.0.3
   http: ^1.4.0
+  image_picker: ^1.1.2
   mocktail: ^1.0.4
   shared_preferences: ^2.5.3
 

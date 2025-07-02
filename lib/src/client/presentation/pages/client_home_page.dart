@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/bloc/client_home_bloc.dart';
-import 'package:indriver_uber_clone/src/profile/presentation/pages/profile_info_page.dart';
+import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 
 class ClientHomePage extends StatelessWidget {
   const ClientHomePage({super.key});

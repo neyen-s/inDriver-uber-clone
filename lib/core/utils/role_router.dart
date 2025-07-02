@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/user_role_entity.dart';
+import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/driver_home_page.dart';

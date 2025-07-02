@@ -1,4 +1,4 @@
-import 'package:indriver_uber_clone/src/auth/domain/entities/user_role_entity.dart';
+import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
 
 class UserEntity {
   UserEntity({
@@ -29,6 +29,28 @@ class UserEntity {
   final String? image;
   final String? notificationToken;
   final List<UserRoleEntity> roles;
+
+  UserEntity copyWith({
+    int? id,
+    String? name,
+    String? lastname,
+    String? email,
+    String? phone,
+    String? image,
+    String? notificationToken,
+    List<UserRoleEntity>? roles,
+  }) {
+    return UserEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      lastname: lastname ?? this.lastname,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      image: image ?? this.image,
+      notificationToken: notificationToken ?? this.notificationToken,
+      roles: roles ?? this.roles,
+    );
+  }
 
   @override
   String toString() {
