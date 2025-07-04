@@ -1,7 +1,7 @@
+import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/auth_response_dto.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
-import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 
 abstract class AuthRepository {
   const AuthRepository();

@@ -16,9 +16,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<UserDTO> updateProfile(UserDTO user, String token, File? file) async {
-    print({'-----HEADER: Authorization': 'Bearer $token'});
-    print({'-----HEADER: 📦 File: ${file?.path}'});
-
     final response = await apiClient.put(
       path: '/users/upload/${user.id}',
       headers: {'Authorization': 'Bearer $token'},
@@ -29,7 +26,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       },
       file: file,
     );
-    print('updateProfile response: ${response}');
 
     return UserDTO.fromJson(response);
   }

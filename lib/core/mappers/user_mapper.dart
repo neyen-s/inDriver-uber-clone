@@ -1,5 +1,5 @@
-import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
 
 extension UserEntityMapper on UserEntity {
   UserDTO toDto() {

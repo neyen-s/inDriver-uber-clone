@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:equatable/equatable.dart';
+import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/core/usecase/usecase.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
-import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/src/profile/domain/repository/profile_repository.dart';
 
 class UpdateUserUseCase extends UsecaseWithParams<void, UpdateProfileParams> {

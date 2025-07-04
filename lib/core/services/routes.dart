@@ -11,33 +11,33 @@ Route<dynamic> generateRoute(RouteSettings settings) {
 
   switch (settings.name) {
     case '/':
-      print('RUTA /');
+      debugPrint('RUTA /');
       return _pageBuilder((_) => const SignInPage(), settings: settings);
 
     case SignInPage.routeName:
-      print('SignInPage.routeName');
+      debugPrint('SignInPage.routeName');
       return _pageBuilder((_) => const SignInPage(), settings: settings);
 
     case SplashPage.routeName:
       return _pageBuilder((_) => const SplashPage(), settings: settings);
 
     case SignUpPage.routeName:
-      print('SignUpPage.routeName');
+      debugPrint('SignUpPage.routeName');
       return _pageBuilder((_) => const SignUpPage(), settings: settings);
 
     case ClientHomePage.routeName:
-      print('ClientHomePage.routeName');
+      debugPrint('ClientHomePage.routeName');
       return _pageBuilder((_) => const ClientHomePage(), settings: settings);
     case ProfileInfoPage.routeName:
-      print('ProfileInfoPage.routeName');
+      debugPrint('ProfileInfoPage.routeName');
       return _pageBuilder((_) => const ProfileInfoPage(), settings: settings);
 
     case ProfileUpdatePage.routeName:
-      print('ProfileUpdatePage.routeName');
+      debugPrint('ProfileUpdatePage.routeName');
       return _pageBuilder((_) => const ProfileUpdatePage(), settings: settings);
 
     default:
-      print('RUTA DEFAULT');
+      debugPrint('RUTA DEFAULT');
       return _pageBuilder((_) => const SignInPage(), settings: settings);
   }
 }

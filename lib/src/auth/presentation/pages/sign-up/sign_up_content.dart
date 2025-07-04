@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field_outlined.dart';
+import 'package:indriver_uber_clone/core/common/widgets/sync_controller.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
@@ -10,7 +11,6 @@ import 'package:indriver_uber_clone/src/auth/presentation/viewmodels/sign_up_vie
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/default_button.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/separator_or.dart';
-import 'package:indriver_uber_clone/core/common/widgets/sync_controller.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
 
 class SignUpContent extends StatefulWidget {

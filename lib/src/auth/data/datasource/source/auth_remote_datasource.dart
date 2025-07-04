@@ -19,6 +19,8 @@ abstract class AuthRemoteDataSource {
     required String phone,
     required String password,
   });
+
+  Future<AuthResponseDTO> refreshToken({required String refreshToken});
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -60,5 +62,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     final response = AuthResponseDTO.fromJson(data);
     return response;
+  }
+
+  @override
+  Future<AuthResponseDTO> refreshToken({required String refreshToken}) async {
+    final data = await apiClient.post(
+      path: '/auth/refresh-token',
+      body: {'refreshToken': refreshToken},
+    );
+    return AuthResponseDTO.fromJson(data);
   }
 }

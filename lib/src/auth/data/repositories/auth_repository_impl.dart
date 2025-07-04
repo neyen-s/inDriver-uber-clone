@@ -1,9 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:indriver_uber_clone/core/errors/exceptions.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
-import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/mappers/auth_response_mapper.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/auth_response_dto.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/sesion_manager.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/source/auth_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/repository/auth_repository.dart';
@@ -28,15 +29,6 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       return Right(user);
-    } on TokenExpiredException catch (_) {
-      //TODO **************CONTINUE FROM HERE WORK ON EXPIRED TOKEN ********************
-      //navigator a signIn y borrado de datos aquí?
-      return const Left(
-        ServerFailure(
-          message: 'Session expired. Please login again.',
-          statusCode: '401',
-        ),
-      );
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
@@ -69,10 +61,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   ResultFuture<AuthResponseDTO> getUserSession() async {
     try {
-      final data = await SharedPrefsAdapter.readDto<AuthResponseDTO>(
-        'user',
-        AuthResponseDTO.fromJson,
-      );
+      final data = await SessionManager.getSession();
 
       if (data != null) {
         return Right(data);
@@ -89,8 +78,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   ResultFuture<void> saveUserSession(AuthResponseEntity authresponse) async {
     try {
-      final dto = AuthResponseDTO.fromEntity(authresponse);
-      await SharedPrefsAdapter.saveDto('user', dto.toJson());
+      await SessionManager.saveSession(authresponse.toDto());
 
       return const Right(null);
     } on CacheException catch (e) {
@@ -101,7 +89,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   ResultFuture<void> signOut() async {
     try {
-      await SharedPrefsAdapter.remove('user');
+      await SessionManager.clearSession();
       return const Right(null);
     } on CacheException catch (e) {
       return Left(CacheFaliure(message: e.message, statusCode: e.statusCode));

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
-import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
+import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/profile_update_page.dart';
 
 class ProfileInfoContent extends StatelessWidget {

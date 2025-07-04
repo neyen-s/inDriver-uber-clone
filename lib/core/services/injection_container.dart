@@ -1,7 +1,9 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
+import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
+import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
 import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/source/auth_remote_datasource.dart';
@@ -34,11 +36,11 @@ Future<void> init() async {
 
 Future<void> _initCore() async {
   sl
-    ..registerLazySingleton<ApiClient>(
-      () => HttpApiClient(baseUrl: API_PROJECT),
-    )
+    ..registerLazySingleton<ApiClient>(() => HttpApiClient(baseUrl: apiProject))
     ..registerLazySingleton<SharedPrefsAdapter>(SharedPrefsAdapter.new)
-    ..registerLazySingleton<Client>(Client.new);
+    ..registerLazySingleton<Client>(Client.new)
+    ..registerLazySingleton<SessionBloc>(SessionBloc.new)
+    ..registerLazySingleton(AppNavigatorService.new);
 }
 
 // AUTH

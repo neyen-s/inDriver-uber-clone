@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:indriver_uber_clone/core/errors/exceptions.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
+import 'package:indriver_uber_clone/src/auth/data/datasource/remote/sesion_manager.dart';
 
 class HttpApiClient implements ApiClient {
   HttpApiClient({required this.baseUrl});
@@ -82,15 +83,30 @@ class HttpApiClient implements ApiClient {
           response = await http
               .put(uri, headers: requestHeaders, body: encodedBody)
               .timeout(timeout);
-          print('***Decoded response: ${response.body}');
 
         default:
           throw UnimplementedError('Method $method not implemented');
       }
-      print('Decoded response: ${response.body}');
 
       return _handleResponse(response);
+    } on TokenExpiredException {
+      debugPrint('Token expired. 401');
+
+      final newToken = await _refreshToken();
+      if (newToken != null) {
+        headers?['Authorization'] = 'Bearer $newToken';
+        return _handleRequest(
+          method: method,
+          uri: uri,
+          headers: headers,
+          body: body,
+          timeout: timeout,
+        );
+      } else {
+        rethrow;
+      }
     } catch (e) {
+      if (e is TokenExpiredException) rethrow;
       throw _handleHttpError(e);
     }
   }
@@ -115,10 +131,26 @@ class HttpApiClient implements ApiClient {
 
       final streamedResponse = await request.send().timeout(timeout);
       final response = await http.Response.fromStream(streamedResponse);
-      print('/******Decoded response: ${response.body}');
 
       return _handleResponse(response);
+    } on TokenExpiredException {
+      debugPrint('Token expired. 401');
+
+      final newToken = await _refreshToken();
+      if (newToken != null) {
+        headers?['Authorization'] = 'Bearer $newToken';
+        return _handleMultipartPut(
+          uri: uri,
+          headers: headers,
+          fields: fields,
+          file: file,
+          timeout: timeout,
+        );
+      } else {
+        rethrow;
+      }
     } catch (e) {
+      if (e is TokenExpiredException) rethrow;
       throw _handleHttpError(e);
     }
   }
@@ -136,9 +168,6 @@ class HttpApiClient implements ApiClient {
         message: 'Request timed out.',
         statusCode: '408',
       );
-    } else if (e is TokenExpiredException) {
-      debugPrint('Token expired. 401');
-      return const TokenExpiredException(message: 'Token expired.');
     } else if (e is ServerException) {
       return e;
     } else {
@@ -151,19 +180,23 @@ class HttpApiClient implements ApiClient {
   }
 
   DataMap _handleResponse(http.Response response) {
-    try {
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final statusCode = response.statusCode;
+    final responseBody = response.body;
 
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+    try {
+      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
+
+      if (statusCode >= 200 && statusCode < 300) {
         return decoded;
       }
-      if (response.statusCode == 401) {
+
+      if (statusCode == 401) {
         final isTokenExpired =
             decoded['code'] == 'token_not_valid' &&
-            (decoded['messages'] as List<dynamic>?)?.any(
+            ((decoded['messages'] as List<dynamic>?)?.any(
                   (msg) => msg['message'] == 'Token is expired',
-                ) ==
-                true;
+                ) ??
+                false);
 
         if (isTokenExpired) {
           throw const TokenExpiredException(message: 'Token expired');
@@ -171,16 +204,50 @@ class HttpApiClient implements ApiClient {
       }
 
       final message = decoded['message']?.toString() ?? 'Unknown error';
-      throw ServerException(
-        message: message,
-        statusCode: response.statusCode.toString(),
-      );
+      throw ServerException(message: message, statusCode: '$statusCode');
     } catch (e) {
-      debugPrint('Error decoding response: ${response.body}');
+      debugPrint('Error decoding response: $responseBody');
+
+      // Si es un 401 pero no se pudo parsear JSON, lanza TokenExpiredException igual por seguridad.
+      if (statusCode == 401) {
+        throw const TokenExpiredException(message: 'Token expired');
+      }
+
       throw ServerException(
         message: 'Invalid JSON response',
-        statusCode: response.statusCode.toString(),
+        statusCode: '$statusCode',
       );
     }
+  }
+
+  Future<String?> _refreshToken() async {
+    try {
+      final refreshToken = await SessionManager.refreshToken;
+
+      if (refreshToken == null) {
+        SessionManager.handleTokenExpired();
+        return null;
+      }
+
+      final response = await post(
+        path: '/auth/refresh',
+        body: {'refresh': refreshToken},
+      );
+
+      final newAccessToken =
+          response['access']
+              as String?; //TODO check later the real name of the variable
+
+      if (newAccessToken != null) {
+        await SessionManager.updateAccessToken(newAccessToken);
+        return newAccessToken;
+      } else {
+        SessionManager.handleTokenExpired();
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error refreshing token: $e');
+    }
+    return null;
   }
 }

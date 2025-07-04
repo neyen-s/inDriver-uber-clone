@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
@@ -13,6 +14,7 @@ class BlocProviders {
     BlocProvider<ClientHomeBloc>(create: (_) => sl<ClientHomeBloc>()),
     BlocProvider<ProfileInfoBloc>(create: (_) => sl<ProfileInfoBloc>()),
     BlocProvider<ProfileUpdateBloc>(create: (_) => sl<ProfileUpdateBloc>()),
+    BlocProvider<SessionBloc>(create: (_) => sl<SessionBloc>()),
     // Agrega más BLoCs aquí si los necesitas
   ];
 }

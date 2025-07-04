@@ -93,9 +93,7 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
     final lastname = LastnameEntity.dirty(state.lastname.value);
     final phone = PhoneEntity.dirty(state.phone.value);
     final isValid = Formz.validate([name, lastname, phone]);
-    print(
-      'isValid $isValid name ${name.value} lastname ${lastname.value} phone ${phone.value}',
-    );
+
     emit(
       ProfileUpdateValidating(
         name: name,
@@ -122,15 +120,12 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
         (failure) => throw Exception('Sesión no encontrada'),
         (dto) => dto,
       );
-      print('session ${session.user}');
 
       final updatedUser = session.user.copyWith(
         name: name.value,
         lastname: lastname.value,
         phone: phone.value,
       );
-
-      print('updatedUser $updatedUser');
 
       final result = await updateUserUseCase(
         UpdateProfileParams(
@@ -139,8 +134,6 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
           file: _imageFile,
         ),
       );
-
-      print('result $result');
 
       await result.fold(
         (failure) async => emit(
