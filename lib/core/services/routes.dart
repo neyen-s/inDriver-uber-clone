@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/sign_up_page.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/client_home_page.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/profile_update_page.dart';
 

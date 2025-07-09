@@ -12,7 +12,7 @@ import 'package:indriver_uber_clone/src/auth/presentation/viewmodels/sign_in_vie
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/default_button.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/separator_or.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/client_home_page.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/client_home_page.dart';
 
 class SignInContent extends StatefulWidget {
   const SignInContent({super.key});

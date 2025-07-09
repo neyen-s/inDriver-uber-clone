@@ -22,7 +22,9 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_screenutil: ^5.9.3
   formz: ^0.8.0
+  geolocator: ^14.0.2
   get_it: ^8.0.3
+  google_maps_flutter: ^2.12.3
   http: ^1.4.0
   image_picker: ^1.1.2
   mocktail: ^1.0.4

@@ -71,9 +71,7 @@ class ProfileInfoContent extends StatelessWidget {
                 child: ClipOval(
                   child: FadeInImage.assetNetwork(
                     placeholder: 'assets/img/user.png',
-                    image:
-                        user?.image ??
-                        'https://preview.keenthemes.com/metronic-v4/theme/assets/pages/media/profile/people19.png',
+                    image: user?.image ?? '',
                     imageErrorBuilder: (context, error, stackTrace) =>
                         Image.asset('assets/img/user.png'),
                     fit: BoxFit.cover,

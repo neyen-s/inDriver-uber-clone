@@ -46,10 +46,6 @@ class CardUserInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl =
-        user?.image ??
-        'https://preview.keenthemes.com/metronic-v4/theme/assets/pages/media/profile/people19.png';
-
     return Container(
       margin: EdgeInsets.only(top: 100.h, left: 20.w, right: 20.w),
       width: context.width,
@@ -72,7 +68,7 @@ class CardUserInfo extends StatelessWidget {
                             ? Image.file(imageFile!, fit: BoxFit.cover)
                             : FadeInImage.assetNetwork(
                                 placeholder: 'assets/img/user.png',
-                                image: imageUrl,
+                                image: user?.image ?? '',
                                 fit: BoxFit.cover,
                                 imageErrorBuilder: (_, _, _) =>
                                     Image.asset('assets/img/user.png'),

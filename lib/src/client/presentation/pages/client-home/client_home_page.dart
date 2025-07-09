@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/bloc/client_home_bloc.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/client_map_seeker_page.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 
 class ClientHomePage extends StatelessWidget {
@@ -12,10 +13,10 @@ class ClientHomePage extends StatelessWidget {
 
   Widget _buildBody(ClientHomeSection section) {
     switch (section) {
+      case ClientHomeSection.map:
+        return const ClientMapSeekerPage();
       case ClientHomeSection.profile:
         return const ProfileInfoPage();
-      case ClientHomeSection.map:
-        return const Center(child: Text('Mapa (por implementar)'));
     }
   }
 
@@ -56,17 +57,18 @@ class ClientHomePage extends StatelessWidget {
               ),
               _buildDrawerItem(
                 context,
-                label: 'Perfil',
-                section: ClientHomeSection.profile,
+                label: 'Map',
+                section: ClientHomeSection.map,
               ),
               _buildDrawerItem(
                 context,
-                label: 'Mapa',
-                section: ClientHomeSection.map,
+                label: 'Profile',
+                section: ClientHomeSection.profile,
               ),
+
               const Divider(),
               ListTile(
-                title: const Text('Cerrar sesión'),
+                title: const Text('Sign out'),
                 leading: const Icon(Icons.logout),
                 onTap: () {
                   context.read<ClientHomeBloc>().add(const SignOutRequested());

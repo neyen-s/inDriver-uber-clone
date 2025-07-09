@@ -9,7 +9,7 @@ sealed class ClientHomeState extends Equatable {
 }
 
 final class ClientHomeInitial extends ClientHomeState {
-  const ClientHomeInitial() : super(ClientHomeSection.profile);
+  const ClientHomeInitial() : super(ClientHomeSection.map);
 }
 
 final class ClientHomeChanged extends ClientHomeState {

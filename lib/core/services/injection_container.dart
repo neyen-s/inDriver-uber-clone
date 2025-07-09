@@ -17,7 +17,14 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_out_use_case.da
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/bloc/client_home_bloc.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/create_marker_use_case.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/get_marker_use_case.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
+import 'package:indriver_uber_clone/src/client/data/repositories/geolocator_repository_impl.dart';
+import 'package:indriver_uber_clone/src/client/domain/repository/geolocator_repository.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/find_position_use_case.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/profile/data/repositories/profile_repository_impl.dart';
 import 'package:indriver_uber_clone/src/profile/domain/repository/profile_repository.dart';
@@ -32,6 +39,7 @@ Future<void> init() async {
   await _initAuth();
   await _initClient();
   await _initProfile();
+  await _initMap();
 }
 
 Future<void> _initCore() async {
@@ -104,4 +112,24 @@ Future<void> _initProfile() async {
     //bloc
     ..registerFactory(() => ProfileInfoBloc(sl()))
     ..registerFactory(() => ProfileUpdateBloc(sl(), sl()));
+}
+
+// MAP
+Future<void> _initMap() async {
+  sl
+    // Repository
+    ..registerLazySingleton<GeolocatorRepository>(GeolocatorRepositoryImpl.new)
+    // UseCases
+    ..registerLazySingleton(() => FindPositionUseCase(sl()))
+    ..registerLazySingleton(() => CreateMarkerUseCase(sl()))
+    ..registerLazySingleton(() => GetMarkerUseCase(sl()))
+    ..registerLazySingleton(
+      () => GeolocatorUseCases(
+        findPositionUseCase: sl(),
+        createMarkerUseCase: CreateMarkerUseCase(sl()),
+        getMarkerUseCase: GetMarkerUseCase(sl()),
+      ),
+    )
+    // Bloc
+    ..registerFactory(() => ClientMapSeekerBloc(sl()));
 }
