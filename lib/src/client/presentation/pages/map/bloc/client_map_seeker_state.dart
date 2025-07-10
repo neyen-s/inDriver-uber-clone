@@ -33,9 +33,18 @@ class PositionWithMarkerSuccess extends ClientMapSeekerState {
     required this.marker,
   });
 
-  final Position position;
+  final LatLng position;
   final Marker marker;
 
   @override
   List<Object> get props => [position, marker];
+}
+
+final class AddressUpdatedSuccess extends ClientMapSeekerState {
+  const AddressUpdatedSuccess(this.address);
+
+  final String address;
+
+  @override
+  List<Object> get props => [address];
 }

@@ -2,9 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter_platform_interface/src/types/bitmap.dart';
-import 'package:google_maps_flutter_platform_interface/src/types/location.dart';
-import 'package:google_maps_flutter_platform_interface/src/types/marker.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/domain/repository/geolocator_repository.dart';

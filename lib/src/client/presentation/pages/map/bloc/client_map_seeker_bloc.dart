@@ -1,11 +1,9 @@
 import 'package:bloc/bloc.dart';
-import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/either_extensions.dart';
-import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
 
 part 'client_map_seeker_event.dart';
@@ -19,8 +17,12 @@ class ClientMapSeekerBloc
     on<LoadCurrentLocationWithMarkerRequested>(
       _onLoadCurrentLocationWithMarkerRequested,
     );
+    on<MapMoved>(_onMapMoved);
+    on<MapIdle>(_onMapIdle);
+    on<GetAddressFromLatLng>(_onGetAddressFromLatLng);
   }
   final GeolocatorUseCases _geolocatorUseCases;
+  LatLng? lastLatLng;
 
   Future<void> _onGetCurrentPositionRequested(
     GetCurrentPositionRequested event,
@@ -74,6 +76,47 @@ class ClientMapSeekerBloc
     );
     if (marker == null) return;
 
-    emit(PositionWithMarkerSuccess(position: position, marker: marker));
+    emit(
+      PositionWithMarkerSuccess(
+        position: LatLng(position.latitude, position.longitude),
+        marker: marker,
+      ),
+    );
+  }
+
+  void _onMapMoved(MapMoved event, Emitter<ClientMapSeekerState> emit) {
+    lastLatLng = event.target;
+    // No emitimos nada aquí si el marcador es fijo (centrado con UI).
+  }
+
+  Future<void> _onMapIdle(
+    MapIdle event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    if (lastLatLng == null) return;
+    add(GetAddressFromLatLng(lastLatLng!));
+  }
+
+  Future<void> _onGetAddressFromLatLng(
+    GetAddressFromLatLng event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        event.latLng.latitude,
+        event.latLng.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final placemark = placemarks.first;
+        final address =
+            "${placemark.street}, ${placemark.locality}, ${placemark.administrativeArea}";
+        emit(AddressUpdatedSuccess(address));
+      } else {
+        emit(const ClientMapSeekerError('Address not found.'));
+      }
+    } catch (e) {
+      emit(const ClientMapSeekerError('Error while getting address. '));
+    }
   }
 }

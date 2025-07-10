@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.indriver_uber_clone"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "29.0.13599879"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
