@@ -10,5 +10,5 @@ Future<String> getAddressFromLatLng(LatLng latLng) async {
   if (placemarks.isEmpty) return 'Unknown location';
 
   final place = placemarks.first;
-  return '${place.street}, ${place.locality}';
+  return '${place.street}, ${place.subThoroughfare} ${place.locality} ';
 }

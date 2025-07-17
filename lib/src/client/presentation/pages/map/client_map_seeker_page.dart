@@ -31,6 +31,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   );
 
   LatLng? _cameraTarget;
+  bool _moveBySearch = false;
 
   @override
   void initState() {
@@ -72,6 +73,17 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
             _pickUpController.text = address;
             print('Address: $address');
           }
+          if (state is AddressUpdatedSuccess) {
+            if (_moveBySearch) {
+              _moveBySearch = false;
+              return;
+            }
+
+            _pickUpController.text = state.address;
+            _pickUpController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _pickUpController.text.length),
+            );
+          }
 
           if (state is ClientMapSeekerError) {
             ScaffoldMessenger.of(
@@ -100,14 +112,17 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                       myLocationEnabled: true,
                       myLocationButtonEnabled: false,
                       onCameraMove: (position) {
-                        context.read<ClientMapSeekerBloc>().add(
+                        _cameraTarget = position.target;
+                        /*                         context.read<ClientMapSeekerBloc>().add(
                           MapMoved(position.target),
-                        );
+                        ); */
                       },
                       onCameraIdle: () {
-                        context.read<ClientMapSeekerBloc>().add(
-                          const MapIdle(),
-                        );
+                        if (_cameraTarget != null) {
+                          context.read<ClientMapSeekerBloc>().add(
+                            MapIdle(_cameraTarget!),
+                          );
+                        }
                       },
                     ),
                     if (state is ClientMapSeekerLoading)
@@ -133,11 +148,14 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                             GooglePlaceAutocompleteField(
                               controller: _pickUpController,
                               hintText: 'Pick up address',
-                              onPlaceSelected: (latLng) => moveCameraTo(
-                                controller: _controller,
-                                target: latLng,
-                                zoom: 16,
-                              ),
+                              onPlaceSelected: (latLng) {
+                                _moveBySearch = true;
+                                moveCameraTo(
+                                  controller: _controller,
+                                  target: latLng,
+                                  zoom: 16,
+                                );
+                              },
                             ),
                             SizedBox(height: 5.h),
                             GooglePlaceAutocompleteField(
@@ -166,15 +184,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
             },
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          context.read<ClientMapSeekerBloc>().add(
-            const LoadCurrentLocationWithMarkerRequested(),
-          );
-        },
-        label: const Text('Mi ubicación'),
-        icon: const Icon(Icons.my_location),
       ),
     );
   }

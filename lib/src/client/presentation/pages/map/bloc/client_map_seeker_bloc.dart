@@ -4,6 +4,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/utils/either_extensions.dart';
+import 'package:indriver_uber_clone/core/utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
 
 part 'client_map_seeker_event.dart';
@@ -93,8 +94,12 @@ class ClientMapSeekerBloc
     MapIdle event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    if (lastLatLng == null) return;
-    add(GetAddressFromLatLng(lastLatLng!));
+    try {
+      final address = await getAddressFromLatLng(event.latLng);
+      emit(AddressUpdatedSuccess(address));
+    } catch (e) {
+      emit(const ClientMapSeekerError('No se pudo obtener la dirección.'));
+    }
   }
 
   Future<void> _onGetAddressFromLatLng(
