@@ -41,10 +41,37 @@ class PositionWithMarkerSuccess extends ClientMapSeekerState {
 }
 
 final class AddressUpdatedSuccess extends ClientMapSeekerState {
-  const AddressUpdatedSuccess(this.address);
+  const AddressUpdatedSuccess(this.address, this.field);
 
   final String address;
+  final SelectedField field;
 
   @override
-  List<Object> get props => [address];
+  List<Object> get props => [address, field];
+}
+
+final class ReadyToConfirmTrip extends ClientMapSeekerState {
+  const ReadyToConfirmTrip({required this.origin, required this.destination});
+  final String origin;
+  final String destination;
+
+  @override
+  List<Object> get props => [origin, destination];
+}
+
+final class SelectedFieldChanged extends ClientMapSeekerState {
+  const SelectedFieldChanged(this.selectedField);
+  final SelectedField selectedField;
+
+  @override
+  List<Object> get props => [selectedField];
+}
+
+final class AddressFetching extends ClientMapSeekerState {
+  const AddressFetching(this.field);
+
+  final SelectedField field;
+
+  @override
+  List<Object> get props => [field];
 }

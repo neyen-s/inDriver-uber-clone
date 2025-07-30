@@ -9,9 +9,14 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
     required this.controller,
     required this.hintText,
     required this.onPlaceSelected,
+    required this.focusNode,
+    required this.suffixIcon,
     super.key,
   });
 
+  final Widget? suffixIcon;
+
+  final FocusNode focusNode;
   final TextEditingController controller;
   final String hintText;
   final void Function(LatLng) onPlaceSelected;
@@ -26,6 +31,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
         textEditingController: controller,
         googleAPIKey: 'AIzaSyDU680a0zalIWFuVNDypJOXIQHlPZLZyPU',
         inputDecoration: InputDecoration(
+          suffixIcon: suffixIcon,
           hintText: hintText,
           hintStyle: const TextStyle(color: Colors.black54),
           border: InputBorder.none,
@@ -41,6 +47,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
             onPlaceSelected(LatLng(lat, lng));
           }
         },
+
         itemClick: (Prediction prediction) {
           controller.text = prediction.description ?? '';
           controller.selection = TextSelection.fromPosition(
@@ -61,6 +68,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
             ),
           );
         },
+        focusNode: focusNode,
       ),
     );
   }
