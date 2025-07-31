@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/core/utils/either_extensions.dart';
 import 'package:indriver_uber_clone/core/utils/get_adress_from_latlng.dart';
+import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
 
 part 'client_map_seeker_event.dart';
@@ -29,6 +31,7 @@ class ClientMapSeekerBloc
     on<ConfirmTripDataEntered>(_onConfirmTripDataEntered);
     on<CancelTripConfirmation>(_onCancelTripConfirmation);
     on<ChangeSelectedFieldRequested>(_onChangeSelectedFieldRequested);
+    on<DrawRouteRequested>(_onDrawRouteRequested);
   }
 
   final DebouncerLocation _debouncer;
@@ -113,10 +116,10 @@ class ClientMapSeekerBloc
     MapIdle event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    if (_isFetchingAddress || state is ReadyToConfirmTrip) return;
+    if (_isFetchingAddress || state is TripReadyToDisplay) return;
     _isFetchingAddress = true;
     try {
-      emit(AddressFetching(_currentSelectedField));
+      emit(FetchingTextAdress(_currentSelectedField));
       final address = await getAddressFromLatLng(event.latLng);
       emit(AddressUpdatedSuccess(address, _currentSelectedField));
     } catch (e) {
@@ -155,8 +158,13 @@ class ClientMapSeekerBloc
     ConfirmTripDataEntered event,
     Emitter<ClientMapSeekerState> emit,
   ) {
-    emit(
-      ReadyToConfirmTrip(origin: event.origin, destination: event.destination),
+    add(
+      DrawRouteRequested(
+        origin: event.originLatLng,
+        destination: event.destinationLatLng,
+        originText: event.origin,
+        destinationText: event.destination,
+      ),
     );
   }
 
@@ -173,5 +181,57 @@ class ClientMapSeekerBloc
   ) {
     _currentSelectedField = event.selectedField;
     emit(SelectedFieldChanged(event.selectedField));
+  }
+
+  Future<void> _onDrawRouteRequested(
+    DrawRouteRequested event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    try {
+      emit(const RouteDrawingInProgress());
+      final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
+      print('********************polylinePoints: ${polylinePoints.toString()}');
+
+      final request = RoutesApiRequest(
+        origin: PointLatLng(event.origin.latitude, event.origin.longitude),
+        destination: PointLatLng(
+          event.destination.latitude,
+          event.destination.longitude,
+        ),
+        routingPreference: RoutingPreference.trafficAware,
+      );
+      print('********************request: ${request.toJson()}');
+
+      // Get route using Routes API
+      final response = await polylinePoints.getRouteBetweenCoordinatesV2(
+        request: request,
+      );
+      print(
+        '********************Routes API response: ${response.routes} ${response.rawJson}, ${response.status}, ${response.errorMessage}',
+      );
+
+      if (response.routes.isNotEmpty) {
+        final route = response.routes.first;
+        final points = route.polylinePoints ?? [];
+
+        emit(
+          TripReadyToDisplay(
+            origin: event.originText ?? '',
+            destination: event.destinationText ?? '',
+            polylinePoints: points,
+            distanceKm: route.distanceKm ?? 0.0,
+            durationMinutes: (route.durationMinutes ?? 0).toInt(),
+          ),
+        );
+      } else {
+        if (event.origin.latitude == 0.0 && event.origin.longitude == 0.0) {
+          emit(const ClientMapSeekerError('Ubicación de origen no válida.'));
+          return;
+        }
+        emit(const ClientMapSeekerError('No se pudo dibujar la ruta.'));
+      }
+    } catch (e) {
+      emit(ClientMapSeekerError('Error al trazar ruta: $e'));
+    }
   }
 }

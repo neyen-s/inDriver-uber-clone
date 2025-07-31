@@ -40,12 +40,21 @@ final class ConfirmTripDataEntered extends ClientMapSeekerEvent {
   const ConfirmTripDataEntered({
     required this.origin,
     required this.destination,
+    required this.originLatLng,
+    required this.destinationLatLng,
   });
   final String origin;
   final String destination;
+  final LatLng originLatLng;
+  final LatLng destinationLatLng;
 
   @override
-  List<Object> get props => [origin, destination];
+  List<Object> get props => [
+    origin,
+    destination,
+    originLatLng,
+    destinationLatLng,
+  ];
 }
 
 final class CancelTripConfirmation extends ClientMapSeekerEvent {
@@ -55,4 +64,17 @@ final class CancelTripConfirmation extends ClientMapSeekerEvent {
 final class ChangeSelectedFieldRequested extends ClientMapSeekerEvent {
   const ChangeSelectedFieldRequested(this.selectedField);
   final SelectedField selectedField;
+}
+
+class DrawRouteRequested extends ClientMapSeekerEvent {
+  const DrawRouteRequested({
+    required this.origin,
+    required this.destination,
+    this.originText,
+    this.destinationText,
+  });
+  final LatLng origin;
+  final LatLng destination;
+  final String? originText;
+  final String? destinationText;
 }

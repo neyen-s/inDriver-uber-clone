@@ -50,15 +50,6 @@ final class AddressUpdatedSuccess extends ClientMapSeekerState {
   List<Object> get props => [address, field];
 }
 
-final class ReadyToConfirmTrip extends ClientMapSeekerState {
-  const ReadyToConfirmTrip({required this.origin, required this.destination});
-  final String origin;
-  final String destination;
-
-  @override
-  List<Object> get props => [origin, destination];
-}
-
 final class SelectedFieldChanged extends ClientMapSeekerState {
   const SelectedFieldChanged(this.selectedField);
   final SelectedField selectedField;
@@ -67,11 +58,40 @@ final class SelectedFieldChanged extends ClientMapSeekerState {
   List<Object> get props => [selectedField];
 }
 
-final class AddressFetching extends ClientMapSeekerState {
-  const AddressFetching(this.field);
+final class FetchingTextAdress extends ClientMapSeekerState {
+  const FetchingTextAdress(this.field);
 
   final SelectedField field;
 
   @override
   List<Object> get props => [field];
+}
+
+final class RouteDrawingInProgress extends ClientMapSeekerState {
+  const RouteDrawingInProgress();
+}
+
+final class TripReadyToDisplay extends ClientMapSeekerState {
+  const TripReadyToDisplay({
+    required this.origin,
+    required this.destination,
+    required this.polylinePoints,
+    required this.distanceKm,
+    required this.durationMinutes,
+  });
+
+  final String origin;
+  final String destination;
+  final List<PointLatLng> polylinePoints;
+  final double distanceKm;
+  final int durationMinutes;
+
+  @override
+  List<Object> get props => [
+    origin,
+    destination,
+    polylinePoints,
+    distanceKm,
+    durationMinutes,
+  ];
 }
