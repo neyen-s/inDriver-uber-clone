@@ -208,7 +208,6 @@ class HttpApiClient implements ApiClient {
     } catch (e) {
       debugPrint('Error decoding response: $responseBody');
 
-      // Si es un 401 pero no se pudo parsear JSON, lanza TokenExpiredException igual por seguridad.
       if (statusCode == 401) {
         throw const TokenExpiredException(message: 'Token expired');
       }

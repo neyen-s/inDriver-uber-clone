@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class DefaultTextField extends StatelessWidget {
@@ -20,6 +21,7 @@ class DefaultTextField extends StatelessWidget {
     this.hintStyle,
     this.overrideValidator = false,
     this.componentMargin,
+    this.customInputFormatters,
   });
 
   final String? Function(String?)? validator;
@@ -38,6 +40,7 @@ class DefaultTextField extends StatelessWidget {
   final TextStyle? hintStyle;
   final EdgeInsetsGeometry? componentMargin;
   final String? errorText;
+  final List<TextInputFormatter>? customInputFormatters;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +66,7 @@ class DefaultTextField extends StatelessWidget {
           onTapOutside: (_) {
             FocusScope.of(context).unfocus();
           },
+          inputFormatters: customInputFormatters ?? [],
           keyboardType: keyboardType,
           obscureText: obscureText,
           readOnly: readOnly,

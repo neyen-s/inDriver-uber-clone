@@ -2,19 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/common/widgets/google_places_auto_complete.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
-import 'package:indriver_uber_clone/core/utils/animate_route_with_padding.dart';
-import 'package:indriver_uber_clone/core/utils/build_polyline_from_points.dart';
-import 'package:indriver_uber_clone/core/utils/calculate_trip_price.dart';
+import 'package:indriver_uber_clone/core/services/injection_container.dart';
+import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
-import 'package:indriver_uber_clone/core/utils/get_adress_from_latlng.dart';
-import 'package:indriver_uber_clone/core/utils/move_map_camera.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/add_markers_on_trip_created.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/animate_route_with_padding.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/build_polyline_from_points.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/calculate_trip_price.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/route_confirmation_handler.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/center_pin_icon.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/confirm_route_btn.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/get_bounds_from_points.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_search_fields.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_view.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/map_loading_indicator.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/trip_summary_card.dart';
 
 class ClientMapSeekerPage extends StatefulWidget {
@@ -46,9 +51,15 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? destinationLatLng;
   bool showMapPadding = false;
 
+  late final MapMarkerIconService _iconService;
+  BitmapDescriptor? _originIcon;
+  BitmapDescriptor? _destinationIcon;
+
   @override
   void initState() {
     super.initState();
+    _iconService = sl<MapMarkerIconService>();
+    _loadCustomIcons();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
     });
@@ -120,11 +131,13 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                 _pickUpController.selection = TextSelection.fromPosition(
                   TextPosition(offset: _pickUpController.text.length),
                 );
+                originLatLng = state.selectedLatLng;
               case SelectedField.destination:
                 _destinationController.text = state.address;
                 _destinationController.selection = TextSelection.fromPosition(
                   TextPosition(offset: _destinationController.text.length),
                 );
+                destinationLatLng = state.selectedLatLng;
             }
           }
           if (state is TripReadyToDisplay) {
@@ -156,6 +169,16 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           if (state is PositionWithMarkerSuccess) {
             markers.add(state.marker);
           }
+          if (_originIcon != null && _destinationIcon != null) {
+            addMarkersOnTripCreated(
+              state: state,
+              markers: markers,
+              originIcon: _originIcon,
+              destinationIcon: _destinationIcon,
+              originLatLng: originLatLng,
+              destinationLatLng: destinationLatLng,
+            );
+          }
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -166,141 +189,49 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                 width: constraints.maxWidth,
                 child: Stack(
                   children: [
-                    GoogleMap(
-                      initialCameraPosition: _initialPosition,
-                      onMapCreated: _controller.complete,
-                      style: customMapStyle,
-                      padding: showMapPadding
-                          ? EdgeInsets.only(
-                              bottom:
-                                  MediaQuery.of(context).size.height * 0.4 + 50,
-                              top: 100,
-                              left: 40,
-                              right: 40,
-                            )
-                          : EdgeInsets.zero,
+                    GoogleMapView(
+                      controller: _controller,
+                      initialPosition: _initialPosition,
                       markers: markers,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false,
+                      showMapPadding: showMapPadding,
                       polylines: buildPolylineFromPoints(state),
-                      onCameraMove: (position) {
-                        if (!isTripReady) {
-                          _cameraTarget = position.target;
-                        }
-                      },
-                      onCameraIdle: () {
-                        if (!isTripReady && _cameraTarget != null) {
-                          context.read<ClientMapSeekerBloc>().add(
-                            MapIdle(_cameraTarget!),
-                          );
-                        }
+                      isTripReady: isTripReady,
+                      onMove: (pos) => _cameraTarget = pos,
+                      onIdle: (LatLng pos) {
+                        context.read<ClientMapSeekerBloc>().add(MapIdle(pos));
                       },
                     ),
-                    if (state is ClientMapSeekerLoading)
-                      const Positioned(
-                        top: 40,
-                        left: 0,
-                        right: 0,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
+                    if (state is ClientMapSeekerLoading) MapLoadingIndicator(),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
 
                       child: isTripReady
                           ? const SizedBox.shrink()
-                          : Container(
-                              key: const ValueKey('search_fields'),
-                              height: 120.h,
-                              margin: EdgeInsets.only(
-                                top: 20.h,
-                                left: 20.w,
-                                right: 20.w,
-                              ),
-                              alignment: Alignment.center,
-                              child: Card(
-                                surfaceTintColor: Colors.white,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    GooglePlaceAutocompleteField(
-                                      controller: _pickUpController,
-                                      hintText: 'Pick up address',
-                                      focusNode: originFocusNode,
-                                      onPlaceSelected: (latLng) {
-                                        _moveBySearch = true;
-                                        moveCameraTo(
-                                          controller: _controller,
-                                          target: latLng,
-                                          zoom: 16,
-                                        );
-                                        originLatLng = latLng;
-                                      },
-                                      suffixIcon:
-                                          state is FetchingTextAdress &&
-                                              originFocusNode.hasFocus
-                                          ? Padding(
-                                              padding: EdgeInsets.all(12.r),
-                                              child: SizedBox(
-                                                width: 16.w,
-                                                height: 16.h,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2.w,
-                                                    ),
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                    SizedBox(height: 5.h),
-                                    GooglePlaceAutocompleteField(
-                                      controller: _destinationController,
-                                      hintText: 'Destination address',
-                                      focusNode: destinationFocusNode,
-                                      onPlaceSelected: (latLng) {
-                                        moveCameraTo(
-                                          controller: _controller,
-                                          target: latLng,
-                                          zoom: 16,
-                                        );
-                                        destinationLatLng = latLng;
-                                      },
-                                      suffixIcon:
-                                          state is FetchingTextAdress &&
-                                              destinationFocusNode.hasFocus
-                                          ? Padding(
-                                              padding: EdgeInsets.all(12.r),
-                                              child: SizedBox(
-                                                width: 16.w,
-                                                height: 16.h,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2.w,
-                                                    ),
-                                              ),
-                                            )
-                                          : null,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                          : GoogleMapSearchFields(
+                              controller: _controller,
+                              pickUpController: _pickUpController,
+                              destinationController: _destinationController,
+                              originFocusNode: originFocusNode,
+                              destinationFocusNode: destinationFocusNode,
+                              moveBySearch: _moveBySearch,
+                              state: state,
                             ),
                     ),
                     if (!isTripReady)
                       ConfirmRouteBtn(
-                        cameraTarget: _cameraTarget,
-                        pickUpController: _pickUpController,
-                        destinationController: _destinationController,
-                        originLatLng: originLatLng,
-                        destinationLatLng: destinationLatLng,
+                        onPressed: () => handleRouteConfirmation(
+                          context: context,
+                          originText: _pickUpController.text,
+                          destinationText: _destinationController.text,
+                          originLatLng: originLatLng,
+                          destinationLatLng: destinationLatLng,
+                          fallbackOrigin: originLatLng,
+                          fallbackDestination: destinationLatLng,
+                          onSuccess: () => setState(() => _cameraTarget = null),
+                        ),
                       ),
                     if (!isTripReady)
-                      Center(
-                        child: Image.asset(
-                          'assets/img/location_blue.png',
-                          width: 40.w,
-                          height: 40.h,
-                        ),
-                      )
+                      const CenterPinIcon()
                     else
                       const SizedBox.shrink(),
                   ],
@@ -330,12 +261,25 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                         const CancelTripConfirmation(),
                       );
                     },
-                    onConfirmPressed: () {},
+                    onConfirmPressed: (offer) {},
                   )
                 : const SizedBox.shrink(),
           );
         },
       ),
     );
+  }
+
+  Future<void> _loadCustomIcons() async {
+    final iconService = sl<MapMarkerIconService>();
+    final origin = await iconService.getOriginIcon();
+    final destination = await iconService.getDestinationIcon();
+
+    if (mounted) {
+      setState(() {
+        _originIcon = origin;
+        _destinationIcon = destination;
+      });
+    }
   }
 }

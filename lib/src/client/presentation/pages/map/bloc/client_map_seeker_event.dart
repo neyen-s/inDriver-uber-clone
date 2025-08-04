@@ -24,6 +24,7 @@ final class MapMoved extends ClientMapSeekerEvent {
 final class MapIdle extends ClientMapSeekerEvent {
   const MapIdle(this.latLng);
   final LatLng latLng;
+
   @override
   List<Object> get props => [latLng];
 }

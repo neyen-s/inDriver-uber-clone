@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:indriver_uber_clone/core/common/widgets/default_text_field.dart';
+import 'package:indriver_uber_clone/core/extensions/text_input_formatters.dart';
+import 'package:indriver_uber_clone/core/utils/validators.dart';
 
-class TripSummaryCard extends StatelessWidget {
+class TripSummaryCard extends StatefulWidget {
   const TripSummaryCard({
     required this.context,
     required this.originAddress,
@@ -12,20 +16,56 @@ class TripSummaryCard extends StatelessWidget {
     required this.onCancelPressed,
     super.key,
   });
+
   final BuildContext context;
   final String originAddress;
   final String destinationAddress;
   final double distanceInKm;
   final Duration duration;
   final double price;
-  final VoidCallback onConfirmPressed;
+  final void Function(String offeredPrice) onConfirmPressed;
   final VoidCallback onCancelPressed;
+
+  @override
+  State<TripSummaryCard> createState() => _TripSummaryCardState();
+}
+
+class _TripSummaryCardState extends State<TripSummaryCard> {
+  TextEditingController offeredPriceController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    offeredPriceController = TextEditingController(
+      text: widget.price.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    offeredPriceController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext contextt) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.5,
+        maxHeight: MediaQuery.of(widget.context).size.height * 0.5,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topRight: const Radius.circular(18).r,
+          topLeft: const Radius.circular(18).r,
+        ),
+        gradient: const LinearGradient(
+          colors: [
+            Color.fromARGB(255, 255, 255, 255),
+            Color.fromARGB(255, 186, 186, 186),
+          ],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -35,41 +75,95 @@ class TripSummaryCard extends StatelessWidget {
 
           children: [
             IconButton(
-              onPressed: onCancelPressed,
+              onPressed: widget.onCancelPressed,
               icon: const Icon(Icons.close),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRow(Icons.location_on, 'Origen', originAddress),
+                  _buildRow(Icons.location_on, 'Origin', widget.originAddress),
                   const SizedBox(height: 8),
-                  _buildRow(Icons.flag, 'Destino', destinationAddress),
+                  _buildRow(
+                    Icons.flag,
+                    'Destination',
+                    widget.destinationAddress,
+                  ),
+
                   const Divider(height: 24, thickness: 1),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _infoColumn(
-                        'Distancia',
-                        '${distanceInKm.toStringAsFixed(2)} km',
+                        'Distance',
+                        '${widget.distanceInKm.toStringAsFixed(2)} km',
                       ),
-                      _infoColumn('Duración', _formatDuration(duration)),
-                      _infoColumn('Precio', '€${price.toStringAsFixed(2)}'),
+                      _infoColumn(
+                        'Estimated duration ',
+                        _formatDuration(widget.duration),
+                      ),
+                      _infoColumn(
+                        'Recomended price',
+                        '${widget.price.toStringAsFixed(2)}€',
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: onConfirmPressed,
+                  const SizedBox(height: 10),
+
+                  DefaultTextField(
+                    controller: offeredPriceController,
+                    hintText: 'Offered price',
+                    keyboardType: TextInputType.number,
+                    fillColour: Colors.white,
+                    filled: true,
+                    focusNode: FocusNode(),
+                    validator: validatePrice,
+                    customInputFormatters: [DecimalTextInputFormatter()],
+                    suffixIcon: const Icon(Icons.euro_symbol),
+                  ),
+                  const SizedBox(height: 5),
+                  ElevatedButton(
+                    onPressed: () =>
+                        widget.onConfirmPressed(offeredPriceController.text),
                     style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
                       minimumSize: const Size.fromHeight(40),
+                      backgroundColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      shadowColor: Colors.transparent,
                     ),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Confirmar viaje'),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                          colors: [
+                            Color.fromARGB(255, 19, 58, 213),
+                            Color.fromARGB(255, 65, 173, 255),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+
+                      child: Container(
+                        height: 38, // puedes ajustar o hacer dinámico
+                        alignment: Alignment.center,
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.search, color: Colors.white),
+                            Text(
+                              'Confirm trip',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -100,6 +194,7 @@ class TripSummaryCard extends StatelessWidget {
 
   Widget _infoColumn(String label, String value) {
     return Column(
+      //crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),

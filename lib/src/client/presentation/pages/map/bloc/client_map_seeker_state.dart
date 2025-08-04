@@ -41,13 +41,13 @@ class PositionWithMarkerSuccess extends ClientMapSeekerState {
 }
 
 final class AddressUpdatedSuccess extends ClientMapSeekerState {
-  const AddressUpdatedSuccess(this.address, this.field);
+  const AddressUpdatedSuccess(this.address, this.field, this.selectedLatLng);
 
   final String address;
   final SelectedField field;
-
+  final LatLng selectedLatLng;
   @override
-  List<Object> get props => [address, field];
+  List<Object> get props => [address, field, selectedLatLng];
 }
 
 final class SelectedFieldChanged extends ClientMapSeekerState {
@@ -78,6 +78,7 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
     required this.polylinePoints,
     required this.distanceKm,
     required this.durationMinutes,
+    this.selectedLatLng,
   });
 
   final String origin;
@@ -85,6 +86,7 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
   final List<PointLatLng> polylinePoints;
   final double distanceKm;
   final int durationMinutes;
+  final LatLng? selectedLatLng;
 
   @override
   List<Object> get props => [

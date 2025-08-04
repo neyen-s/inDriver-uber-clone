@@ -60,6 +60,7 @@ class ProfileInfoContent extends StatelessWidget {
       height: 190.h,
       child: Card(
         color: Colors.white,
+
         surfaceTintColor: Colors.white,
         child: Column(
           children: [

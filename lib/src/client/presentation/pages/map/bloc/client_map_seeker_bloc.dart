@@ -5,9 +5,9 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
-import 'package:indriver_uber_clone/core/utils/deboncer_location.dart';
-import 'package:indriver_uber_clone/core/utils/either_extensions.dart';
-import 'package:indriver_uber_clone/core/utils/get_adress_from_latlng.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
+import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
 
@@ -117,11 +117,10 @@ class ClientMapSeekerBloc
     Emitter<ClientMapSeekerState> emit,
   ) async {
     if (_isFetchingAddress || state is TripReadyToDisplay) return;
-    _isFetchingAddress = true;
     try {
       emit(FetchingTextAdress(_currentSelectedField));
       final address = await getAddressFromLatLng(event.latLng);
-      emit(AddressUpdatedSuccess(address, _currentSelectedField));
+      emit(AddressUpdatedSuccess(address, _currentSelectedField, event.latLng));
     } catch (e) {
       emit(ClientMapSeekerError('Error while getting address.  $e '));
       print('** Error while getting address: $e');
@@ -145,7 +144,9 @@ class ClientMapSeekerBloc
         final placemark = placemarks.first;
         final address =
             "${placemark.street}, ${placemark.locality}, ${placemark.administrativeArea}";
-        emit(AddressUpdatedSuccess(address, _currentSelectedField));
+        emit(
+          AddressUpdatedSuccess(address, _currentSelectedField, event.latLng),
+        );
       } else {
         emit(const ClientMapSeekerError('Address not found.'));
       }

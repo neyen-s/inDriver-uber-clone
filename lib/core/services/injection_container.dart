@@ -4,6 +4,7 @@ import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
 import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
+import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/source/auth_remote_datasource.dart';
@@ -48,7 +49,8 @@ Future<void> _initCore() async {
     ..registerLazySingleton<SharedPrefsAdapter>(SharedPrefsAdapter.new)
     ..registerLazySingleton<Client>(Client.new)
     ..registerLazySingleton<SessionBloc>(SessionBloc.new)
-    ..registerLazySingleton(AppNavigatorService.new);
+    ..registerLazySingleton(AppNavigatorService.new)
+    ..registerLazySingleton(MapMarkerIconService.new);
 }
 
 // AUTH
