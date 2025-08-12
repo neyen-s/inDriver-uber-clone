@@ -1,3 +1,3 @@
-enum ClientHomeSection { map, profile }
+enum GenericHomeScaffoldSection { map, profile, roles }
 
 enum SelectedField { origin, destination }

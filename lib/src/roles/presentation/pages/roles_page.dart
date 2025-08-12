@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
+import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
+import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
+import 'package:indriver_uber_clone/src/roles/presentation/widgets/roles_item.dart';
+
+class RolesPage extends StatefulWidget {
+  const RolesPage({super.key});
+  static const String routeName = '/roles-page';
+
+  @override
+  State<RolesPage> createState() => _RolesPageState();
+}
+
+class _RolesPageState extends State<RolesPage> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<RolesBloc>().add(GetRolesList());
+    print('------------RolesPage initialized------------');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: BlocBuilder<RolesBloc, RolesState>(
+        builder: (context, state) {
+          if (state is RolesLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is RolesError) {
+            return Center(child: Text(state.message));
+          } else if (state is RolesLoaded) {
+            if (state.roles.isEmpty) {
+              return const Center(child: Text('No roles available'));
+            }
+
+            return Container(
+              height: context.height,
+              width: context.width,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Color.fromARGB(255, 12, 38, 145),
+                    Color.fromARGB(255, 34, 156, 249),
+                  ],
+                ),
+              ),
+              child: ListView(
+                shrinkWrap: true,
+                children:
+                    state.roles.map((UserRoleEntity role) {
+                          return RolesItem(role: role);
+                        }).toList()
+                        as List<Widget>,
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+}

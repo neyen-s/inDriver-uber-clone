@@ -13,4 +13,6 @@ abstract class GeolocatorRepository {
     LatLng position,
     BitmapDescriptor icon,
   );
+
+  Stream<Position> getPositionStream();
 }

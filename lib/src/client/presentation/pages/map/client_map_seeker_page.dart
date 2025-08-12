@@ -31,13 +31,12 @@ class ClientMapSeekerPage extends StatefulWidget {
 }
 
 class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
-  final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
+  late Completer<GoogleMapController> _controller;
 
   final TextEditingController _pickUpController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
 
-  static const CameraPosition _initialPosition = CameraPosition(
+  static const CameraPosition initialPosition = CameraPosition(
     target: defaultLocation,
     zoom: 14,
   );
@@ -51,14 +50,15 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? destinationLatLng;
   bool showMapPadding = false;
 
-  late final MapMarkerIconService _iconService;
+  //late final MapMarkerIconService _iconService;
   BitmapDescriptor? _originIcon;
   BitmapDescriptor? _destinationIcon;
 
   @override
   void initState() {
     super.initState();
-    _iconService = sl<MapMarkerIconService>();
+    // _iconService = sl<MapMarkerIconService>();
+    _controller = Completer();
     _loadCustomIcons();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
@@ -87,6 +87,11 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     _destinationController.dispose();
     originFocusNode.dispose();
     destinationFocusNode.dispose();
+    _controller.future.then((controller) {
+      controller.dispose();
+    });
+    _controller.future.then((c) => c.dispose());
+    _controller = Completer();
     super.dispose();
   }
 
@@ -153,12 +158,14 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
               enablePadding: () => setState(() => showMapPadding = true),
             );
           } else {
+            if (!mounted) return;
             setState(() {
               showMapPadding = false;
             });
           }
 
           if (state is ClientMapSeekerError) {
+            print('******Error: ${state.message}******');
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
@@ -190,8 +197,8 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                 child: Stack(
                   children: [
                     GoogleMapView(
-                      controller: _controller,
-                      initialPosition: _initialPosition,
+                      mapController: _controller,
+                      initialPosition: initialPosition,
                       markers: markers,
                       showMapPadding: showMapPadding,
                       polylines: buildPolylineFromPoints(state),
@@ -227,7 +234,10 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                           destinationLatLng: destinationLatLng,
                           fallbackOrigin: originLatLng,
                           fallbackDestination: destinationLatLng,
-                          onSuccess: () => setState(() => _cameraTarget = null),
+                          onSuccess: () {
+                            if (!mounted) return;
+                            setState(() => _cameraTarget = null);
+                          },
                         ),
                       ),
                     if (!isTripReady)

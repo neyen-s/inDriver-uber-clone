@@ -61,7 +61,8 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   ResultFuture<AuthResponseDTO> getUserSession() async {
     try {
-      final data = await SessionManager.getSession();
+      final data =
+          await SessionManager.getSession(); //check when database info changes
 
       if (data != null) {
         return Right(data);

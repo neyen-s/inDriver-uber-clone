@@ -8,7 +8,7 @@ sealed class ClientHomeEvent extends Equatable {
 
 final class ChangeDrawerSection extends ClientHomeEvent {
   const ChangeDrawerSection(this.section);
-  final ClientHomeSection section;
+  final GenericHomeScaffoldSection section;
 
   @override
   List<Object> get props => [section];

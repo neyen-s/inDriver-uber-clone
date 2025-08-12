@@ -1,9 +1,11 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_position_stream_use_case.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
 import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
+import 'package:indriver_uber_clone/core/services/location_service.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
@@ -18,20 +20,23 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_out_use_case.da
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
-import 'package:indriver_uber_clone/src/client/data/repositories/geolocator_repository_impl.dart';
-import 'package:indriver_uber_clone/src/client/domain/repository/geolocator_repository.dart';
-import 'package:indriver_uber_clone/src/client/domain/usecases/create_marker_use_case.dart';
-import 'package:indriver_uber_clone/src/client/domain/usecases/find_position_use_case.dart';
-import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
-import 'package:indriver_uber_clone/src/client/domain/usecases/get_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/data/repositories/geolocator_repository_impl.dart';
+import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/create_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/find_position_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_marker_use_case.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/profile/data/repositories/profile_repository_impl.dart';
 import 'package:indriver_uber_clone/src/profile/domain/repository/profile_repository.dart';
 import 'package:indriver_uber_clone/src/profile/domain/usecases/update_user_use_case.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/bloc/profile_update_bloc.dart';
+import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -39,18 +44,38 @@ Future<void> init() async {
   await _initCore();
   await _initAuth();
   await _initClient();
+  await _initDriver();
   await _initProfile();
-  await _initMap();
+  await _initClientMap();
+  await _initDriverMap();
 }
 
 Future<void> _initCore() async {
   sl
     ..registerLazySingleton<ApiClient>(() => HttpApiClient(baseUrl: apiProject))
     ..registerLazySingleton<SharedPrefsAdapter>(SharedPrefsAdapter.new)
+    ..registerLazySingleton<RolesBloc>(() => RolesBloc(sl()))
     ..registerLazySingleton<Client>(Client.new)
     ..registerLazySingleton<SessionBloc>(SessionBloc.new)
     ..registerLazySingleton(AppNavigatorService.new)
-    ..registerLazySingleton(MapMarkerIconService.new);
+    ..registerLazySingleton(MapMarkerIconService.new)
+    ..registerLazySingleton(LocationService.new)
+    // Repository
+    ..registerLazySingleton<GeolocatorRepository>(GeolocatorRepositoryImpl.new)
+    // UseCases
+    ..registerLazySingleton(() => FindPositionUseCase(sl()))
+    ..registerLazySingleton(() => CreateMarkerUseCase(sl()))
+    ..registerLazySingleton(() => GetMarkerUseCase(sl()))
+    ..registerLazySingleton(() => GetPositionStreamUseCase(sl()))
+    // UseCases group
+    ..registerLazySingleton(
+      () => GeolocatorUseCases(
+        findPositionUseCase: FindPositionUseCase(sl()),
+        createMarkerUseCase: CreateMarkerUseCase(sl()),
+        getMarkerUseCase: GetMarkerUseCase(sl()),
+        getPositionStreamUseCase: GetPositionStreamUseCase(sl()),
+      ),
+    );
 }
 
 // AUTH
@@ -97,6 +122,11 @@ Future<void> _initClient() async {
   sl.registerFactory(() => ClientHomeBloc(sl()));
 }
 
+// DRIVER
+Future<void> _initDriver() async {
+  sl.registerFactory(() => DriverHomeBloc(sl()));
+}
+
 // PROFILE
 
 Future<void> _initProfile() async {
@@ -117,21 +147,11 @@ Future<void> _initProfile() async {
 }
 
 // MAP
-Future<void> _initMap() async {
-  sl
-    // Repository
-    ..registerLazySingleton<GeolocatorRepository>(GeolocatorRepositoryImpl.new)
-    // UseCases
-    ..registerLazySingleton(() => FindPositionUseCase(sl()))
-    ..registerLazySingleton(() => CreateMarkerUseCase(sl()))
-    ..registerLazySingleton(() => GetMarkerUseCase(sl()))
-    ..registerLazySingleton(
-      () => GeolocatorUseCases(
-        findPositionUseCase: sl(),
-        createMarkerUseCase: CreateMarkerUseCase(sl()),
-        getMarkerUseCase: GetMarkerUseCase(sl()),
-      ),
-    )
-    // Bloc
-    ..registerFactory(() => ClientMapSeekerBloc(sl()));
+Future<void> _initClientMap() async {
+  sl.registerFactory(() => ClientMapSeekerBloc(sl()));
+}
+
+// DRIVER MAP
+Future<void> _initDriverMap() async {
+  sl.registerFactory(() => DriverMapBloc(sl()));
 }

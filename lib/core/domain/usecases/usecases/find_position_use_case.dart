@@ -1,6 +1,6 @@
 import 'package:geolocator/geolocator.dart';
+import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
-import 'package:indriver_uber_clone/src/client/domain/repository/geolocator_repository.dart';
 
 class FindPositionUseCase {
   FindPositionUseCase(this.geolocatorRepository);

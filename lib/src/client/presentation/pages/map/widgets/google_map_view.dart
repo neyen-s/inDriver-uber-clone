@@ -6,7 +6,7 @@ import 'package:indriver_uber_clone/core/utils/constants.dart';
 
 class GoogleMapView extends StatelessWidget {
   const GoogleMapView({
-    required this.controller,
+    required this.mapController,
     required this.initialPosition,
     required this.markers,
     required this.showMapPadding,
@@ -17,7 +17,7 @@ class GoogleMapView extends StatelessWidget {
     super.key,
   });
 
-  final Completer<GoogleMapController> controller;
+  final Completer<GoogleMapController> mapController;
   final CameraPosition initialPosition;
   final Set<Marker> markers;
   final bool showMapPadding;
@@ -29,7 +29,11 @@ class GoogleMapView extends StatelessWidget {
   Widget build(BuildContext context) {
     return GoogleMap(
       initialCameraPosition: initialPosition,
-      onMapCreated: controller.complete,
+      onMapCreated: (controller) {
+        if (!mapController.isCompleted) {
+          mapController.complete(controller);
+        }
+      },
       style: customMapStyle,
       padding: showMapPadding
           ? EdgeInsets.only(
@@ -50,7 +54,7 @@ class GoogleMapView extends StatelessWidget {
       },
       onCameraIdle: () {
         if (!isTripReady && onIdle != null) {
-          controller.future.then((c) async {
+          mapController.future.then((c) async {
             final pos = await c.getLatLng(
               ScreenCoordinate(
                 x: MediaQuery.of(context).size.width ~/ 2,

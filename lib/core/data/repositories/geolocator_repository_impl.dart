@@ -4,9 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
-import 'package:indriver_uber_clone/src/client/domain/repository/geolocator_repository.dart';
 
 class GeolocatorRepositoryImpl implements GeolocatorRepository {
   @override
@@ -86,5 +86,12 @@ class GeolocatorRepositoryImpl implements GeolocatorRepository {
     } catch (e) {
       return Left(ServerFailure(message: e.toString(), statusCode: 400));
     }
+  }
+
+  @override
+  Stream<Position> getPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(distanceFilter: 5),
+    );
   }
 }

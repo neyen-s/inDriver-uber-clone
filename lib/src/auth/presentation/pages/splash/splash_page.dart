@@ -28,6 +28,7 @@ class _SplashPageState extends State<SplashPage> {
     return Scaffold(
       body: BlocListener<SignInBloc, SignInState>(
         listener: (context, state) {
+          debugPrint('------SplashPage Listener-----');
           if (state is SessionValid) {
             debugPrint('--SessionValid ${state.authResponse.user.roles}--');
             RoleRouter.redirectUser(context, state.authResponse.user.roles);

@@ -3,11 +3,14 @@ import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/sign_up_page.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/client_home_page.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/driver_home_page.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map/driver_map_page_wrapper.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/profile_update_page.dart';
+import 'package:indriver_uber_clone/src/roles/presentation/pages/roles_page.dart';
 
 Route<dynamic> generateRoute(RouteSettings settings) {
-  print('generateRoute /');
+  print('******GENERATING ${settings.name}  ROUTE******* ');
 
   switch (settings.name) {
     case '/':
@@ -35,6 +38,21 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     case ProfileUpdatePage.routeName:
       debugPrint('ProfileUpdatePage.routeName');
       return _pageBuilder((_) => const ProfileUpdatePage(), settings: settings);
+
+    case DriverHomePage.routeName:
+      debugPrint('DriverHomePage.routeName');
+      return _pageBuilder((_) => const DriverHomePage(), settings: settings);
+
+    case RolesPage.routeName:
+      debugPrint('RolesPage.routeName');
+      return _pageBuilder((_) => const RolesPage(), settings: settings);
+
+    case DriverMapPageWrapper.routeName:
+      debugPrint('RolesPage.routeName');
+      return _pageBuilder(
+        (_) => const DriverMapPageWrapper(),
+        settings: settings,
+      );
 
     default:
       debugPrint('RUTA DEFAULT');

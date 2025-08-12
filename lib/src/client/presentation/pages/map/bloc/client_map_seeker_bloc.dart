@@ -5,11 +5,11 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
-import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/secrets.dart';
-import 'package:indriver_uber_clone/src/client/domain/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
 
 part 'client_map_seeker_event.dart';
 part 'client_map_seeker_state.dart';
@@ -25,7 +25,6 @@ class ClientMapSeekerBloc
     on<LoadCurrentLocationWithMarkerRequested>(
       _onLoadCurrentLocationWithMarkerRequested,
     );
-    // on<MapMoved>(_onMapMoved);
     on<MapIdle>(_onMapIdle);
     on<GetAddressFromLatLng>(_onGetAddressFromLatLng);
     on<ConfirmTripDataEntered>(_onConfirmTripDataEntered);
@@ -106,12 +105,6 @@ class ClientMapSeekerBloc
     );
   }
 
-  /*   void _onMapMoved(MapMoved event, Emitter<ClientMapSeekerState> emit) {
-    if (state is ReadyToConfirmTrip) return;
-    lastLatLng = event.target;
-    // No emitimos nada aquí si el marcador es fijo (centrado con UI).
-  } */
-
   Future<void> _onMapIdle(
     MapIdle event,
     Emitter<ClientMapSeekerState> emit,
@@ -139,11 +132,11 @@ class ClientMapSeekerBloc
         event.latLng.longitude,
       );
 
-      print('*******************Reverse geocoding placemarks: $placemarks');
       if (placemarks.isNotEmpty) {
         final placemark = placemarks.first;
         final address =
-            "${placemark.street}, ${placemark.locality}, ${placemark.administrativeArea}";
+            '${placemark.street}, ${placemark.locality},'
+            '${placemark.administrativeArea}';
         emit(
           AddressUpdatedSuccess(address, _currentSelectedField, event.latLng),
         );
@@ -201,14 +194,9 @@ class ClientMapSeekerBloc
         ),
         routingPreference: RoutingPreference.trafficAware,
       );
-      print('********************request: ${request.toJson()}');
 
-      // Get route using Routes API
       final response = await polylinePoints.getRouteBetweenCoordinatesV2(
         request: request,
-      );
-      print(
-        '********************Routes API response: ${response.routes} ${response.rawJson}, ${response.status}, ${response.errorMessage}',
       );
 
       if (response.routes.isNotEmpty) {

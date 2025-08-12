@@ -1,5 +1,3 @@
-import 'package:flutter/services.dart';
-
 String? validatePrice(String? value) {
   if (value == null || value.trim().isEmpty) {
     return null; // No molestar si aún no se escribió nada

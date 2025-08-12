@@ -2,14 +2,14 @@ part of 'client_home_bloc.dart';
 
 sealed class ClientHomeState extends Equatable {
   const ClientHomeState(this.section);
-  final ClientHomeSection section;
+  final GenericHomeScaffoldSection section;
 
   @override
   List<Object> get props => [section];
 }
 
 final class ClientHomeInitial extends ClientHomeState {
-  const ClientHomeInitial() : super(ClientHomeSection.map);
+  const ClientHomeInitial() : super(GenericHomeScaffoldSection.map);
 }
 
 final class ClientHomeChanged extends ClientHomeState {
@@ -17,5 +17,5 @@ final class ClientHomeChanged extends ClientHomeState {
 }
 
 final class SignOutSuccess extends ClientHomeState {
-  const SignOutSuccess() : super(ClientHomeSection.profile);
+  const SignOutSuccess() : super(GenericHomeScaffoldSection.profile);
 }
