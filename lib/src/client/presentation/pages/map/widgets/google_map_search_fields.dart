@@ -8,7 +8,7 @@ import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 
 class GoogleMapSearchFields extends StatelessWidget {
-  GoogleMapSearchFields({
+  const GoogleMapSearchFields({
     required this.state,
     required this.originFocusNode,
     required this.destinationFocusNode,
@@ -16,17 +16,23 @@ class GoogleMapSearchFields extends StatelessWidget {
     required this.pickUpController,
     required this.destinationController,
     required this.moveBySearch,
+    required this.onMoveBySearchChanged,
+    required this.onOriginSelected,
+    required this.onDestinationSelected,
     super.key,
   });
+
   final ClientMapSeekerState state;
   final FocusNode originFocusNode;
   final FocusNode destinationFocusNode;
   final TextEditingController pickUpController;
   final TextEditingController destinationController;
   final Completer<GoogleMapController> controller;
-  late LatLng originLatLng;
-  late LatLng destinationLatLng;
-  late bool moveBySearch = false;
+  final bool moveBySearch;
+
+  final ValueChanged<bool> onMoveBySearchChanged;
+  final ValueChanged<LatLng> onOriginSelected;
+  final ValueChanged<LatLng> onDestinationSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +51,8 @@ class GoogleMapSearchFields extends StatelessWidget {
               hintText: 'Pick up address',
               focusNode: originFocusNode,
               onPlaceSelected: (latLng) {
-                moveBySearch = true;
-                moveCameraTo(controller: controller, target: latLng, zoom: 16);
-                originLatLng = latLng;
+                onMoveBySearchChanged(true);
+                onOriginSelected(latLng);
               },
               suffixIcon:
                   state is FetchingTextAdress && originFocusNode.hasFocus
@@ -67,8 +72,7 @@ class GoogleMapSearchFields extends StatelessWidget {
               hintText: 'Destination address',
               focusNode: destinationFocusNode,
               onPlaceSelected: (latLng) {
-                moveCameraTo(controller: controller, target: latLng, zoom: 16);
-                destinationLatLng = latLng;
+                onDestinationSelected(latLng);
               },
               suffixIcon:
                   state is FetchingTextAdress && destinationFocusNode.hasFocus

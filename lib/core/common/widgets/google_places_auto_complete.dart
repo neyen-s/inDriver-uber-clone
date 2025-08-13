@@ -12,15 +12,18 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
     required this.onPlaceSelected,
     required this.focusNode,
     required this.suffixIcon,
+    this.onPredictionSelected,
     super.key,
   });
 
   final Widget? suffixIcon;
-
   final FocusNode focusNode;
   final TextEditingController controller;
   final String hintText;
   final void Function(LatLng) onPlaceSelected;
+
+  /// Nuevo callback: cuando el usuario hace click en una sugerencia
+  final void Function(Prediction)? onPredictionSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
         boxDecoration: const BoxDecoration(color: Colors.white),
         debounceTime: 400,
         countries: const ['es'],
+
         getPlaceDetailWithLatLng: (Prediction prediction) {
           final lat = double.tryParse(prediction.lat ?? '');
           final lng = double.tryParse(prediction.lng ?? '');
@@ -54,6 +58,13 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
           controller.selection = TextSelection.fromPosition(
             TextPosition(offset: controller.text.length),
           );
+
+          // Evitar llamar dos veces: usa la lat/lng del prediction si existe
+          final lat = double.tryParse(prediction.lat ?? '');
+          final lng = double.tryParse(prediction.lng ?? '');
+          if (lat != null && lng != null) {
+            onPlaceSelected(LatLng(lat, lng));
+          }
         },
         seperatedBuilder: const Divider(),
         containerHorizontalPadding: 10,

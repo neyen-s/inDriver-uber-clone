@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,6 +22,8 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/go
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_view.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/map_loading_indicator.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/trip_summary_card.dart';
+
+enum _MoveOrigin { user, search, tap }
 
 class ClientMapSeekerPage extends StatefulWidget {
   const ClientMapSeekerPage({super.key});
@@ -50,14 +53,18 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? destinationLatLng;
   bool showMapPadding = false;
 
-  //late final MapMarkerIconService _iconService;
   BitmapDescriptor? _originIcon;
   BitmapDescriptor? _destinationIcon;
+
+  // NUEVAS variables para gestionar origen del movimiento e ignorar onIdle
+  _MoveOrigin? _lastMoveOrigin;
+  bool _ignoreNextIdle = false;
+  LatLng? _lastRequestedLatLng;
+  static const double _idleDistanceThresholdMeters = 40.0;
 
   @override
   void initState() {
     super.initState();
-    // _iconService = sl<MapMarkerIconService>();
     _controller = Completer();
     _loadCustomIcons();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,10 +94,11 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     _destinationController.dispose();
     originFocusNode.dispose();
     destinationFocusNode.dispose();
-    _controller.future.then((controller) {
-      controller.dispose();
-    });
-    _controller.future.then((c) => c.dispose());
+    _controller.future
+        .then((controller) {
+          controller.dispose();
+        })
+        .catchError((_) {});
     _controller = Completer();
     super.dispose();
   }
@@ -123,12 +131,15 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
             final address = await getAddressFromLatLng(latLng);
             _pickUpController.text = address;
           }
+
           if (state is AddressUpdatedSuccess) {
+            // Si venimos de una búsqueda marcada por el parent, no sobrescribimos
             if (_moveBySearch) {
-              _moveBySearch = false;
+              _moveBySearch = false; // limpiamos el flag y salimos
               return;
             }
 
+            // Actualizamos campos según el field
             switch (state.field) {
               case SelectedField.origin:
                 _pickUpController.text = state.address;
@@ -136,14 +147,17 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   TextPosition(offset: _pickUpController.text.length),
                 );
                 originLatLng = state.selectedLatLng;
+                break;
               case SelectedField.destination:
                 _destinationController.text = state.address;
                 _destinationController.selection = TextSelection.fromPosition(
                   TextPosition(offset: _destinationController.text.length),
                 );
                 destinationLatLng = state.selectedLatLng;
+                break;
             }
           }
+
           if (state is TripReadyToDisplay) {
             final controller = await _controller.future;
 
@@ -202,15 +216,81 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                       polylines: buildPolylineFromPoints(state),
                       isTripReady: isTripReady,
                       onMove: (pos) => _cameraTarget = pos,
+                      // onIdle controlado por el wrapper que evita races
                       onIdle: (LatLng pos) {
+                        // si el parent indicó ignorar el siguiente idle, lo consumimos
+                        if (_ignoreNextIdle) {
+                          _ignoreNextIdle = false;
+                          // no hacer nada
+                          return;
+                        }
+
+                        // Si pedimos una latLng explícita (búsqueda/tap), y la distancia
+                        // entre el pos calculado y la pedida es pequeña, usamos la pedida
+                        if (_lastRequestedLatLng != null) {
+                          final dist = _distanceBetweenMeters(
+                            pos,
+                            _lastRequestedLatLng!,
+                          );
+                          if (dist <= _idleDistanceThresholdMeters) {
+                            context.read<ClientMapSeekerBloc>().add(
+                              MapIdle(_lastRequestedLatLng!),
+                            );
+                            _lastRequestedLatLng = null;
+                            return;
+                          }
+                          // si está lejos, se limpia y se usa pos real
+                          _lastRequestedLatLng = null;
+                        }
+
                         context.read<ClientMapSeekerBloc>().add(MapIdle(pos));
+                      },
+                      onTap: (LatLng pos) async {
+                        // touch on map: decide origin/destination by focus nodes
+                        setState(() {
+                          _lastMoveOrigin = _MoveOrigin.tap;
+                          _ignoreNextIdle = true; // evitar idle duplicado
+                        });
+
+                        final selected = LatLng(pos.latitude, pos.longitude);
+
+                        if (originFocusNode.hasFocus) {
+                          originLatLng = selected;
+                          _pickUpController.text =
+                              ''; // a rellenar cuando llegue la dirección
+                        } else if (destinationFocusNode.hasFocus) {
+                          destinationLatLng = selected;
+                          _destinationController.text = '';
+                        } else {
+                          // Por defecto tratamos como origin
+                          originLatLng = selected;
+                          _pickUpController.text = '';
+                        }
+
+                        // mover la camara al tap y esperar
+                        await moveCameraTo(
+                          controller: _controller,
+                          target: selected,
+                          zoom: 16,
+                        );
+                        await Future.delayed(const Duration(milliseconds: 60));
+
+                        _lastRequestedLatLng = selected;
+
+                        // Pedimos la dirección directamente al Bloc (no dependemos del onIdle)
+                        context.read<ClientMapSeekerBloc>().add(
+                          GetAddressFromLatLng(selected),
+                        );
+
+                        setState(() {
+                          _lastMoveOrigin = null;
+                        });
                       },
                     ),
                     if (state is ClientMapSeekerLoading)
                       const MapLoadingIndicator(),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
-
                       child: isTripReady
                           ? const SizedBox.shrink()
                           : GoogleMapSearchFields(
@@ -221,6 +301,55 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                               destinationFocusNode: destinationFocusNode,
                               moveBySearch: _moveBySearch,
                               state: state,
+                              // callbacks que debe proveer GoogleMapSearchFields
+                              onMoveBySearchChanged: (val) =>
+                                  setState(() => _moveBySearch = val),
+                              onOriginSelected: (latLng) async {
+                                setState(() {
+                                  _lastMoveOrigin = _MoveOrigin.search;
+                                  _ignoreNextIdle = true;
+                                  _moveBySearch = true;
+                                  originLatLng = latLng;
+                                  _lastRequestedLatLng = latLng;
+                                });
+
+                                await moveCameraTo(
+                                  controller: _controller,
+                                  target: latLng,
+                                  zoom: 16,
+                                );
+                                await Future.delayed(
+                                  const Duration(milliseconds: 60),
+                                );
+
+                                context.read<ClientMapSeekerBloc>().add(
+                                  GetAddressFromLatLng(latLng),
+                                );
+
+                                setState(() {
+                                  _lastMoveOrigin = null;
+                                });
+                              },
+                              onDestinationSelected: (latLng) async {
+                                setState(() {
+                                  destinationLatLng = latLng;
+                                  _ignoreNextIdle = true;
+                                  _lastRequestedLatLng = latLng;
+                                });
+
+                                await moveCameraTo(
+                                  controller: _controller,
+                                  target: latLng,
+                                  zoom: 16,
+                                );
+                                await Future.delayed(
+                                  const Duration(milliseconds: 60),
+                                );
+
+                                context.read<ClientMapSeekerBloc>().add(
+                                  GetAddressFromLatLng(latLng),
+                                );
+                              },
                             ),
                     ),
                     if (!isTripReady)
@@ -290,5 +419,20 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         _destinationIcon = destination;
       });
     }
+  }
+
+  // Haversine para comparar distancias en metros
+  double _distanceBetweenMeters(LatLng a, LatLng b) {
+    const earthRadius = 6371000.0;
+    final rad = pi / 180;
+    final lat1 = a.latitude * rad;
+    final lat2 = b.latitude * rad;
+    final dLat = lat2 - lat1;
+    final dLon = (b.longitude - a.longitude) * rad;
+    final sinDLat = sin(dLat / 2);
+    final sinDLon = sin(dLon / 2);
+    final hav = sinDLat * sinDLat + cos(lat1) * cos(lat2) * sinDLon * sinDLon;
+    final c = 2 * atan2(sqrt(hav), sqrt(1 - hav));
+    return earthRadius * c;
   }
 }

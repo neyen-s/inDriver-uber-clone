@@ -112,14 +112,15 @@ class ClientMapSeekerBloc
   ) async {
     if (_isFetchingAddress || state is TripReadyToDisplay) return;
     try {
+      _isFetchingAddress = true; // <-- Pónla en true ANTES
       emit(FetchingTextAdress(_currentSelectedField));
+
       final address = await getAddressFromLatLng(event.latLng);
       emit(AddressUpdatedSuccess(address, _currentSelectedField, event.latLng));
     } catch (e) {
       emit(ClientMapSeekerError('Error while getting address.  $e '));
-      debugPrint('** Error while getting address: $e');
     } finally {
-      _isFetchingAddress = false;
+      _isFetchingAddress = false; // <-- y vuelve a false
     }
   }
 
