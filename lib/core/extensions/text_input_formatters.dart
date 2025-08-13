@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 
 class DecimalTextInputFormatter extends TextInputFormatter {
   DecimalTextInputFormatter({this.decimalRange = 2, this.maxIntegerDigits = 4})
-    : assert(decimalRange >= 0);
+    : assert(decimalRange >= 0, ' Decimal range must be non-negative');
 
   final int decimalRange;
   final int maxIntegerDigits;

@@ -7,31 +7,13 @@ import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
-import 'package:indriver_uber_clone/src/driver/presentation/pages/map/driver_map_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/driver_map_page_wrapper.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/pages/roles_page.dart';
 
-class DriverHomePage extends StatefulWidget {
+class DriverHomePage extends StatelessWidget {
   const DriverHomePage({super.key});
   static const String routeName = 'driver/home';
-
-  @override
-  State<DriverHomePage> createState() => _DriverHomePageState();
-}
-
-class _DriverHomePageState extends State<DriverHomePage> {
-  @override
-  void initState() {
-    super.initState();
-    print('------------DriverHomePage initialized------------');
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {

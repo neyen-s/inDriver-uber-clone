@@ -12,6 +12,7 @@ class DriverMapPageWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<DriverMapBloc>(),
+
       child: const DriverMapPage(),
     );
   }

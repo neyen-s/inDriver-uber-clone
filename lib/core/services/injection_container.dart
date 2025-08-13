@@ -1,6 +1,12 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
+import 'package:indriver_uber_clone/core/data/repositories/geolocator_repository_impl.dart';
+import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/create_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/find_position_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_marker_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_position_stream_use_case.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
@@ -20,12 +26,6 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_out_use_case.da
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
-import 'package:indriver_uber_clone/core/data/repositories/geolocator_repository_impl.dart';
-import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/create_marker_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/find_position_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_marker_use_case.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';

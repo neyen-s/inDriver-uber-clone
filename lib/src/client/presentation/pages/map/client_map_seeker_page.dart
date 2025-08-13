@@ -122,7 +122,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
 
             final address = await getAddressFromLatLng(latLng);
             _pickUpController.text = address;
-            print('Address: $address');
           }
           if (state is AddressUpdatedSuccess) {
             if (_moveBySearch) {
@@ -165,7 +164,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           }
 
           if (state is ClientMapSeekerError) {
-            print('******Error: ${state.message}******');
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(state.message)));
@@ -208,7 +206,8 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                         context.read<ClientMapSeekerBloc>().add(MapIdle(pos));
                       },
                     ),
-                    if (state is ClientMapSeekerLoading) MapLoadingIndicator(),
+                    if (state is ClientMapSeekerLoading)
+                      const MapLoadingIndicator(),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
 

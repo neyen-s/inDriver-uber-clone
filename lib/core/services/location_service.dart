@@ -2,12 +2,12 @@ import 'package:geolocator/geolocator.dart';
 
 class LocationService {
   Future<void> checkPermission() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw Exception('El servicio de ubicación está deshabilitado.');
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
+    var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }

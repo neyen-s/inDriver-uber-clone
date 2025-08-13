@@ -14,10 +14,9 @@ class RolesItem extends StatefulWidget {
 class _RolesItemState extends State<RolesItem> {
   @override
   Widget build(BuildContext context) {
-    print('role.route: ${widget.role.route}');
     return GestureDetector(
       onTap: () async {
-        print(' Navigating to ${widget.role.name} page');
+        debugPrint(' Navigating to ${widget.role.name} page');
         await Navigator.pushReplacementNamed(context, widget.role.route);
       },
       child: Column(

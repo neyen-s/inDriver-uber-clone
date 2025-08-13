@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 
@@ -29,7 +28,6 @@ class _DriverMapPageState extends State<DriverMapPage> {
   @override
   void initState() {
     super.initState();
-    print('------------DriverMapPage initialized------------');
     _mapController = Completer<GoogleMapController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DriverMapBloc>().add(const DriverLocationStreamStarted());
@@ -50,7 +48,6 @@ class _DriverMapPageState extends State<DriverMapPage> {
     return Scaffold(
       body: BlocListener<DriverMapBloc, DriverMapState>(
         listener: (context, state) async {
-          print('DriverMapPage Listener: $state');
           if (state is DriverMapPositionWithMarker) {
             await _updateMarkerAndCamera(state.marker);
           }
@@ -83,7 +80,7 @@ class _DriverMapPageState extends State<DriverMapPage> {
         ..add(marker);
     });
 
-    final controller = await _mapController.future;
+    await _mapController.future;
     await moveCameraTo(controller: _mapController, target: marker.position);
   }
 }

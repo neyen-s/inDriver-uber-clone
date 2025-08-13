@@ -18,7 +18,6 @@ class _RolesPageState extends State<RolesPage> {
   void initState() {
     super.initState();
     context.read<RolesBloc>().add(GetRolesList());
-    print('------------RolesPage initialized------------');
   }
 
   @override

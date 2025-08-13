@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 Future<void> animateRouteWithPadding({
@@ -27,7 +28,7 @@ Future<void> animateRouteWithPadding({
 
     await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, -40));
   } catch (e) {
-    print('Camera animation failed: $e');
+    debugPrint('Camera animation failed: $e');
   }
 }
 

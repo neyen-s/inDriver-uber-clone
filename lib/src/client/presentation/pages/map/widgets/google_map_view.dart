@@ -22,8 +22,8 @@ class GoogleMapView extends StatelessWidget {
   final Set<Marker> markers;
   final bool showMapPadding;
   final Set<Polyline> polylines;
-  final Function(LatLng target)? onIdle;
-  final Function(LatLng target)? onMove;
+  final void Function(LatLng target)? onIdle;
+  final void Function(LatLng target)? onMove;
   final bool isTripReady;
   @override
   Widget build(BuildContext context) {
@@ -55,11 +55,15 @@ class GoogleMapView extends StatelessWidget {
       onCameraIdle: () {
         if (!isTripReady && onIdle != null) {
           mapController.future.then((c) async {
+            final size = MediaQuery.of(context).size;
+            final paddingTop = showMapPadding ? 100 : 0;
+            final paddingBottom = showMapPadding ? (size.height * 0.4 + 50) : 0;
+            final adjustedY =
+                ((size.height - paddingTop - paddingBottom) / 2 + paddingTop)
+                    .round();
+
             final pos = await c.getLatLng(
-              ScreenCoordinate(
-                x: MediaQuery.of(context).size.width ~/ 2,
-                y: MediaQuery.of(context).size.height ~/ 2,
-              ),
+              ScreenCoordinate(x: (size.width / 2).round(), y: adjustedY),
             );
             onIdle!(pos);
           });

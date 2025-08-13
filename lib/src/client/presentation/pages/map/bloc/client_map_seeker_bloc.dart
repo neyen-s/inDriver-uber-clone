@@ -1,15 +1,16 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/secrets.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
 
 part 'client_map_seeker_event.dart';
 part 'client_map_seeker_state.dart';
@@ -116,7 +117,7 @@ class ClientMapSeekerBloc
       emit(AddressUpdatedSuccess(address, _currentSelectedField, event.latLng));
     } catch (e) {
       emit(ClientMapSeekerError('Error while getting address.  $e '));
-      print('** Error while getting address: $e');
+      debugPrint('** Error while getting address: $e');
     } finally {
       _isFetchingAddress = false;
     }
@@ -184,7 +185,6 @@ class ClientMapSeekerBloc
     try {
       emit(const RouteDrawingInProgress());
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
-      print('********************polylinePoints: ${polylinePoints.toString()}');
 
       final request = RoutesApiRequest(
         origin: PointLatLng(event.origin.latitude, event.origin.longitude),

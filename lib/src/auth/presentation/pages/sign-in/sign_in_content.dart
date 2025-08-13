@@ -100,7 +100,8 @@ class _SignInContentState extends State<SignInContent> {
                                 _loginText(),
                                 SizedBox(height: 12.h),
 
-                                // TODO: Make the forms react only when the user closes the keyboard or goes to another field
+                                // TODO: Make the forms react only when the user
+                                //closes the keyboard or goes to another field
                                 DefaultTextFieldOutlined(
                                   hintText: 'Email Address',
                                   prefixIcon: Icons.person,

@@ -7,13 +7,13 @@ import 'package:indriver_uber_clone/src/roles/presentation/pages/roles_page.dart
 class RoleRouter {
   static void redirectUser(BuildContext context, List<UserRoleEntity> roles) {
     if (roles.any((r) => r.id == 'DRIVER')) {
-      print('is DRIVER');
+      debugPrint('is DRIVER');
       Navigator.pushReplacementNamed(context, RolesPage.routeName);
     } else if (roles.any((r) => r.id == 'CLIENT')) {
-      print('is CLIENT');
+      debugPrint('is CLIENT');
       Navigator.pushReplacementNamed(context, ClientHomePage.routeName);
     } else {
-      print('---ELSE DEFAULT---');
+      debugPrint('---ELSE DEFAULT---');
       Navigator.pushReplacementNamed(context, SignInPage.routeName);
     }
   }
