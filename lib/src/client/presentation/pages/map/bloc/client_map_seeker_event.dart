@@ -21,12 +21,12 @@ final class MapMoved extends ClientMapSeekerEvent {
   List<Object> get props => [target];
 }
 
-final class MapIdle extends ClientMapSeekerEvent {
-  const MapIdle(this.latLng);
-  final LatLng latLng;
+class MapTapped extends ClientMapSeekerEvent {
+  const MapTapped(this.position);
+  final LatLng position;
 
   @override
-  List<Object> get props => [latLng];
+  List<Object> get props => [position];
 }
 
 final class GetAddressFromLatLng extends ClientMapSeekerEvent {

@@ -26,7 +26,7 @@ class ClientMapSeekerBloc
     on<LoadCurrentLocationWithMarkerRequested>(
       _onLoadCurrentLocationWithMarkerRequested,
     );
-    on<MapIdle>(_onMapIdle);
+    on<MapTapped>(_onMapTapped);
     on<GetAddressFromLatLng>(_onGetAddressFromLatLng);
     on<ConfirmTripDataEntered>(_onConfirmTripDataEntered);
     on<CancelTripConfirmation>(_onCancelTripConfirmation);
@@ -38,7 +38,6 @@ class ClientMapSeekerBloc
   final GeolocatorUseCases _geolocatorUseCases;
   LatLng? lastLatLng;
   SelectedField _currentSelectedField = SelectedField.origin;
-  bool _isFetchingAddress = false;
 
   @override
   Future<void> close() {
@@ -106,22 +105,41 @@ class ClientMapSeekerBloc
     );
   }
 
-  Future<void> _onMapIdle(
-    MapIdle event,
+  Future<void> _onMapTapped(
+    MapTapped event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    if (_isFetchingAddress || state is TripReadyToDisplay) return;
-    try {
-      _isFetchingAddress = true; // <-- Pónla en true ANTES
-      emit(FetchingTextAdress(_currentSelectedField));
+    emit(ClientMapSeekerLoading());
 
-      final address = await getAddressFromLatLng(event.latLng);
-      emit(AddressUpdatedSuccess(address, _currentSelectedField, event.latLng));
-    } catch (e) {
-      emit(ClientMapSeekerError('Error while getting address.  $e '));
-    } finally {
-      _isFetchingAddress = false; // <-- y vuelve a false
-    }
+    final iconResult = await _geolocatorUseCases.createMarkerUseCase(
+      'assets/img/location_blue.png',
+    );
+    final icon = await foldOrEmitError(
+      iconResult,
+      emit,
+      ClientMapSeekerError.new,
+    );
+    if (icon == null) return;
+
+    final markerResult = await _geolocatorUseCases.getMarkerUseCase(
+      'selected',
+      'Selected Location',
+      '',
+      event.position,
+      icon,
+    );
+    final marker = await foldOrEmitError(
+      markerResult,
+      emit,
+      ClientMapSeekerError.new,
+    );
+    if (marker == null) return;
+
+    final address = await getAddressFromLatLng(event.position);
+
+    emit(PositionWithMarkerSuccess(position: event.position, marker: marker));
+
+    emit(AddressUpdatedSuccess(address, SelectedField.origin, event.position));
   }
 
   Future<void> _onGetAddressFromLatLng(

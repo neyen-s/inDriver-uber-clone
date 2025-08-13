@@ -12,6 +12,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
     required this.onPlaceSelected,
     required this.focusNode,
     required this.suffixIcon,
+    required this.isSelected,
     this.onPredictionSelected,
     super.key,
   });
@@ -20,6 +21,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
   final FocusNode focusNode;
   final TextEditingController controller;
   final String hintText;
+  final bool isSelected;
   final void Function(LatLng) onPlaceSelected;
 
   /// Nuevo callback: cuando el usuario hace click en una sugerencia
@@ -31,6 +33,14 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
       height: 50.h,
       alignment: Alignment.topCenter,
       padding: const EdgeInsets.symmetric(horizontal: 20),
+      /*  decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isSelected ? Colors.blue : Colors.grey,
+          width: 2,
+        ),
+      ), */
       child: GooglePlaceAutoCompleteTextField(
         textEditingController: controller,
         googleAPIKey: googleMapsApiKey,

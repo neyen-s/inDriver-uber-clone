@@ -12,9 +12,27 @@ class ConfirmRouteBtn extends StatelessWidget {
       bottom: 30.h,
       left: 20.w,
       right: 20.w,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        child: const Text('Confirm destination'),
+      child: Container(
+        height: 35.h,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(40.r)),
+          gradient: const LinearGradient(
+            colors: [
+              Color.fromARGB(255, 255, 255, 255),
+              Color.fromARGB(255, 186, 186, 186),
+            ],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+        ),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+          ),
+          onPressed: onPressed,
+          child: const Text('Confirm destination'),
+        ),
       ),
     );
   }

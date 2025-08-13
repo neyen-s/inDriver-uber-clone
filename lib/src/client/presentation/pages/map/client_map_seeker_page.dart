@@ -23,8 +23,6 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/go
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/map_loading_indicator.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/trip_summary_card.dart';
 
-enum _MoveOrigin { user, search, tap }
-
 class ClientMapSeekerPage extends StatefulWidget {
   const ClientMapSeekerPage({super.key});
   static const routeName = '/map-seeker';
@@ -34,18 +32,15 @@ class ClientMapSeekerPage extends StatefulWidget {
 }
 
 class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
-  late Completer<GoogleMapController> _controller;
+  late Completer<GoogleMapController> _mapController;
 
   final TextEditingController _pickUpController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
 
-  static const CameraPosition initialPosition = CameraPosition(
+  static const CameraPosition _initialPosition = CameraPosition(
     target: defaultLocation,
     zoom: 14,
   );
-
-  LatLng? _cameraTarget;
-  bool _moveBySearch = false;
 
   final originFocusNode = FocusNode();
   final destinationFocusNode = FocusNode();
@@ -53,19 +48,15 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? destinationLatLng;
   bool showMapPadding = false;
 
+  SelectedField currentSelectedField = SelectedField.origin;
+
   BitmapDescriptor? _originIcon;
   BitmapDescriptor? _destinationIcon;
-
-  // NUEVAS variables para gestionar origen del movimiento e ignorar onIdle
-  _MoveOrigin? _lastMoveOrigin;
-  bool _ignoreNextIdle = false;
-  LatLng? _lastRequestedLatLng;
-  static const double _idleDistanceThresholdMeters = 40.0;
 
   @override
   void initState() {
     super.initState();
-    _controller = Completer();
+    _mapController = Completer();
     _loadCustomIcons();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
@@ -94,12 +85,12 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     _destinationController.dispose();
     originFocusNode.dispose();
     destinationFocusNode.dispose();
-    _controller.future
+    _mapController.future
         .then((controller) {
           controller.dispose();
         })
         .catchError((_) {});
-    _controller = Completer();
+    _mapController = Completer();
     super.dispose();
   }
 
@@ -108,9 +99,18 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     return Scaffold(
       body: BlocConsumer<ClientMapSeekerBloc, ClientMapSeekerState>(
         listener: (context, state) async {
+          if (state is SelectedFieldChanged) {
+            setState(() {
+              currentSelectedField = state.selectedField;
+            });
+          }
+
+          // 1º Centers the map on the current position
+          // and updates the origin address
           if (state is FindPositionSuccess) {
             final position = state.position;
             final latLng = LatLng(position.latitude, position.longitude);
+
             if (position.latitude.abs() < 0.001 &&
                 position.longitude.abs() < 0.001) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -122,24 +122,23 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
             }
 
             await moveCameraTo(
-              controller: _controller,
+              controller: _mapController,
               target: latLng,
               zoom: 16,
             );
             originLatLng = latLng;
-
+            setState(() {});
             final address = await getAddressFromLatLng(latLng);
             _pickUpController.text = address;
           }
 
+          // 2º Updates the map camera position
           if (state is AddressUpdatedSuccess) {
             // Si venimos de una búsqueda marcada por el parent, no sobrescribimos
-            if (_moveBySearch) {
+            /*           if (_moveBySearch) {
               _moveBySearch = false; // limpiamos el flag y salimos
               return;
-            }
-
-            // Actualizamos campos según el field
+            } */
             switch (state.field) {
               case SelectedField.origin:
                 _pickUpController.text = state.address;
@@ -147,19 +146,18 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   TextPosition(offset: _pickUpController.text.length),
                 );
                 originLatLng = state.selectedLatLng;
-                break;
               case SelectedField.destination:
                 _destinationController.text = state.address;
                 _destinationController.selection = TextSelection.fromPosition(
                   TextPosition(offset: _destinationController.text.length),
                 );
                 destinationLatLng = state.selectedLatLng;
-                break;
             }
           }
-
+          // 3º If the trip is ready to display,
+          // animate the route and set LatLng points
           if (state is TripReadyToDisplay) {
-            final controller = await _controller.future;
+            final controller = await _mapController.future;
 
             final latLngPoints = state.polylinePoints
                 .map((e) => LatLng(e.latitude, e.longitude))
@@ -176,7 +174,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
               showMapPadding = false;
             });
           }
-
+          // 4º Errors
           if (state is ClientMapSeekerError) {
             ScaffoldMessenger.of(
               context,
@@ -185,6 +183,27 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         },
         builder: (context, state) {
           final markers = <Marker>{};
+
+          if (originLatLng != null && _originIcon != null) {
+            markers.add(
+              Marker(
+                markerId: const MarkerId('origin'),
+                position: originLatLng!,
+                icon: _originIcon!,
+              ),
+            );
+          }
+
+          if (destinationLatLng != null && _destinationIcon != null) {
+            markers.add(
+              Marker(
+                markerId: const MarkerId('destination'),
+                position: destinationLatLng!,
+                icon: _destinationIcon!,
+              ),
+            );
+          }
+
           if (state is PositionWithMarkerSuccess) {
             markers.add(state.marker);
           }
@@ -198,184 +217,135 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
               destinationLatLng: destinationLatLng,
             );
           }
+          final isTripReady = state is TripReadyToDisplay;
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isTripReady = state is TripReadyToDisplay;
+          return Stack(
+            children: [
+              GoogleMapView(
+                mapController: _mapController,
+                initialPosition: _initialPosition,
+                markers: markers,
 
-              return SizedBox(
-                height: constraints.maxHeight,
-                width: constraints.maxWidth,
-                child: Stack(
-                  children: [
-                    GoogleMapView(
-                      mapController: _controller,
-                      initialPosition: initialPosition,
-                      markers: markers,
-                      showMapPadding: showMapPadding,
-                      polylines: buildPolylineFromPoints(state),
-                      isTripReady: isTripReady,
-                      onMove: (pos) => _cameraTarget = pos,
-                      // onIdle controlado por el wrapper que evita races
-                      onIdle: (LatLng pos) {
-                        // si el parent indicó ignorar el siguiente idle, lo consumimos
-                        if (_ignoreNextIdle) {
-                          _ignoreNextIdle = false;
-                          // no hacer nada
-                          return;
-                        }
+                polylines: buildPolylineFromPoints(state),
+                isTripReady: isTripReady,
+                showMapPadding:
+                    showMapPadding, // asegúrate de exponerlo en GoogleMapView
+                onMapTap: (LatLng tapped) async {
+                  // Decide si el tap va a origen o destino
+                  SelectedField targetField;
+                  if (originFocusNode.hasFocus) {
+                    targetField = SelectedField.origin;
+                  } else if (destinationFocusNode.hasFocus) {
+                    targetField = SelectedField.destination;
+                  } else {
+                    // Si no hay foco: si aún no hay origen, usar origen; si ya hay origen, usar destino
+                    targetField = (originLatLng == null)
+                        ? SelectedField.origin
+                        : SelectedField.destination;
+                    // sincroniza el bloc con el campo elegido
+                    context.read<ClientMapSeekerBloc>().add(
+                      ChangeSelectedFieldRequested(targetField),
+                    );
+                  }
 
-                        // Si pedimos una latLng explícita (búsqueda/tap), y la distancia
-                        // entre el pos calculado y la pedida es pequeña, usamos la pedida
-                        if (_lastRequestedLatLng != null) {
-                          final dist = _distanceBetweenMeters(
-                            pos,
-                            _lastRequestedLatLng!,
-                          );
-                          if (dist <= _idleDistanceThresholdMeters) {
-                            context.read<ClientMapSeekerBloc>().add(
-                              MapIdle(_lastRequestedLatLng!),
-                            );
-                            _lastRequestedLatLng = null;
-                            return;
-                          }
-                          // si está lejos, se limpia y se usa pos real
-                          _lastRequestedLatLng = null;
-                        }
+                  if (targetField == SelectedField.origin) {
+                    originLatLng = tapped;
+                  } else {
+                    destinationLatLng = tapped;
+                  }
 
-                        context.read<ClientMapSeekerBloc>().add(MapIdle(pos));
-                      },
-                      onTap: (LatLng pos) async {
-                        // touch on map: decide origin/destination by focus nodes
-                        setState(() {
-                          _lastMoveOrigin = _MoveOrigin.tap;
-                          _ignoreNextIdle = true; // evitar idle duplicado
-                        });
+                  // Move camera (opcional, para centrar)
+                  await moveCameraTo(
+                    controller: _mapController,
+                    target: tapped,
+                    zoom: 16,
+                  );
 
-                        final selected = LatLng(pos.latitude, pos.longitude);
+                  // Pide la dirección según el campo seleccionado en el bloc
+                  context.read<ClientMapSeekerBloc>().add(
+                    GetAddressFromLatLng(tapped),
+                  );
+                },
+              ),
 
-                        if (originFocusNode.hasFocus) {
-                          originLatLng = selected;
-                          _pickUpController.text =
-                              ''; // a rellenar cuando llegue la dirección
-                        } else if (destinationFocusNode.hasFocus) {
-                          destinationLatLng = selected;
-                          _destinationController.text = '';
-                        } else {
-                          // Por defecto tratamos como origin
-                          originLatLng = selected;
-                          _pickUpController.text = '';
-                        }
+              if (state is ClientMapSeekerLoading) const MapLoadingIndicator(),
 
-                        // mover la camara al tap y esperar
-                        await moveCameraTo(
-                          controller: _controller,
-                          target: selected,
-                          zoom: 16,
-                        );
-                        await Future.delayed(const Duration(milliseconds: 60));
-
-                        _lastRequestedLatLng = selected;
-
-                        // Pedimos la dirección directamente al Bloc (no dependemos del onIdle)
-                        context.read<ClientMapSeekerBloc>().add(
-                          GetAddressFromLatLng(selected),
-                        );
-
-                        setState(() {
-                          _lastMoveOrigin = null;
-                        });
-                      },
-                    ),
-                    if (state is ClientMapSeekerLoading)
-                      const MapLoadingIndicator(),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: isTripReady
-                          ? const SizedBox.shrink()
-                          : GoogleMapSearchFields(
-                              controller: _controller,
-                              pickUpController: _pickUpController,
-                              destinationController: _destinationController,
-                              originFocusNode: originFocusNode,
-                              destinationFocusNode: destinationFocusNode,
-                              moveBySearch: _moveBySearch,
-                              state: state,
-                              // callbacks que debe proveer GoogleMapSearchFields
-                              onMoveBySearchChanged: (val) =>
-                                  setState(() => _moveBySearch = val),
-                              onOriginSelected: (latLng) async {
-                                setState(() {
-                                  _lastMoveOrigin = _MoveOrigin.search;
-                                  _ignoreNextIdle = true;
-                                  _moveBySearch = true;
-                                  originLatLng = latLng;
-                                  _lastRequestedLatLng = latLng;
-                                });
-
-                                await moveCameraTo(
-                                  controller: _controller,
-                                  target: latLng,
-                                  zoom: 16,
-                                );
-                                await Future.delayed(
-                                  const Duration(milliseconds: 60),
-                                );
-
-                                context.read<ClientMapSeekerBloc>().add(
-                                  GetAddressFromLatLng(latLng),
-                                );
-
-                                setState(() {
-                                  _lastMoveOrigin = null;
-                                });
-                              },
-                              onDestinationSelected: (latLng) async {
-                                setState(() {
-                                  destinationLatLng = latLng;
-                                  _ignoreNextIdle = true;
-                                  _lastRequestedLatLng = latLng;
-                                });
-
-                                await moveCameraTo(
-                                  controller: _controller,
-                                  target: latLng,
-                                  zoom: 16,
-                                );
-                                await Future.delayed(
-                                  const Duration(milliseconds: 60),
-                                );
-
-                                context.read<ClientMapSeekerBloc>().add(
-                                  GetAddressFromLatLng(latLng),
-                                );
-                              },
+              // Search fields
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: isTripReady
+                    ? const SizedBox.shrink()
+                    : GoogleMapSearchFields(
+                        controller: _mapController,
+                        pickUpController: _pickUpController,
+                        destinationController: _destinationController,
+                        isOriginSelected:
+                            currentSelectedField == SelectedField.origin,
+                        isDestinationSelected:
+                            currentSelectedField == SelectedField.destination,
+                        originFocusNode: originFocusNode,
+                        destinationFocusNode: destinationFocusNode,
+                        moveBySearch:
+                            false, // ya no necesitamos gatear por onIdle
+                        state: state,
+                        onMoveBySearchChanged: (_) {}, // noop
+                        onOriginSelected: (LatLng latLng) async {
+                          // Marcar campo en bloc y actualizar
+                          context.read<ClientMapSeekerBloc>().add(
+                            const ChangeSelectedFieldRequested(
+                              SelectedField.origin,
                             ),
-                    ),
-                    if (!isTripReady)
-                      ConfirmRouteBtn(
-                        onPressed: () => handleRouteConfirmation(
-                          context: context,
-                          originText: _pickUpController.text,
-                          destinationText: _destinationController.text,
-                          originLatLng: originLatLng,
-                          destinationLatLng: destinationLatLng,
-                          fallbackOrigin: originLatLng,
-                          fallbackDestination: destinationLatLng,
-                          onSuccess: () {
-                            if (!mounted) return;
-                            setState(() => _cameraTarget = null);
-                          },
-                        ),
+                          );
+                          originLatLng = latLng;
+
+                          await moveCameraTo(
+                            controller: _mapController,
+                            target: latLng,
+                            zoom: 16,
+                          );
+
+                          context.read<ClientMapSeekerBloc>().add(
+                            GetAddressFromLatLng(latLng),
+                          );
+                        },
+                        onDestinationSelected: (LatLng latLng) async {
+                          context.read<ClientMapSeekerBloc>().add(
+                            const ChangeSelectedFieldRequested(
+                              SelectedField.destination,
+                            ),
+                          );
+                          destinationLatLng = latLng;
+
+                          await moveCameraTo(
+                            controller: _mapController,
+                            target: latLng,
+                            zoom: 16,
+                          );
+
+                          context.read<ClientMapSeekerBloc>().add(
+                            GetAddressFromLatLng(latLng),
+                          );
+                        },
                       ),
-                    if (!isTripReady)
-                      const CenterPinIcon()
-                    else
-                      const SizedBox.shrink(),
-                  ],
+              ),
+
+              if (!isTripReady)
+                ConfirmRouteBtn(
+                  onPressed: () => handleRouteConfirmation(
+                    context: context,
+                    originText: _pickUpController.text,
+                    destinationText: _destinationController.text,
+                    originLatLng: originLatLng,
+                    destinationLatLng: destinationLatLng,
+                    fallbackOrigin: originLatLng,
+                    fallbackDestination: destinationLatLng,
+                    onSuccess: () {
+                      if (!mounted) return;
+                      // cualquier limpieza local si quieres
+                    },
+                  ),
                 ),
-              );
-            },
+            ],
           );
         },
       ),
@@ -419,20 +389,5 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         _destinationIcon = destination;
       });
     }
-  }
-
-  // Haversine para comparar distancias en metros
-  double _distanceBetweenMeters(LatLng a, LatLng b) {
-    const earthRadius = 6371000.0;
-    final rad = pi / 180;
-    final lat1 = a.latitude * rad;
-    final lat2 = b.latitude * rad;
-    final dLat = lat2 - lat1;
-    final dLon = (b.longitude - a.longitude) * rad;
-    final sinDLat = sin(dLat / 2);
-    final sinDLon = sin(dLon / 2);
-    final hav = sinDLat * sinDLat + cos(lat1) * cos(lat2) * sinDLon * sinDLon;
-    final c = 2 * atan2(sqrt(hav), sqrt(1 - hav));
-    return earthRadius * c;
   }
 }
