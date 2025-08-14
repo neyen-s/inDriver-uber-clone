@@ -183,7 +183,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           }
         },
         builder: (context, state) {
-          print('--- BUILDER: ClientMapSeekerPage  STATE IS $state ---');
           final markers = <Marker>{};
 
           if (originLatLng != null && _originIcon != null) {
