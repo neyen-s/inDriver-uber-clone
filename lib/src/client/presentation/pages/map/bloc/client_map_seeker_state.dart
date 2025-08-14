@@ -59,7 +59,12 @@ final class SelectedFieldChanged extends ClientMapSeekerState {
 }
 
 final class TripCancelled extends ClientMapSeekerState {
-  const TripCancelled();
+  const TripCancelled({required this.polylines});
+
+  final Set<Polyline> polylines;
+
+  @override
+  List<Object> get props => [polylines];
 }
 
 final class FetchingTextAdress extends ClientMapSeekerState {
@@ -82,6 +87,7 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
     required this.polylinePoints,
     required this.distanceKm,
     required this.durationMinutes,
+    //required this.polylines,
     this.selectedLatLng,
     this.selectedField,
   });
@@ -93,6 +99,7 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
   final int durationMinutes;
   final LatLng? selectedLatLng;
   final SelectedField? selectedField;
+  //  final Set<Polyline> polylines;
 
   @override
   List<Object> get props => [
@@ -101,6 +108,7 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
     polylinePoints,
     distanceKm,
     durationMinutes,
+    //polylines,
     selectedLatLng ?? '',
     selectedField ?? '',
   ];

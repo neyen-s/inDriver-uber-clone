@@ -45,7 +45,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? originLatLng;
   LatLng? destinationLatLng;
   bool showMapPadding = false;
-  Set<Polyline> _cachedPolylines = {};
   SelectedField currentSelectedField = SelectedField.origin;
 
   BitmapDescriptor? _originIcon;
@@ -97,13 +96,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     return Scaffold(
       body: BlocConsumer<ClientMapSeekerBloc, ClientMapSeekerState>(
         listener: (context, state) async {
-          print('--- LISTENER: ClientMapSeekerPage  STATE IS $state ---');
-
-          if (state is SelectedFieldChanged) {
-            setState(() {
-              currentSelectedField = state.selectedField;
-            });
-          }
           if (state is ClientMapSeekerLoading ||
               state is RouteDrawingInProgress ||
               state is RouteDrawingInProgress) {
@@ -111,7 +103,11 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           } else {
             LoadingService.hide(context);
           }
-
+          if (state is SelectedFieldChanged) {
+            setState(() {
+              currentSelectedField = state.selectedField;
+            });
+          }
           // 1º Centers the map on the current position
           // and updates the origin address
           if (state is FindPositionSuccess) {
@@ -134,18 +130,13 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
               zoom: 16,
             );
             originLatLng = latLng;
-            setState(() {});
+            // setState(() {});
             final address = await getAddressFromLatLng(latLng);
             _pickUpController.text = address;
           }
 
           // 2º Updates the map camera position
           if (state is AddressUpdatedSuccess) {
-            // Si venimos de una búsqueda marcada por el parent, no sobrescribimos
-            /*           if (_moveBySearch) {
-              _moveBySearch = false; // limpiamos el flag y salimos
-              return;
-            } */
             switch (state.field) {
               case SelectedField.origin:
                 _pickUpController.text = state.address;
@@ -164,53 +155,23 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           // 3º If the trip is ready to display,
           // animate the route and set LatLng points
           if (state is TripReadyToDisplay) {
-            debugPrint('---- LISTENER: TripReadyToDisplay----');
-            debugPrint(
-              '[BLOC] TripReadyToDisplay: ${state.polylinePoints.length}',
-            );
             final controller = await _mapController.future;
 
             final latLngPoints = state.polylinePoints
                 .map((e) => LatLng(e.latitude, e.longitude))
                 .toList();
-            debugPrint('----- latLngPoints: ${latLngPoints.length}');
             FocusScope.of(context).unfocus();
-            debugPrint('--- DEBUG ROUTE ---');
-            debugPrint('Origin: ${latLngPoints.first}');
-            debugPrint('Destination: ${latLngPoints.last}');
-            for (var p in latLngPoints) {
-              debugPrint('latLngPoints: $p');
-            }
+
             await animateRouteWithPadding(
               controller: controller,
               context: context,
               points: latLngPoints,
               enablePadding: () => setState(() => showMapPadding = true),
             );
-
-            setState(() {
-              _cachedPolylines = buildPolylineFromPoints(state);
-            });
-            for (final p in _cachedPolylines) {
-              debugPrint(
-                'PolylineId: ${p.polylineId.value} | points: ${p.points.length}',
-              );
-            }
-
-            debugPrint(
-              'Total polylines EN EL LISTENER DESPUES DE HACER TripReadyToDisplay : ${_cachedPolylines.length}',
-            );
-            print('------route on TripReadyToDisplay animated --------');
           } else {
             if (!mounted) return;
             setState(() {
               showMapPadding = false;
-            });
-          }
-
-          if (state is TripCancelled) {
-            setState(() {
-              _cachedPolylines.clear();
             });
           }
 
@@ -260,16 +221,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           }
           final isTripReady = state is TripReadyToDisplay;
 
-          for (final p in _cachedPolylines) {
-            debugPrint(
-              'PolylineId: ${p.polylineId.value} | points: ${p.points.length}',
-            );
-          }
-
-          debugPrint(
-            'Total _cachedPolylines EN EL BUILDER: ${_cachedPolylines.length}',
-          );
-
           return Stack(
             children: [
               GoogleMapView(
@@ -277,10 +228,9 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                 initialPosition: _initialPosition,
                 markers: markers,
 
-                polylines: _cachedPolylines,
+                polylines: buildPolylineFromPoints(state),
                 isTripReady: isTripReady,
-                showMapPadding:
-                    showMapPadding, // asegúrate de exponerlo en GoogleMapView
+                showMapPadding: showMapPadding,
                 onMapTap: (LatLng tapped) async {
                   // Decide si el tap va a origen o destino
                   SelectedField targetField;
@@ -289,11 +239,9 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   } else if (destinationFocusNode.hasFocus) {
                     targetField = SelectedField.destination;
                   } else {
-                    // Si no hay foco: si aún no hay origen, usar origen; si ya hay origen, usar destino
                     targetField = (originLatLng == null)
                         ? SelectedField.origin
                         : SelectedField.destination;
-                    // sincroniza el bloc con el campo elegido
                     context.read<ClientMapSeekerBloc>().add(
                       ChangeSelectedFieldRequested(targetField),
                     );
@@ -304,15 +252,11 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   } else {
                     destinationLatLng = tapped;
                   }
-
-                  // Move camera (opcional, para centrar)
                   await moveCameraTo(
                     controller: _mapController,
                     target: tapped,
                     zoom: 16,
                   );
-
-                  // Pide la dirección según el campo seleccionado en el bloc
                   context.read<ClientMapSeekerBloc>().add(
                     GetAddressFromLatLng(tapped),
                   );
@@ -400,8 +344,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
       ),
       bottomSheet: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
         builder: (context, state) {
-          print('--- bottomSheet builder called ---');
-          print('---- STATE ON BOTTOM SHEET: $state ----');
           return AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: state is TripReadyToDisplay

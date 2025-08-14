@@ -186,7 +186,7 @@ class ClientMapSeekerBloc
     CancelTripConfirmation event,
     Emitter<ClientMapSeekerState> emit,
   ) {
-    emit(TripCancelled());
+    emit(const TripCancelled(polylines: {}));
   }
 
   void _onChangeSelectedFieldRequested(
@@ -196,7 +196,7 @@ class ClientMapSeekerBloc
     _currentSelectedField = event.selectedField;
 
     if (state is TripReadyToDisplay) {
-      final tripState = state as TripReadyToDisplay; // CAST explícito
+      final tripState = state as TripReadyToDisplay;
       emit(
         TripReadyToDisplay(
           origin: tripState.origin,
@@ -205,9 +205,11 @@ class ClientMapSeekerBloc
           distanceKm: tripState.distanceKm,
           durationMinutes: tripState.durationMinutes,
           selectedLatLng: tripState.selectedLatLng,
-          selectedField: event.selectedField, // usa el nuevo campo
+          selectedField: event.selectedField,
         ),
       );
+    } else {
+      emit(SelectedFieldChanged(event.selectedField));
     }
   }
 
@@ -217,6 +219,7 @@ class ClientMapSeekerBloc
   ) async {
     try {
       emit(const RouteDrawingInProgress());
+
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
 
       final request = RoutesApiRequest(
@@ -235,14 +238,16 @@ class ClientMapSeekerBloc
       if (response.routes.isNotEmpty) {
         final route = response.routes.first;
         final points = route.polylinePoints ?? [];
+
         debugPrint(
-          'DENTRO DEL BLOC ANTES DE EMITIR EVENT --> [EVENT] DrawRouteRequested triggered',
+          '[BLOC] DrawRouteRequested: ${points.length} puntos en la ruta',
         );
+
         emit(
           TripReadyToDisplay(
             origin: event.originText ?? '',
             destination: event.destinationText ?? '',
-            polylinePoints: points,
+            polylinePoints: points, // <-- solo datos crudos
             distanceKm: route.distanceKm ?? 0.0,
             durationMinutes: (route.durationMinutes ?? 0).toInt(),
           ),

@@ -101,11 +101,11 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
                         '${widget.distanceInKm.toStringAsFixed(2)} km',
                       ),
                       _infoColumn(
-                        'Estimated duration ',
+                        'Duration ',
                         _formatDuration(widget.duration),
                       ),
                       _infoColumn(
-                        'Recomended price',
+                        'Avrg Price',
                         '${widget.price.toStringAsFixed(2)}€',
                       ),
                     ],
@@ -152,13 +152,16 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
                       child: Container(
                         height: 38, // puedes ajustar o hacer dinámico
                         alignment: Alignment.center,
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.search, color: Colors.white),
+                            const Icon(Icons.search, color: Colors.white),
                             Text(
                               'Confirm trip',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14.sp,
+                              ),
                             ),
                           ],
                         ),

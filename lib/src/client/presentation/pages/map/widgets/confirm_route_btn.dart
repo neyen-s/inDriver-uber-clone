@@ -18,8 +18,8 @@ class ConfirmRouteBtn extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(40.r)),
           gradient: const LinearGradient(
             colors: [
-              Color.fromARGB(255, 255, 255, 255),
-              Color.fromARGB(255, 186, 186, 186),
+              Color.fromARGB(255, 19, 58, 213),
+              Color.fromARGB(255, 65, 173, 255),
             ],
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
@@ -31,7 +31,10 @@ class ConfirmRouteBtn extends StatelessWidget {
             shadowColor: Colors.transparent,
           ),
           onPressed: onPressed,
-          child: const Text('Confirm destination'),
+          child: Text(
+            'Confirm destination',
+            style: TextStyle(color: Colors.white, fontSize: 15.sp),
+          ),
         ),
       ),
     );
