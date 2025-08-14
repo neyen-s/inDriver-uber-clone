@@ -186,7 +186,7 @@ class ClientMapSeekerBloc
     CancelTripConfirmation event,
     Emitter<ClientMapSeekerState> emit,
   ) {
-    emit(ClientMapSeekerInitial());
+    emit(TripCancelled());
   }
 
   void _onChangeSelectedFieldRequested(
@@ -194,7 +194,21 @@ class ClientMapSeekerBloc
     Emitter<ClientMapSeekerState> emit,
   ) {
     _currentSelectedField = event.selectedField;
-    emit(SelectedFieldChanged(event.selectedField));
+
+    if (state is TripReadyToDisplay) {
+      final tripState = state as TripReadyToDisplay; // CAST explícito
+      emit(
+        TripReadyToDisplay(
+          origin: tripState.origin,
+          destination: tripState.destination,
+          polylinePoints: tripState.polylinePoints,
+          distanceKm: tripState.distanceKm,
+          durationMinutes: tripState.durationMinutes,
+          selectedLatLng: tripState.selectedLatLng,
+          selectedField: event.selectedField, // usa el nuevo campo
+        ),
+      );
+    }
   }
 
   Future<void> _onDrawRouteRequested(
@@ -221,7 +235,9 @@ class ClientMapSeekerBloc
       if (response.routes.isNotEmpty) {
         final route = response.routes.first;
         final points = route.polylinePoints ?? [];
-
+        debugPrint(
+          'DENTRO DEL BLOC ANTES DE EMITIR EVENT --> [EVENT] DrawRouteRequested triggered',
+        );
         emit(
           TripReadyToDisplay(
             origin: event.originText ?? '',

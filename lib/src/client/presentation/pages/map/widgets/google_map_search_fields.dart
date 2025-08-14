@@ -41,19 +41,12 @@ class GoogleMapSearchFields extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(10.r)),
-        color: Colors.grey[200],
-        /*  gradient: const LinearGradient(
-          colors: [
-            Color.fromARGB(255, 230, 228, 228),
-            Color.fromARGB(255, 186, 186, 186),
-          ],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ), */
+        color: Colors.grey[200]!.withValues(alpha: 0.8),
       ),
       key: const ValueKey('search_fields'),
       height: 120.h,
       margin: EdgeInsets.only(top: 20.h, left: 20.w, right: 20.w),
+      padding: EdgeInsets.symmetric(horizontal: 10.w),
       alignment: Alignment.center,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

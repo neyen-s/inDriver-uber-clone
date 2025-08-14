@@ -33,14 +33,14 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
       height: 50.h,
       alignment: Alignment.topCenter,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      /*  decoration: BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isSelected ? Colors.blue : Colors.grey,
-          width: 2,
+          color: isSelected ? Colors.blue : Colors.transparent,
+          width: 3,
         ),
-      ), */
+      ),
       child: GooglePlaceAutoCompleteTextField(
         textEditingController: controller,
         googleAPIKey: googleMapsApiKey,

@@ -78,4 +78,12 @@ class DrawRouteRequested extends ClientMapSeekerEvent {
   final LatLng destination;
   final String? originText;
   final String? destinationText;
+
+  @override
+  List<Object> get props => [
+    origin,
+    destination,
+    originText ?? '',
+    destinationText ?? '',
+  ];
 }

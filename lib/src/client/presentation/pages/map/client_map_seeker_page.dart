@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
+import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/add_markers_on_trip_created.dart';
@@ -16,11 +16,9 @@ import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/route_confirmation_handler.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/center_pin_icon.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/confirm_route_btn.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_search_fields.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_view.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/map_loading_indicator.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/trip_summary_card.dart';
 
 class ClientMapSeekerPage extends StatefulWidget {
@@ -47,7 +45,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? originLatLng;
   LatLng? destinationLatLng;
   bool showMapPadding = false;
-
+  Set<Polyline> _cachedPolylines = {};
   SelectedField currentSelectedField = SelectedField.origin;
 
   BitmapDescriptor? _originIcon;
@@ -99,10 +97,19 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     return Scaffold(
       body: BlocConsumer<ClientMapSeekerBloc, ClientMapSeekerState>(
         listener: (context, state) async {
+          print('--- LISTENER: ClientMapSeekerPage  STATE IS $state ---');
+
           if (state is SelectedFieldChanged) {
             setState(() {
               currentSelectedField = state.selectedField;
             });
+          }
+          if (state is ClientMapSeekerLoading ||
+              state is RouteDrawingInProgress ||
+              state is RouteDrawingInProgress) {
+            LoadingService.show(context, message: 'Loading location...');
+          } else {
+            LoadingService.hide(context);
           }
 
           // 1º Centers the map on the current position
@@ -157,23 +164,56 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           // 3º If the trip is ready to display,
           // animate the route and set LatLng points
           if (state is TripReadyToDisplay) {
+            debugPrint('---- LISTENER: TripReadyToDisplay----');
+            debugPrint(
+              '[BLOC] TripReadyToDisplay: ${state.polylinePoints.length}',
+            );
             final controller = await _mapController.future;
 
             final latLngPoints = state.polylinePoints
                 .map((e) => LatLng(e.latitude, e.longitude))
                 .toList();
-
+            debugPrint('----- latLngPoints: ${latLngPoints.length}');
+            FocusScope.of(context).unfocus();
+            debugPrint('--- DEBUG ROUTE ---');
+            debugPrint('Origin: ${latLngPoints.first}');
+            debugPrint('Destination: ${latLngPoints.last}');
+            for (var p in latLngPoints) {
+              debugPrint('latLngPoints: $p');
+            }
             await animateRouteWithPadding(
               controller: controller,
+              context: context,
               points: latLngPoints,
               enablePadding: () => setState(() => showMapPadding = true),
             );
+
+            setState(() {
+              _cachedPolylines = buildPolylineFromPoints(state);
+            });
+            for (final p in _cachedPolylines) {
+              debugPrint(
+                'PolylineId: ${p.polylineId.value} | points: ${p.points.length}',
+              );
+            }
+
+            debugPrint(
+              'Total polylines EN EL LISTENER DESPUES DE HACER TripReadyToDisplay : ${_cachedPolylines.length}',
+            );
+            print('------route on TripReadyToDisplay animated --------');
           } else {
             if (!mounted) return;
             setState(() {
               showMapPadding = false;
             });
           }
+
+          if (state is TripCancelled) {
+            setState(() {
+              _cachedPolylines.clear();
+            });
+          }
+
           // 4º Errors
           if (state is ClientMapSeekerError) {
             ScaffoldMessenger.of(
@@ -182,6 +222,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           }
         },
         builder: (context, state) {
+          print('--- BUILDER: ClientMapSeekerPage  STATE IS $state ---');
           final markers = <Marker>{};
 
           if (originLatLng != null && _originIcon != null) {
@@ -219,6 +260,16 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           }
           final isTripReady = state is TripReadyToDisplay;
 
+          for (final p in _cachedPolylines) {
+            debugPrint(
+              'PolylineId: ${p.polylineId.value} | points: ${p.points.length}',
+            );
+          }
+
+          debugPrint(
+            'Total _cachedPolylines EN EL BUILDER: ${_cachedPolylines.length}',
+          );
+
           return Stack(
             children: [
               GoogleMapView(
@@ -226,7 +277,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                 initialPosition: _initialPosition,
                 markers: markers,
 
-                polylines: buildPolylineFromPoints(state),
+                polylines: _cachedPolylines,
                 isTripReady: isTripReady,
                 showMapPadding:
                     showMapPadding, // asegúrate de exponerlo en GoogleMapView
@@ -267,8 +318,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   );
                 },
               ),
-
-              if (state is ClientMapSeekerLoading) const MapLoadingIndicator(),
 
               // Search fields
               AnimatedSwitcher(
@@ -351,6 +400,8 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
       ),
       bottomSheet: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
         builder: (context, state) {
+          print('--- bottomSheet builder called ---');
+          print('---- STATE ON BOTTOM SHEET: $state ----');
           return AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: state is TripReadyToDisplay

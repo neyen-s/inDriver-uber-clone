@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
+import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/widgets/roles_item.dart';
 
@@ -23,11 +24,16 @@ class _RolesPageState extends State<RolesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<RolesBloc, RolesState>(
-        builder: (context, state) {
+      body: BlocConsumer<RolesBloc, RolesState>(
+        listener: (context, state) {
           if (state is RolesLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is RolesError) {
+            LoadingService.show(context, message: 'Loading roles...');
+          } else {
+            LoadingService.hide(context);
+          }
+        },
+        builder: (context, state) {
+          if (state is RolesError) {
             return Center(child: Text(state.message));
           } else if (state is RolesLoaded) {
             if (state.roles.isEmpty) {
