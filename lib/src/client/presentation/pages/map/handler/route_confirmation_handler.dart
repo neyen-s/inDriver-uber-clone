@@ -21,11 +21,7 @@ Future<void> handleRouteConfirmation({
 
   final currentOrigin = originLatLng ?? fallbackOrigin;
   final currentDestination = destinationLatLng ?? fallbackDestination;
-  print('**** handleRouteConfirmation all must have a value ****');
-  print(
-    'Current Origin: $currentOrigin, Current Destination: $currentDestination',
-  );
-  print('Origin: $origin, Destination: $destination');
+
   if (origin.isNotEmpty &&
       destination.isNotEmpty &&
       currentOrigin != null &&

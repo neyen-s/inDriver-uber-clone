@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
 
 class GoogleMapView extends StatelessWidget {
   const GoogleMapView({
@@ -33,6 +35,9 @@ class GoogleMapView extends StatelessWidget {
         if (!mapController.isCompleted) {
           mapController.complete(controller);
         }
+        try {
+          context.read<MapLifecycleCubit>().markReady();
+        } catch (_) {}
       },
       padding: showMapPadding
           ? EdgeInsets.only(

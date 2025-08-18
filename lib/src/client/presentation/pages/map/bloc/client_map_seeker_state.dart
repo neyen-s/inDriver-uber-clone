@@ -87,7 +87,6 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
     required this.polylinePoints,
     required this.distanceKm,
     required this.durationMinutes,
-    //required this.polylines,
     this.selectedLatLng,
     this.selectedField,
   });
@@ -99,7 +98,6 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
   final int durationMinutes;
   final LatLng? selectedLatLng;
   final SelectedField? selectedField;
-  //  final Set<Polyline> polylines;
 
   @override
   List<Object> get props => [
@@ -108,7 +106,6 @@ final class TripReadyToDisplay extends ClientMapSeekerState {
     polylinePoints,
     distanceKm,
     durationMinutes,
-    //polylines,
     selectedLatLng ?? '',
     selectedField ?? '',
   ];

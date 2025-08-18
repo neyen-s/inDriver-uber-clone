@@ -23,10 +23,7 @@ class ClientMapSeekerBloc
 
       super(ClientMapSeekerInitial()) {
     on<GetCurrentPositionRequested>(_onGetCurrentPositionRequested);
-    on<LoadCurrentLocationWithMarkerRequested>(
-      _onLoadCurrentLocationWithMarkerRequested,
-    );
-    on<MapTapped>(_onMapTapped);
+
     on<GetAddressFromLatLng>(_onGetAddressFromLatLng);
     on<ConfirmTripDataEntered>(_onConfirmTripDataEntered);
     on<CancelTripConfirmation>(_onCancelTripConfirmation);
@@ -57,89 +54,6 @@ class ClientMapSeekerBloc
       (failure) => emit(ClientMapSeekerError(failure.message)),
       (position) => emit(FindPositionSuccess(position)),
     );
-  }
-
-  Future<void> _onLoadCurrentLocationWithMarkerRequested(
-    LoadCurrentLocationWithMarkerRequested event,
-    Emitter<ClientMapSeekerState> emit,
-  ) async {
-    emit(ClientMapSeekerLoading());
-
-    final positionResult = await _geolocatorUseCases.findPositionUseCase();
-    final position = await foldOrEmitError(
-      positionResult,
-      emit,
-      ClientMapSeekerError.new,
-    );
-    if (position == null) return;
-
-    final iconResult = await _geolocatorUseCases.createMarkerUseCase(
-      'assets/img/location_blue.png',
-    );
-    final icon = await foldOrEmitError(
-      iconResult,
-      emit,
-      ClientMapSeekerError.new,
-    );
-    if (icon == null) return;
-
-    final markerResult = await _geolocatorUseCases.getMarkerUseCase(
-      'me',
-      'My location',
-      'I am here',
-      LatLng(position.latitude, position.longitude),
-      icon,
-    );
-    final marker = await foldOrEmitError(
-      markerResult,
-      emit,
-      ClientMapSeekerError.new,
-    );
-    if (marker == null) return;
-
-    emit(
-      PositionWithMarkerSuccess(
-        position: LatLng(position.latitude, position.longitude),
-        marker: marker,
-      ),
-    );
-  }
-
-  Future<void> _onMapTapped(
-    MapTapped event,
-    Emitter<ClientMapSeekerState> emit,
-  ) async {
-    emit(ClientMapSeekerLoading());
-
-    final iconResult = await _geolocatorUseCases.createMarkerUseCase(
-      'assets/img/location_blue.png',
-    );
-    final icon = await foldOrEmitError(
-      iconResult,
-      emit,
-      ClientMapSeekerError.new,
-    );
-    if (icon == null) return;
-
-    final markerResult = await _geolocatorUseCases.getMarkerUseCase(
-      'selected',
-      'Selected Location',
-      '',
-      event.position,
-      icon,
-    );
-    final marker = await foldOrEmitError(
-      markerResult,
-      emit,
-      ClientMapSeekerError.new,
-    );
-    if (marker == null) return;
-
-    final address = await getAddressFromLatLng(event.position);
-
-    emit(PositionWithMarkerSuccess(position: event.position, marker: marker));
-
-    emit(AddressUpdatedSuccess(address, SelectedField.origin, event.position));
   }
 
   Future<void> _onGetAddressFromLatLng(

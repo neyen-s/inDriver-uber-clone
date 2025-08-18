@@ -14,7 +14,6 @@ class GoogleMapSearchFields extends StatelessWidget {
     required this.controller,
     required this.pickUpController,
     required this.destinationController,
-    required this.moveBySearch,
     required this.onMoveBySearchChanged,
     required this.onOriginSelected,
     required this.isOriginSelected,
@@ -29,7 +28,6 @@ class GoogleMapSearchFields extends StatelessWidget {
   final TextEditingController pickUpController;
   final TextEditingController destinationController;
   final Completer<GoogleMapController> controller;
-  final bool moveBySearch;
   final bool isOriginSelected;
   final bool isDestinationSelected;
   final ValueChanged<bool> onMoveBySearchChanged;
