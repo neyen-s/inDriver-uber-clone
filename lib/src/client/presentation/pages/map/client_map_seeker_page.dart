@@ -57,8 +57,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
 
     _mapController = Completer();
     _loadCustomIcons().then((_) async {
-      // Esperar a que el mapa se haya creado antes de pedir ubicación
-      final controller = await _mapController.future;
+      await _mapController.future;
       context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
     });
 
@@ -141,7 +140,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   mapController: _mapController,
                   initialPosition: _initialPosition,
                   markers: markers,
-
                   polylines: buildPolylineFromPoints(state),
                   isTripReady: isTripReady,
                   showMapPadding: showMapPadding,
@@ -165,7 +163,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   ),
                 ),
 
-                // Search fields
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: isTripReady

@@ -15,6 +15,7 @@ class AuthBackground extends StatelessWidget {
 
   final Widget child;
   final List<Color> gradientColors;
+
   final double cardHeight;
   final double cardWidth;
   final EdgeInsetsGeometry? margin;

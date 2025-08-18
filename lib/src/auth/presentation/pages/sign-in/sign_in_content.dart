@@ -39,148 +39,137 @@ class _SignInContentState extends State<SignInContent> {
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: Stack(
-        children: [
-          _backgroundButtons(context),
-          AuthBackground(
-            cardHeight: context.height * 0.95,
-            cardWidth: context.width,
-            margin: EdgeInsets.only(left: 50.w, bottom: 50.w, top: 0.h),
-            gradientColors: const [
-              Color.fromARGB(255, 14, 29, 106),
-              Color.fromARGB(255, 30, 112, 227),
-            ],
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 25.w),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return BlocConsumer<SignInBloc, SignInState>(
-                    listener: (context, state) async {
-                      if (state is SignInFailure) {
-                        CoreUtils.showSnackBar(context, state.message);
-                      } else if (state is SignInSuccess) {
-                        final authResponse = state.authResponse;
-                        debugPrint('authResponse: $authResponse');
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: bottomInset),
+        child: Stack(
+          children: [
+            _backgroundButtons(context),
+            AuthBackground(
+              cardHeight: context.height,
+              cardWidth: context.width,
+              margin: EdgeInsets.only(left: 50.w, bottom: 0.w, top: 0.h),
+              gradientColors: const [
+                Color.fromARGB(255, 14, 29, 106),
+                Color.fromARGB(255, 30, 112, 227),
+              ],
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 25.w),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return BlocConsumer<SignInBloc, SignInState>(
+                      listener: (context, state) async {
+                        if (state is SignInFailure) {
+                          CoreUtils.showSnackBar(context, state.message);
+                        } else if (state is SignInSuccess) {
+                          final authResponse = state.authResponse;
+                          debugPrint('authResponse: $authResponse');
 
-                        context.read<SignInBloc>().add(
-                          SaveUserSession(authResponse: authResponse),
-                        );
+                          context.read<SignInBloc>().add(
+                            SaveUserSession(authResponse: authResponse),
+                          );
 
-                        // Navegar a otra pantalla si querés
-                        await Navigator.pushReplacementNamed(
-                          context,
-                          ClientHomePage.routeName,
-                        );
-                        return;
-                      }
-                      if (!mounted) return;
+                          // Navegar a otra pantalla si querés
+                          await Navigator.pushReplacementNamed(
+                            context,
+                            ClientHomePage.routeName,
+                          );
+                          return;
+                        }
+                        if (!mounted) return;
 
-                      final vm = SignInViewModel.fromState(state);
+                        final vm = SignInViewModel.fromState(state);
 
-                      syncController(_emailController, vm.email.value);
-                      syncController(_passwordController, vm.password.value);
-                    },
-                    builder: (context, state) {
-                      final vm = SignInViewModel.fromState(state);
+                        syncController(_emailController, vm.email.value);
+                        syncController(_passwordController, vm.password.value);
+                      },
+                      builder: (context, state) {
+                        final vm = SignInViewModel.fromState(state);
 
-                      return SingleChildScrollView(
-                        padding: EdgeInsets.only(bottom: bottomInset),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
-                          ),
-                          child: IntrinsicHeight(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(height: 10.h),
-                                _titleMessage(text: 'Welcome'),
-                                _titleMessage(text: 'back...'),
-                                _carImage(),
-                                _loginText(),
-                                SizedBox(height: 12.h),
-
-                                // TODO: Make the forms react only when the user
-                                //closes the keyboard or goes to another field
-                                DefaultTextFieldOutlined(
-                                  hintText: 'Email Address',
-                                  prefixIcon: Icons.person,
-                                  filled: true,
-                                  fillColour: Colors.white,
-                                  controller: _emailController,
-                                  errorText:
-                                      vm.email.isNotValid && !vm.email.isPure
-                                      ? 'Invalid email'
-                                      : null,
-                                  onChanged: (value) => context
-                                      .read<SignInBloc>()
-                                      .add(SignInEmailChanged(value)),
-                                ),
-                                SizedBox(height: 12.h),
-                                DefaultTextFieldOutlined(
-                                  hintText: 'Password',
-                                  prefixIcon: Icons.lock_outline,
-                                  filled: true,
-                                  fillColour: Colors.white,
-                                  obscureText: true,
-                                  controller: _passwordController,
-                                  errorText:
-                                      vm.password.isNotValid &&
-                                          !vm.password.isPure
-                                      ? 'Invalid password'
-                                      : null,
-                                  onChanged: (value) => context
-                                      .read<SignInBloc>()
-                                      .add(SignInPasswordChanged(value)),
-                                ),
-                                SizedBox(height: isKeyboardOpen ? 40.h : 10),
-                                const Spacer(),
-                                if (vm.error != null)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                    ),
-                                    child: Text(
-                                      vm.error!,
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                DefaultButton(
-                                  text: vm.isSubmitting
-                                      ? const CircularProgressIndicator(
-                                          color: Colors.blueAccent,
-                                        )
-                                      : const Text(
-                                          'LOGIN',
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                  onPressed: vm.isSubmitting || !vm.isValid
-                                      ? null
-                                      : () => context.read<SignInBloc>().add(
-                                          const SignInSubmitted(),
-                                        ),
-                                ),
-                                SizedBox(height: 15.h),
-                                const SeparatorOr(),
-                                SizedBox(height: 10.h),
-                                _dontHaveAnAccountSection(context),
-                                SizedBox(height: 20.h),
-                              ],
+                        return Column(
+                          mainAxisSize: MainAxisSize
+                              .min, // evita que ocupe toda la pantalla
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 10.h),
+                            _titleMessage(text: 'Welcome'),
+                            _titleMessage(text: 'back...'),
+                            _carImage(),
+                            _loginText(),
+                            SizedBox(height: 12.h),
+                            DefaultTextFieldOutlined(
+                              hintText: 'Email Address',
+                              prefixIcon: Icons.person,
+                              filled: true,
+                              fillColour: Colors.white,
+                              controller: _emailController,
+                              errorText: vm.email.isNotValid && !vm.email.isPure
+                                  ? 'Invalid email'
+                                  : null,
+                              onChanged: (value) => context
+                                  .read<SignInBloc>()
+                                  .add(SignInEmailChanged(value)),
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
+                            SizedBox(height: 12.h),
+                            DefaultTextFieldOutlined(
+                              hintText: 'Password',
+                              prefixIcon: Icons.lock_outline,
+                              filled: true,
+                              fillColour: Colors.white,
+                              obscureText: true,
+                              controller: _passwordController,
+                              errorText:
+                                  vm.password.isNotValid && !vm.password.isPure
+                                  ? 'Invalid password'
+                                  : null,
+                              onChanged: (value) => context
+                                  .read<SignInBloc>()
+                                  .add(SignInPasswordChanged(value)),
+                            ),
+                            SizedBox(height: 20.h),
+                            if (vm.error != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Text(
+                                  vm.error!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            DefaultButton(
+                              text: vm.isSubmitting
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.blueAccent,
+                                    )
+                                  : const Text(
+                                      'LOGIN',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                              onPressed: vm.isSubmitting || !vm.isValid
+                                  ? null
+                                  : () => context.read<SignInBloc>().add(
+                                      const SignInSubmitted(),
+                                    ),
+                            ),
+                            SizedBox(height: 15.h),
+                            const SeparatorOr(),
+                            SizedBox(height: 10.h),
+                            _dontHaveAnAccountSection(context),
+                            SizedBox(height: 20.h),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

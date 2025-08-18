@@ -23,16 +23,6 @@ Future<void> handleMapStateChange({
   required void Function(LatLng?) onUpdateDestinationLatLng,
   required void Function(bool) onSetShowMapPadding,
 }) async {
-  /*   WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (state is ClientMapSeekerLoading ||
-            state is RouteDrawingInProgress ||
-            state is ClientMapSeekerInitial) {
-      LoadingService.show(context, message: 'Loading location...');
-    } else {
-      LoadingService.hide(context);
-    }
-  }); */
-
   if (state is SelectedFieldChanged) {
     onUpdateSelectedField(state.selectedField);
   }
