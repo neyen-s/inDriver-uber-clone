@@ -1,7 +1,7 @@
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/create_marker_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/find_position_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_marker_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_position_stream_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/create_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/find_position_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/get_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/get_position_stream_use_case.dart';
 
 class GeolocatorUseCases {
   GeolocatorUseCases({

@@ -2,14 +2,21 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
 import 'package:indriver_uber_clone/core/data/repositories/geolocator_repository_impl.dart';
+import 'package:indriver_uber_clone/core/data/repositories/socket_repository_impl.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/create_marker_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/find_position_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_marker_use_case.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/get_position_stream_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/create_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/find_position_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/get_marker_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/get_position_stream_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/socket/connect_socket_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/socket/disconnect_socket_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/socket/send_socket_message_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/core/network/http_api_client.dart';
+import 'package:indriver_uber_clone/core/network/socket_client.dart';
 import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
 import 'package:indriver_uber_clone/core/services/location_service.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
@@ -61,9 +68,25 @@ Future<void> _initCore() async {
     ..registerLazySingleton(AppNavigatorService.new)
     ..registerLazySingleton(MapMarkerIconService.new)
     ..registerLazySingleton(LocationService.new)
+    ..registerLazySingleton(SocketClient.new)
     // Repository
     ..registerLazySingleton<GeolocatorRepository>(GeolocatorRepositoryImpl.new)
+    ..registerLazySingleton<SocketRepository>(
+      () => SocketRepositoryImpl(socket: sl()),
+    )
     // UseCases
+    //Socket
+    ..registerLazySingleton(() => ConnectSocketUseCase(sl()))
+    ..registerLazySingleton(() => DisconnectSocketUseCase(sl()))
+    ..registerLazySingleton(() => SendSocketMessageUseCase(sl()))
+    ..registerLazySingleton(
+      () => SocketUseCases(
+        connectSocketUseCase: sl(),
+        disconnectSocketUseCase: sl(),
+        sendSocketMessageUseCase: SendSocketMessageUseCase(sl()),
+      ),
+    )
+    //Map
     ..registerLazySingleton(() => FindPositionUseCase(sl()))
     ..registerLazySingleton(() => CreateMarkerUseCase(sl()))
     ..registerLazySingleton(() => GetMarkerUseCase(sl()))
@@ -156,5 +179,5 @@ Future<void> _initClientMap() async {
 
 // DRIVER MAP
 Future<void> _initDriverMap() async {
-  sl.registerFactory(() => DriverMapBloc(sl()));
+  sl.registerFactory(() => DriverMapBloc(sl(), sl(), sl()));
 }

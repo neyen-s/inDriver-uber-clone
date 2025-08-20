@@ -35,7 +35,6 @@ class _SignInContentState extends State<SignInContent> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final isKeyboardOpen = bottomInset > 0;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),

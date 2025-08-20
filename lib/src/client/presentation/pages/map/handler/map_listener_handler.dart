@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
-import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/animate_route_with_padding.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';

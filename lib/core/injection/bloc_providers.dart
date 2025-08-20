@@ -19,5 +19,6 @@ class BlocProviders {
     BlocProvider<RolesBloc>(create: (_) => sl<RolesBloc>()),
     BlocProvider<ClientMapSeekerBloc>(create: (_) => sl<ClientMapSeekerBloc>()),
     BlocProvider<MapLifecycleCubit>(create: (_) => sl<MapLifecycleCubit>()),
+    //BlocProvider<DriverHomeBloc>(create: (_) => sl<DriverHomeBloc>()),
   ];
 }

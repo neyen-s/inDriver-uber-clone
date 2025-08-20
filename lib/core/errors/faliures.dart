@@ -27,3 +27,7 @@ class ServerFailure extends Failure {
   ServerFailure.fromException(ServerException exception)
     : this(message: exception.message, statusCode: exception.statusCode);
 }
+
+class SocketFailure extends Failure {
+  const SocketFailure({required super.message, super.statusCode});
+}

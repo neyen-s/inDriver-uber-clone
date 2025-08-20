@@ -24,13 +24,17 @@ class _DriverMapPageState extends State<DriverMapPage> {
     zoom: 14,
   );
   final Set<Marker> _markers = {};
+  late DriverMapBloc _driverMapBloc;
 
   @override
   void initState() {
     super.initState();
+    _driverMapBloc = context.read<DriverMapBloc>();
     _mapController = Completer<GoogleMapController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DriverMapBloc>().add(const DriverLocationStreamStarted());
+      _driverMapBloc
+        ..add(const ConnectSocketIo())
+        ..add(const DriverLocationStreamStarted());
     });
   }
 
@@ -39,7 +43,7 @@ class _DriverMapPageState extends State<DriverMapPage> {
     _mapController.future.then((controller) {
       controller.dispose();
     });
-
+    _driverMapBloc.add(const DisconnectSocketIo());
     super.dispose();
   }
 
@@ -57,16 +61,30 @@ class _DriverMapPageState extends State<DriverMapPage> {
             ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
-        child: GoogleMap(
-          style: customMapStyle,
-          initialCameraPosition: _initialPosition,
-          markers: _markers,
-          myLocationEnabled: true,
-          onMapCreated: (controller) async {
-            if (!_mapController.isCompleted) {
-              _mapController.complete(controller);
-            }
-          },
+        child: Stack(
+          children: [
+            GoogleMap(
+              style: customMapStyle,
+              initialCameraPosition: _initialPosition,
+              markers: _markers,
+              myLocationEnabled: true,
+              onMapCreated: (controller) async {
+                if (!_mapController.isCompleted) {
+                  _mapController.complete(controller);
+                }
+              },
+            ),
+            Positioned(
+              bottom: 20,
+              child: ElevatedButton(
+                onPressed: () {
+                  print('ConnectSocketIo');
+                  context.read<DriverMapBloc>().add(const ConnectSocketIo());
+                },
+                child: const Text('socket test'),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -4,23 +4,39 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
+import 'package:indriver_uber_clone/core/network/socket_client.dart';
+import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
 
 part 'driver_map_event.dart';
 part 'driver_map_state.dart';
 
 class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
-  DriverMapBloc(this._geolocatorUseCases) : super(DriverMapInitial()) {
-    on<DriverLocationRequested>(_onDriverLocationRequested);
-    on<DriverMapMoveToCurrentLocationRequested>(_onMoveToCurrentLocation);
+  DriverMapBloc(
+    this.socketUseCases,
+    this.authUseCases,
+    this._geolocatorUseCases,
+  ) : super(DriverMapInitial()) {
+    // on<DriverLocationRequested>(_onDriverLocationRequested);
+    //on<DriverMapMoveToCurrentLocationRequested>(_onMoveToCurrentLocation);
     on<DriverLocationStreamStarted>(_onDriverLocationUpdated);
+
+    on<ConnectSocketIo>(_onConnectSocketIo);
+    on<DisconnectSocketIo>(_onDisconnectSocketIo);
+    on<DriverLocationSentToSocket>(_onDriverLocationSentToSocket);
   }
 
   final GeolocatorUseCases _geolocatorUseCases;
+  final SocketUseCases socketUseCases;
+  final AuthUseCases authUseCases;
 
   StreamSubscription<void>? _positionSubscription;
 
-  Future<void> _onDriverLocationRequested(
+  /*   Future<void> _onDriverLocationRequested(
     DriverLocationRequested event,
     Emitter<DriverMapState> emit,
   ) async {
@@ -48,7 +64,7 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
     } catch (e) {
       emit(DriverMapError(e.toString()));
     }
-  }
+  } */
 
   Future<void> _onDriverLocationUpdated(
     DriverLocationStreamStarted event,
@@ -74,13 +90,19 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
                 icon,
               );
 
+              add(
+                DriverLocationSentToSocket(
+                  position.latitude,
+                  position.longitude,
+                ),
+              );
+
               yield markerResult.fold<DriverMapState>(
                 (failure) => DriverMapError(failure.message),
                 (marker) => DriverMapPositionWithMarker(marker),
               );
             });
 
-        // Aquí el punto clave:
         await emit.forEach<DriverMapState>(
           stateStream,
           onData: (state) => state,
@@ -88,6 +110,41 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
         );
       },
     );
+  }
+
+  Future<void> _onConnectSocketIo(
+    ConnectSocketIo event,
+    Emitter<DriverMapState> emit,
+  ) async {
+    print('ConnectSocketIo');
+    await socketUseCases.connectSocketUseCase();
+  }
+
+  Future<void> _onDisconnectSocketIo(
+    DisconnectSocketIo event,
+    Emitter<DriverMapState> emit,
+  ) async {
+    await socketUseCases.disconnectSocketUseCase();
+  }
+
+  Future<void> _onDriverLocationSentToSocket(
+    DriverLocationSentToSocket event,
+    Emitter<DriverMapState> emit,
+  ) async {
+    final authResponse = await authUseCases.getUserSessionUseCase();
+
+    authResponse.fold((failure) => emit(DriverMapError(failure.message)), (
+      authResponse,
+    ) async {
+      try {
+        await socketUseCases.sendSocketMessageUseCase(
+          'change_driver_position',
+          {'id': authResponse.user.id, 'lat': event.lat, 'lng': event.lng},
+        );
+      } catch (e) {
+        emit(DriverMapError('Error sending position to socket: $e'));
+      }
+    });
   }
 
   @override
