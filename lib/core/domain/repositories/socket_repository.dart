@@ -7,5 +7,5 @@ abstract class SocketRepository {
 
   ResultFuture<void> sendMessage(String event, dynamic data);
 
-  Stream<dynamic> onMessage(String event);
+  ResultFuture<Stream<dynamic>> onMessage(String event);
 }

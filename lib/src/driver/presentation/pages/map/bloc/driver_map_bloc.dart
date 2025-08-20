@@ -4,13 +4,9 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
-import 'package:indriver_uber_clone/core/network/socket_client.dart';
-import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
-import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
 
 part 'driver_map_event.dart';
 part 'driver_map_state.dart';
@@ -21,8 +17,6 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
     this.authUseCases,
     this._geolocatorUseCases,
   ) : super(DriverMapInitial()) {
-    // on<DriverLocationRequested>(_onDriverLocationRequested);
-    //on<DriverMapMoveToCurrentLocationRequested>(_onMoveToCurrentLocation);
     on<DriverLocationStreamStarted>(_onDriverLocationUpdated);
 
     on<ConnectSocketIo>(_onConnectSocketIo);
@@ -35,36 +29,6 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
   final AuthUseCases authUseCases;
 
   StreamSubscription<void>? _positionSubscription;
-
-  /*   Future<void> _onDriverLocationRequested(
-    DriverLocationRequested event,
-    Emitter<DriverMapState> emit,
-  ) async {
-    emit(DriverMapLoading());
-
-    final positionResult = await _geolocatorUseCases.findPositionUseCase();
-
-    positionResult.fold(
-      (failure) => emit(DriverMapError(failure.message)),
-      (position) => emit(DriverMapPositionLoaded(position)),
-    );
-  }
-
-  Future<void> _onMoveToCurrentLocation(
-    DriverMapMoveToCurrentLocationRequested event,
-    Emitter<DriverMapState> emit,
-  ) async {
-    try {
-      final position = await _geolocatorUseCases.findPositionUseCase();
-      position.fold((failure) => emit(DriverMapError(failure.message)), (
-        position,
-      ) {
-        emit(DriverMapPositionLoaded(position));
-      });
-    } catch (e) {
-      emit(DriverMapError(e.toString()));
-    }
-  } */
 
   Future<void> _onDriverLocationUpdated(
     DriverLocationStreamStarted event,
@@ -116,7 +80,6 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
     ConnectSocketIo event,
     Emitter<DriverMapState> emit,
   ) async {
-    print('ConnectSocketIo');
     await socketUseCases.connectSocketUseCase();
   }
 

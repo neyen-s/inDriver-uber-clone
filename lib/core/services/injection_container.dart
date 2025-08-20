@@ -12,6 +12,7 @@ import 'package:indriver_uber_clone/core/domain/usecases/get_marker_use_case.dar
 import 'package:indriver_uber_clone/core/domain/usecases/get_position_stream_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/connect_socket_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/disconnect_socket_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/socket/on_socket_message_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/send_socket_message_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
@@ -79,11 +80,13 @@ Future<void> _initCore() async {
     ..registerLazySingleton(() => ConnectSocketUseCase(sl()))
     ..registerLazySingleton(() => DisconnectSocketUseCase(sl()))
     ..registerLazySingleton(() => SendSocketMessageUseCase(sl()))
+    ..registerLazySingleton(() => OnSocketMessageUseCase(sl()))
     ..registerLazySingleton(
       () => SocketUseCases(
         connectSocketUseCase: sl(),
         disconnectSocketUseCase: sl(),
         sendSocketMessageUseCase: SendSocketMessageUseCase(sl()),
+        onSocketMessageUseCase: OnSocketMessageUseCase(sl()),
       ),
     )
     //Map
@@ -173,7 +176,7 @@ Future<void> _initProfile() async {
 // MAP
 Future<void> _initClientMap() async {
   sl
-    ..registerFactory(() => ClientMapSeekerBloc(sl()))
+    ..registerFactory(() => ClientMapSeekerBloc(sl(), sl()))
     ..registerFactory(MapLifecycleCubit.new);
 }
 

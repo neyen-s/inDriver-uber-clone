@@ -87,3 +87,35 @@ class DrawRouteRequested extends ClientMapSeekerEvent {
     destinationText ?? '',
   ];
 }
+
+class ConnectSocketIo extends ClientMapSeekerEvent {
+  const ConnectSocketIo();
+}
+
+class DisconnectSocketIo extends ClientMapSeekerEvent {
+  const DisconnectSocketIo();
+}
+
+class ListenDriverPositionSocket extends ClientMapSeekerEvent {
+  const ListenDriverPositionSocket(this.lat, this.lng);
+  final double lat;
+  final double lng;
+  @override
+  List<Object> get props => [lat, lng];
+}
+
+class AddDriverPositionMarker extends ClientMapSeekerEvent {
+  const AddDriverPositionMarker({
+    required this.idSocket,
+    required this.id,
+    required this.lat,
+    required this.lng,
+  });
+
+  final String idSocket;
+  final int id;
+  final double lat;
+  final double lng;
+  @override
+  List<Object> get props => [idSocket, id, lat, lng];
+}

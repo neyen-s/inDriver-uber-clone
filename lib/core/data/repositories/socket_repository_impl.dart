@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
+import 'package:flutter/rendering.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/network/socket_client.dart';
@@ -12,7 +15,7 @@ class SocketRepositoryImpl implements SocketRepository {
   @override
   ResultFuture<void> connect() async {
     try {
-      print('Connecting to socket...');
+      debugPrint('Connecting to socket...');
       socket.connect();
       return const Right(null);
     } catch (e) {
@@ -36,14 +39,22 @@ class SocketRepositoryImpl implements SocketRepository {
       socket.emit(event, data);
       return const Right(null);
     } catch (e) {
-      print('Error sending message: $e');
+      debugPrint('Error sending message: $e');
       return Left(SocketFailure(message: e.toString()));
     }
   }
 
   @override
-  Stream<dynamic> onMessage(String event) {
-    // TODO: implement onMessage
-    throw UnimplementedError();
+  ResultFuture<Stream<dynamic>> onMessage(String event) async {
+    try {
+      final controller = StreamController<dynamic>();
+
+      socket.on(event, controller.add);
+
+      return Right(controller.stream);
+    } catch (e) {
+      debugPrint('Error listening to event $event: $e');
+      return Left(SocketFailure(message: e.toString()));
+    }
   }
 }
