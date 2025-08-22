@@ -7,7 +7,6 @@ import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
-import 'package:indriver_uber_clone/core/utils/map-utils/build_polyline_from_points.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/calculate_trip_price.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
@@ -15,7 +14,6 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/map_listener_handler.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/markers_hanlder.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/on_map_tap_handler.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/route_confirmation_handler.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/update_loader_handler.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/confirm_route_btn.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_search_fields.dart';
@@ -100,27 +98,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         listeners: [
           BlocListener<ClientMapSeekerBloc, ClientMapSeekerState>(
             listener: (context, state) async {
-              // Si ya migraste a ClientMapSeekerSuccess, extrae los valores desde ahí
               if (state is ClientMapSeekerSuccess) {
-                // si tienes un helper que espera el state antiguo, puedes adaptarlo,
-                // pero aquí llamamos al handler con los datos concretos:
-                await handleMapStateChange(
-                  context: context,
-                  state:
-                      state, // si tu helper usa el state, adapta su implementación para ClientMapSeekerSuccess
-                  mapController: _mapController,
-                  pickUpController: _pickUpController,
-                  destinationController: _destinationController,
-                  originFocusNode: originFocusNode,
-                  destinationFocusNode: destinationFocusNode,
-                  onUpdateSelectedField: (field) =>
-                      currentSelectedField = field,
-                  onUpdateOriginLatLng: (lat) => originLatLng = lat,
-                  onUpdateDestinationLatLng: (lat) => destinationLatLng = lat,
-                  onSetShowMapPadding: (v) => showMapPadding = v,
-                );
-              } else {
-                // Si aún estás con estados antiguos, mantenemos la llamada original
                 await handleMapStateChange(
                   context: context,
                   state: state,
@@ -149,9 +127,9 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         child: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
           builder: (context, state) {
             // Si está migrado, usa datos del success
-            Set<Marker> markersFromState = {};
-            Set<Polyline> polylinesFromState = {};
-            bool isTripReady = false;
+            var markersFromState = <Marker>{};
+            var polylinesFromState = <Polyline>{};
+            var isTripReady = false;
 
             if (state is ClientMapSeekerSuccess) {
               // markers
@@ -163,10 +141,8 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                 destinationIcon: _destinationIcon,
               );
 
-              // polylines (ruta)
-              polylinesFromState = buildPolylineFromPoints(state);
+              polylinesFromState = state.polylines.values.toSet();
 
-              // ahora el flag se basa en si hay polylines
               isTripReady = polylinesFromState.isNotEmpty;
             }
 
@@ -251,23 +227,10 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
       ),
       bottomSheet: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
         builder: (context, state) {
-          print(
-            ' state.distanceKm  --> ${state is ClientMapSeekerSuccess ? state.distanceKm : ''} ',
-          );
-          print(
-            ' state.durationMinutes  --> ${state is ClientMapSeekerSuccess ? state.durationMinutes : ''}',
-          );
-          print(
-            ' state.polylines.isNotEmpty  --> ${state is ClientMapSeekerSuccess ? state.polylines.isNotEmpty : ''}',
-          );
-
-          // Si migrado, intenta leer desde Success (añade campos de trip si los metes en Success)
           if (state is ClientMapSeekerSuccess &&
               state.distanceKm != null &&
               state.durationMinutes != null &&
               state.polylines.isNotEmpty) {
-            // TODO CHECK POLYLINES VARIABLE
-            print('*************************************** entro ***');
             return TripSummaryCard(
               context: context,
               originAddress: state.originAddress ?? '',

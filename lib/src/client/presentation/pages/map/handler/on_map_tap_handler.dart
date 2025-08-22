@@ -41,7 +41,8 @@ Future<void> Function(LatLng) onMapTapHandler({
     await mapController.future;
     await moveCameraTo(controller: mapController, target: tapped, zoom: 16);
 
-    bloc.add(GetAddressFromLatLng(tapped, selectedField: targetField));
-    bloc.add(ChangeSelectedFieldRequested(targetField));
+    bloc
+      ..add(GetAddressFromLatLng(tapped, selectedField: targetField))
+      ..add(ChangeSelectedFieldRequested(targetField));
   };
 }

@@ -4,14 +4,12 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/clien
 void addMarkersOnTripCreated({
   required ClientMapSeekerState state,
   required Set<Marker> markers,
-  required BitmapDescriptor? originIcon,
-  required BitmapDescriptor? destinationIcon,
+  required BitmapDescriptor originIcon,
+  required BitmapDescriptor destinationIcon,
   required LatLng? originLatLng,
   required LatLng? destinationLatLng,
 }) {
-  // Si estás usando el nuevo estado rico:
   if (state is ClientMapSeekerSuccess) {
-    // Si mapPolylines no está vacío consideramos que hay una ruta
     if (state.polylines.isNotEmpty &&
         originLatLng != null &&
         destinationLatLng != null) {
@@ -19,19 +17,17 @@ void addMarkersOnTripCreated({
         Marker(
           markerId: const MarkerId('origin'),
           position: originLatLng,
-          icon: originIcon ?? BitmapDescriptor.defaultMarker,
+          icon: originIcon,
           infoWindow: const InfoWindow(title: 'Origin'),
         ),
         Marker(
           markerId: const MarkerId('destination'),
           position: destinationLatLng,
-          icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
+          icon: destinationIcon,
           infoWindow: const InfoWindow(title: 'Destination'),
         ),
       ]);
     }
     return;
   }
-
-  // Compatibilidad con estado antiguo (si todavía lo tuvieses)
 }

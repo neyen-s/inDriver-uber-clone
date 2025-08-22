@@ -22,12 +22,9 @@ class ClientMapSeekerError extends ClientMapSeekerState {
 class ClientMapSeekerSuccess extends ClientMapSeekerState {
   const ClientMapSeekerSuccess({
     this.userPosition,
-    this.selectedLatLng,
-    this.address,
     this.selectedField = SelectedField.origin,
     this.driverMarkers = const {},
     this.isSocketConnected = false,
-    this.isDrawingRoute = false,
     this.hasCenteredCameraOnce = false,
     this.originAddress,
     this.destinationAddress,
@@ -36,16 +33,12 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     this.polylines = const {},
     this.origin,
     this.destination,
-    this.userMarker,
   });
 
   final Position? userPosition;
-  final LatLng? selectedLatLng;
-  final String? address;
   final SelectedField selectedField;
   final Set<Marker> driverMarkers;
   final bool isSocketConnected;
-  final bool isDrawingRoute;
   final bool hasCenteredCameraOnce;
   final String? originAddress;
   final String? destinationAddress;
@@ -54,17 +47,13 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
   final Map<PolylineId, Polyline> polylines;
   final LatLng? origin;
   final LatLng? destination;
-  final Marker? userMarker;
 
   ClientMapSeekerSuccess copyWith({
     Position? userPosition,
-    LatLng? selectedLatLng,
-    String? address,
     SelectedField? selectedField,
     Set<Marker>? driverMarkers,
     Set<Polyline>? polylines,
     bool? isSocketConnected,
-    bool? isDrawingRoute,
     bool? hasCenteredCameraOnce,
     LatLng? origin,
     LatLng? destination,
@@ -73,16 +62,12 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     double? distanceKm,
     int? durationMinutes,
     Map<PolylineId, Polyline>? mapPolylines,
-    Marker? userMarker,
   }) {
     return ClientMapSeekerSuccess(
       userPosition: userPosition ?? this.userPosition,
-      selectedLatLng: selectedLatLng ?? this.selectedLatLng,
-      address: address ?? this.address,
       selectedField: selectedField ?? this.selectedField,
       driverMarkers: driverMarkers ?? this.driverMarkers,
       isSocketConnected: isSocketConnected ?? this.isSocketConnected,
-      isDrawingRoute: isDrawingRoute ?? this.isDrawingRoute,
       hasCenteredCameraOnce:
           hasCenteredCameraOnce ?? this.hasCenteredCameraOnce,
       origin: origin ?? this.origin,
@@ -92,19 +77,15 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
       distanceKm: distanceKm ?? this.distanceKm,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       polylines: mapPolylines ?? this.polylines,
-      userMarker: userMarker ?? this.userMarker,
     );
   }
 
   @override
   List<Object?> get props => [
     userPosition,
-    selectedLatLng,
-    address,
     selectedField,
     driverMarkers,
     isSocketConnected,
-    isDrawingRoute,
     hasCenteredCameraOnce,
     origin,
     destination,
@@ -113,6 +94,5 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     distanceKm,
     durationMinutes,
     polylines,
-    userMarker,
   ];
 }

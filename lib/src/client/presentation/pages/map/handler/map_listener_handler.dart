@@ -22,21 +22,19 @@ Future<void> handleMapStateChange({
   required void Function(LatLng?) onUpdateDestinationLatLng,
   required void Function(bool) onSetShowMapPadding,
 }) async {
-  // Si es el nuevo estado "rico"
   if (state is ClientMapSeekerSuccess) {
     final s = state;
 
-    // Selected field
     onUpdateSelectedField(s.selectedField);
 
-    // 1) Usuario: si hay userPosition, mueve la cámara y actualiza pickup si procede
+    // Updates the camera if theres is a userPosition
     if (s.userPosition != null && !s.hasCenteredCameraOnce) {
       final latLng = LatLng(
         s.userPosition!.latitude,
         s.userPosition!.longitude,
       );
 
-      // Evita hacer zoom continuo si ya estabas ahí; criterio simple:
+      // prevents the camera to do too many updates
       if (!(latLng.latitude.abs() < 0.000001 &&
           latLng.longitude.abs() < 0.000001)) {
         try {
@@ -46,14 +44,12 @@ Future<void> handleMapStateChange({
             zoom: 16,
           );
           context.read<ClientMapSeekerBloc>().add(ClientMapCameraCentered());
-        } catch (_) {
-          // si falla mover la camara, no rompe todo
-        }
+        } catch (_) {}
       }
 
       onUpdateOriginLatLng(latLng);
 
-      // Si ya tenemos address en el state úsalo; si no, obténlo una única vez.
+      //Uses the adrres if we have one else get it once
       if (s.originAddress != null && s.originAddress!.isNotEmpty) {
         pickUpController
           ..text = s.originAddress!
@@ -74,7 +70,7 @@ Future<void> handleMapStateChange({
       }
     }
 
-    // 2) Si hay una selectedLatLng (por ejemplo después de buscar una dirección), actualiza los campos correspondientes
+    //Updates the origin and destination fields
     if (s.originAddress != null && s.originAddress!.isNotEmpty) {
       pickUpController
         ..text = s.originAddress!
@@ -93,16 +89,15 @@ Future<void> handleMapStateChange({
       onUpdateDestinationLatLng(s.destination);
     }
 
-    // 3) Si hay polylines (mapPolylines) dibujadas -> animar la ruta con padding
-    //    Asumimos que mapPolylines contiene Polyline cuyo `.points` es List<LatLng>.
+    //  IF we have polylines drawn -> animate the route with padding
     if (s.polylines.isNotEmpty) {
       try {
         final controller = await mapController.future;
 
-        // Extrae los puntos de la primera polyline (o genera la lista completa si tienes varias)
+        //Extracts the points from the first polyline
+        //(or generates a complete list if you have multiple)
         final firstPolyline = s.polylines.values.first;
-        final latLngPoints = firstPolyline
-            .points; // asegúrate que `.points` devuelve List<LatLng>
+        final latLngPoints = firstPolyline.points;
 
         FocusScope.of(context).unfocus();
 
@@ -123,14 +118,12 @@ Future<void> handleMapStateChange({
     return;
   }
 
-  // Si es error, mostramos snackbar (estado antiguo ClientMapSeekerError aún soportado)
   if (state is ClientMapSeekerError) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(state.message)));
     return;
   }
-
-  // Fallback: si por cualquier razón recibe algo distinto, resetea padding
+  //Fallback: if something different is received, reset padding
   onSetShowMapPadding(false);
 }

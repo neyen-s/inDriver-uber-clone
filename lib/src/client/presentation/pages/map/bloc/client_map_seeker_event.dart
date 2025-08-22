@@ -21,7 +21,7 @@ final class GetAddressFromLatLng extends ClientMapSeekerEvent {
   List<Object> get props => [latLng, selectedField];
 }
 
-final class ConfirmTripDataEntered extends ClientMapSeekerEvent {
+/* final class ConfirmTripDataEntered extends ClientMapSeekerEvent {
   const ConfirmTripDataEntered({
     required this.origin,
     required this.destination,
@@ -40,7 +40,7 @@ final class ConfirmTripDataEntered extends ClientMapSeekerEvent {
     originLatLng,
     destinationLatLng,
   ];
-}
+} */
 
 final class CancelTripConfirmation extends ClientMapSeekerEvent {
   const CancelTripConfirmation();

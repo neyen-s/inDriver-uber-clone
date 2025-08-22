@@ -28,7 +28,6 @@ class ClientMapSeekerBloc
        super(ClientMapSeekerInitial()) {
     on<GetCurrentPositionRequested>(_onGetCurrentPositionRequested);
     on<GetAddressFromLatLng>(_onGetAddressFromLatLng);
-    on<ConfirmTripDataEntered>(_onConfirmTripDataEntered);
     on<CancelTripConfirmation>(_onCancelTripConfirmation);
     on<ChangeSelectedFieldRequested>(_onChangeSelectedFieldRequested);
     on<DrawRouteRequested>(_onDrawRouteRequested);
@@ -47,8 +46,6 @@ class ClientMapSeekerBloc
   StreamSubscription<Position>? _positionStreamSub;
 
   LatLng? lastLatLng;
-
-  SelectedField _currentSelectedField = SelectedField.origin;
 
   @override
   Future<void> close() {
@@ -93,7 +90,8 @@ class ClientMapSeekerBloc
 
       final placemark = placemarks.first;
       final address =
-          '${placemark.street}, ${placemark.locality}, ${placemark.administrativeArea}';
+          '${placemark.street}, ${placemark.locality}, '
+          ' ${placemark.administrativeArea}';
 
       final current = state is ClientMapSeekerSuccess
           ? state as ClientMapSeekerSuccess
@@ -101,54 +99,25 @@ class ClientMapSeekerBloc
 
       // Diferenciar por selectedField
       if (event.selectedField == SelectedField.origin) {
-        print('**** Selected field is origin');
-        print('**** ORIGIN: ${event.latLng}');
-        print('**** ORIGIN address : $address');
         emit(
           current.copyWith(
             origin: event.latLng,
             originAddress: address,
             selectedField: event.selectedField,
-            userMarker: Marker(
-              markerId: const MarkerId('origin'),
-              position: event.latLng,
-            ),
           ),
         );
       } else {
-        print('**** Selected field is destination');
-        print('**** Destination: ${event.latLng}');
-        print('**** Destination address : $address');
-
         emit(
           current.copyWith(
             destination: event.latLng,
             destinationAddress: address,
             selectedField: SelectedField.destination,
-            userMarker: Marker(
-              markerId: const MarkerId('destination'),
-              position: event.latLng,
-            ),
           ),
         );
       }
     } catch (e) {
       emit(const ClientMapSeekerError('Error while getting address.'));
     }
-  }
-
-  void _onConfirmTripDataEntered(
-    ConfirmTripDataEntered event,
-    Emitter<ClientMapSeekerState> emit,
-  ) {
-    add(
-      DrawRouteRequested(
-        origin: event.originLatLng,
-        destination: event.destinationLatLng,
-        originText: event.origin,
-        destinationText: event.destination,
-      ),
-    );
   }
 
   // --------------------------
@@ -183,7 +152,7 @@ class ClientMapSeekerBloc
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
 
-      emit(current.copyWith(isDrawingRoute: true));
+      emit(ClientMapSeekerLoading());
 
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
 
@@ -229,7 +198,6 @@ class ClientMapSeekerBloc
             mapPolylines: updatedPolylines,
             distanceKm: distanceKm,
             durationMinutes: durationMinutes,
-            isDrawingRoute: false,
           ),
         );
       } else {
@@ -298,7 +266,8 @@ class ClientMapSeekerBloc
           final lat = (data['lat'] as num).toDouble();
           final lng = (data['lng'] as num).toDouble();
 
-          // En vez de crear el Marker sin el icon (coste), puedes crear una "marker info" y delegar icon -> getMarkerUseCase
+          // En vez de crear el Marker sin el icon (coste),
+          // puedes crear una "marker info" y delegar icon -> getMarkerUseCase
           add(
             AddDriverPositionMarker(
               idSocket: idSocket,
