@@ -19,6 +19,8 @@ class GoogleMapSearchFields extends StatelessWidget {
     required this.isOriginSelected,
     required this.isDestinationSelected,
     required this.onDestinationSelected,
+    this.isFetchingOrigin = false,
+    this.isFetchingDestination = false,
     super.key,
   });
 
@@ -34,12 +36,16 @@ class GoogleMapSearchFields extends StatelessWidget {
   final ValueChanged<LatLng> onOriginSelected;
   final ValueChanged<LatLng> onDestinationSelected;
 
+  // Nuevos flags inyectados por el padre (derivados del state)
+  final bool isFetchingOrigin;
+  final bool isFetchingDestination;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(10.r)),
-        color: Colors.grey[200]!.withValues(alpha: 0.8),
+        color: Colors.grey[200]!.withOpacity(0.8),
       ),
       key: const ValueKey('search_fields'),
       height: 120.h,
@@ -58,7 +64,7 @@ class GoogleMapSearchFields extends StatelessWidget {
               onMoveBySearchChanged(true);
               onOriginSelected(latLng);
             },
-            suffixIcon: state is FetchingTextAdress && originFocusNode.hasFocus
+            suffixIcon: isFetchingOrigin && originFocusNode.hasFocus
                 ? Padding(
                     padding: EdgeInsets.all(12.r),
                     child: SizedBox(
@@ -76,8 +82,7 @@ class GoogleMapSearchFields extends StatelessWidget {
             isSelected: isDestinationSelected,
             focusNode: destinationFocusNode,
             onPlaceSelected: onDestinationSelected,
-            suffixIcon:
-                state is FetchingTextAdress && destinationFocusNode.hasFocus
+            suffixIcon: isFetchingDestination && destinationFocusNode.hasFocus
                 ? Padding(
                     padding: EdgeInsets.all(12.r),
                     child: SizedBox(

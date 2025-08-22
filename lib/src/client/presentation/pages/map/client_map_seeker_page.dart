@@ -16,7 +16,7 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/ma
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/markers_hanlder.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/on_map_tap_handler.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/route_confirmation_handler.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/update_loader_hablder.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/update_loader_handler.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/confirm_route_btn.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_search_fields.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_view.dart';
@@ -100,19 +100,43 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         listeners: [
           BlocListener<ClientMapSeekerBloc, ClientMapSeekerState>(
             listener: (context, state) async {
-              await handleMapStateChange(
-                context: context,
-                state: state,
-                mapController: _mapController,
-                pickUpController: _pickUpController,
-                destinationController: _destinationController,
-                originFocusNode: originFocusNode,
-                destinationFocusNode: destinationFocusNode,
-                onUpdateSelectedField: (field) => currentSelectedField = field,
-                onUpdateOriginLatLng: (lat) => originLatLng = lat,
-                onUpdateDestinationLatLng: (lat) => destinationLatLng = lat,
-                onSetShowMapPadding: (v) => showMapPadding = v,
-              );
+              // Si ya migraste a ClientMapSeekerSuccess, extrae los valores desde ahí
+              if (state is ClientMapSeekerSuccess) {
+                // si tienes un helper que espera el state antiguo, puedes adaptarlo,
+                // pero aquí llamamos al handler con los datos concretos:
+                await handleMapStateChange(
+                  context: context,
+                  state:
+                      state, // si tu helper usa el state, adapta su implementación para ClientMapSeekerSuccess
+                  mapController: _mapController,
+                  pickUpController: _pickUpController,
+                  destinationController: _destinationController,
+                  originFocusNode: originFocusNode,
+                  destinationFocusNode: destinationFocusNode,
+                  onUpdateSelectedField: (field) =>
+                      currentSelectedField = field,
+                  onUpdateOriginLatLng: (lat) => originLatLng = lat,
+                  onUpdateDestinationLatLng: (lat) => destinationLatLng = lat,
+                  onSetShowMapPadding: (v) => showMapPadding = v,
+                );
+              } else {
+                // Si aún estás con estados antiguos, mantenemos la llamada original
+                await handleMapStateChange(
+                  context: context,
+                  state: state,
+                  mapController: _mapController,
+                  pickUpController: _pickUpController,
+                  destinationController: _destinationController,
+                  originFocusNode: originFocusNode,
+                  destinationFocusNode: destinationFocusNode,
+                  onUpdateSelectedField: (field) =>
+                      currentSelectedField = field,
+                  onUpdateOriginLatLng: (lat) => originLatLng = lat,
+                  onUpdateDestinationLatLng: (lat) => destinationLatLng = lat,
+                  onSetShowMapPadding: (v) => showMapPadding = v,
+                );
+              }
+
               updateLoader(context);
             },
           ),
@@ -124,23 +148,35 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         ],
         child: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
           builder: (context, state) {
-            final markers = handleMarkers(
-              state: state,
-              originLatLng: originLatLng,
-              destinationLatLng: destinationLatLng,
-              originIcon: _originIcon,
-              destinationIcon: _destinationIcon,
-            );
+            // Si está migrado, usa datos del success
+            Set<Marker> markersFromState = {};
+            Set<Polyline> polylinesFromState = {};
+            bool isTripReady = false;
 
-            final isTripReady = state is TripReadyToDisplay;
+            if (state is ClientMapSeekerSuccess) {
+              // markers
+              markersFromState = handleMarkers(
+                state: state,
+                originLatLng: originLatLng,
+                destinationLatLng: destinationLatLng,
+                originIcon: _originIcon,
+                destinationIcon: _destinationIcon,
+              );
+
+              // polylines (ruta)
+              polylinesFromState = buildPolylineFromPoints(state);
+
+              // ahora el flag se basa en si hay polylines
+              isTripReady = polylinesFromState.isNotEmpty;
+            }
 
             return Stack(
               children: [
                 GoogleMapView(
                   mapController: _mapController,
                   initialPosition: _initialPosition,
-                  markers: markers,
-                  polylines: buildPolylineFromPoints(state),
+                  markers: markersFromState,
+                  polylines: polylinesFromState,
                   isTripReady: isTripReady,
                   showMapPadding: showMapPadding,
                   onMapTap: onMapTapHandler(
@@ -195,19 +231,18 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
 
                 if (!isTripReady)
                   ConfirmRouteBtn(
-                    onPressed: () => handleRouteConfirmation(
-                      context: context,
-                      originText: _pickUpController.text,
-                      destinationText: _destinationController.text,
-                      originLatLng: originLatLng,
-                      destinationLatLng: destinationLatLng,
-                      fallbackOrigin: originLatLng,
-                      fallbackDestination: destinationLatLng,
-                      onSuccess: () {
-                        if (!mounted) return;
-                        // cualquier limpieza local si quieres
-                      },
-                    ),
+                    onPressed: () {
+                      if (originLatLng != null && destinationLatLng != null) {
+                        context.read<ClientMapSeekerBloc>().add(
+                          DrawRouteRequested(
+                            origin: originLatLng!,
+                            destination: destinationLatLng!,
+                            originText: _pickUpController.text,
+                            destinationText: _destinationController.text,
+                          ),
+                        );
+                      }
+                    },
                   ),
               ],
             );
@@ -216,28 +251,42 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
       ),
       bottomSheet: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
         builder: (context, state) {
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: state is TripReadyToDisplay
-                ? TripSummaryCard(
-                    context: context,
-                    originAddress: state.origin,
-                    destinationAddress: state.destination,
-                    distanceInKm: state.distanceKm,
-                    duration: Duration(minutes: state.durationMinutes),
-                    price: calculateTripPrice(
-                      state.distanceKm,
-                      state.durationMinutes,
-                    ),
-                    onCancelPressed: () {
-                      context.read<ClientMapSeekerBloc>().add(
-                        const CancelTripConfirmation(),
-                      );
-                    },
-                    onConfirmPressed: (offer) {},
-                  )
-                : const SizedBox.shrink(),
+          print(
+            ' state.distanceKm  --> ${state is ClientMapSeekerSuccess ? state.distanceKm : ''} ',
           );
+          print(
+            ' state.durationMinutes  --> ${state is ClientMapSeekerSuccess ? state.durationMinutes : ''}',
+          );
+          print(
+            ' state.polylines.isNotEmpty  --> ${state is ClientMapSeekerSuccess ? state.polylines.isNotEmpty : ''}',
+          );
+
+          // Si migrado, intenta leer desde Success (añade campos de trip si los metes en Success)
+          if (state is ClientMapSeekerSuccess &&
+              state.distanceKm != null &&
+              state.durationMinutes != null &&
+              state.polylines.isNotEmpty) {
+            // TODO CHECK POLYLINES VARIABLE
+            print('*************************************** entro ***');
+            return TripSummaryCard(
+              context: context,
+              originAddress: state.originAddress ?? '',
+              destinationAddress: state.destinationAddress ?? '',
+              distanceInKm: state.distanceKm ?? 0.0,
+              duration: Duration(minutes: state.durationMinutes ?? 0),
+              price: calculateTripPrice(
+                state.distanceKm ?? 0.0,
+                state.durationMinutes ?? 0,
+              ),
+              onCancelPressed: () {
+                context.read<ClientMapSeekerBloc>().add(
+                  const CancelTripConfirmation(),
+                );
+              },
+              onConfirmPressed: (offer) {},
+            );
+          }
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -259,17 +308,14 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
     required SelectedField field,
     required LatLng latLng,
   }) async {
-    context.read<ClientMapSeekerBloc>().add(
-      ChangeSelectedFieldRequested(field),
-    );
-
     if (field == SelectedField.origin) {
       originLatLng = latLng;
     } else {
       destinationLatLng = latLng;
     }
     await moveCameraTo(controller: _mapController, target: latLng, zoom: 16);
-
-    context.read<ClientMapSeekerBloc>().add(GetAddressFromLatLng(latLng));
+    context.read<ClientMapSeekerBloc>().add(
+      GetAddressFromLatLng(latLng, selectedField: field),
+    );
   }
 }

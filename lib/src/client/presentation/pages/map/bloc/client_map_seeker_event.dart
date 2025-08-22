@@ -9,32 +9,16 @@ sealed class ClientMapSeekerEvent extends Equatable {
 
 class GetCurrentPositionRequested extends ClientMapSeekerEvent {}
 
-class LoadCurrentLocationWithMarkerRequested extends ClientMapSeekerEvent {
-  const LoadCurrentLocationWithMarkerRequested();
-}
-
-final class MapMoved extends ClientMapSeekerEvent {
-  const MapMoved(this.target);
-  final LatLng target;
-
-  @override
-  List<Object> get props => [target];
-}
-
-class MapTapped extends ClientMapSeekerEvent {
-  const MapTapped(this.position);
-  final LatLng position;
-
-  @override
-  List<Object> get props => [position];
-}
-
 final class GetAddressFromLatLng extends ClientMapSeekerEvent {
-  const GetAddressFromLatLng(this.latLng);
+  const GetAddressFromLatLng(
+    this.latLng, {
+    this.selectedField = SelectedField.origin,
+  });
   final LatLng latLng;
+  final SelectedField selectedField;
 
   @override
-  List<Object> get props => [latLng];
+  List<Object> get props => [latLng, selectedField];
 }
 
 final class ConfirmTripDataEntered extends ClientMapSeekerEvent {
@@ -119,3 +103,5 @@ class AddDriverPositionMarker extends ClientMapSeekerEvent {
   @override
   List<Object> get props => [idSocket, id, lat, lng];
 }
+
+class ClientMapCameraCentered extends ClientMapSeekerEvent {}

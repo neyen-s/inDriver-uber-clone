@@ -10,7 +10,6 @@ void updateLoader(BuildContext context) {
 
   final blocLoading =
       clientState is ClientMapSeekerLoading ||
-      clientState is RouteDrawingInProgress ||
       clientState is ClientMapSeekerInitial;
 
   final mapReady = mapLifecycle == MapLifecycleState.ready;

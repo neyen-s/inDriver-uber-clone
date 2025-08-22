@@ -9,21 +9,29 @@ void addMarkersOnTripCreated({
   required LatLng? originLatLng,
   required LatLng? destinationLatLng,
 }) {
-  if (state is TripReadyToDisplay) {
-    markers.addAll([
-      Marker(
-        markerId: const MarkerId('origin'),
-
-        position: originLatLng!,
-        icon: originIcon!,
-        infoWindow: const InfoWindow(title: 'Origin'),
-      ),
-      Marker(
-        markerId: const MarkerId('destination'),
-        position: destinationLatLng!,
-        icon: destinationIcon!,
-        infoWindow: const InfoWindow(title: 'Destination'),
-      ),
-    ]);
+  // Si estás usando el nuevo estado rico:
+  if (state is ClientMapSeekerSuccess) {
+    // Si mapPolylines no está vacío consideramos que hay una ruta
+    if (state.polylines.isNotEmpty &&
+        originLatLng != null &&
+        destinationLatLng != null) {
+      markers.addAll([
+        Marker(
+          markerId: const MarkerId('origin'),
+          position: originLatLng,
+          icon: originIcon ?? BitmapDescriptor.defaultMarker,
+          infoWindow: const InfoWindow(title: 'Origin'),
+        ),
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: destinationLatLng,
+          icon: destinationIcon ?? BitmapDescriptor.defaultMarker,
+          infoWindow: const InfoWindow(title: 'Destination'),
+        ),
+      ]);
+    }
+    return;
   }
+
+  // Compatibilidad con estado antiguo (si todavía lo tuvieses)
 }

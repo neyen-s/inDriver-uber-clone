@@ -4,109 +4,115 @@ sealed class ClientMapSeekerState extends Equatable {
   const ClientMapSeekerState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class ClientMapSeekerInitial extends ClientMapSeekerState {}
 
 class ClientMapSeekerLoading extends ClientMapSeekerState {}
 
-class FindPositionSuccess extends ClientMapSeekerState {
-  const FindPositionSuccess(this.position);
-  final Position position;
-
-  @override
-  List<Object> get props => [position];
-}
-
 class ClientMapSeekerError extends ClientMapSeekerState {
   const ClientMapSeekerError(this.message);
   final String message;
 
   @override
-  List<Object> get props => [message];
+  List<Object?> get props => [message];
 }
 
-class PositionWithMarkerSuccess extends ClientMapSeekerState {
-  const PositionWithMarkerSuccess({
-    required this.position,
-    required this.marker,
-  });
-
-  final LatLng position;
-  final Marker marker;
-
-  @override
-  List<Object> get props => [position, marker];
-}
-
-final class AddressUpdatedSuccess extends ClientMapSeekerState {
-  const AddressUpdatedSuccess(this.address, this.field, this.selectedLatLng);
-
-  final String address;
-  final SelectedField field;
-  final LatLng selectedLatLng;
-  @override
-  List<Object> get props => [address, field, selectedLatLng];
-}
-
-final class SelectedFieldChanged extends ClientMapSeekerState {
-  const SelectedFieldChanged(this.selectedField);
-  final SelectedField selectedField;
-
-  @override
-  List<Object> get props => [selectedField];
-}
-
-final class TripCancelled extends ClientMapSeekerState {
-  const TripCancelled({required this.polylines});
-
-  final Set<Polyline> polylines;
-
-  @override
-  List<Object> get props => [polylines];
-}
-
-final class FetchingTextAdress extends ClientMapSeekerState {
-  const FetchingTextAdress(this.field);
-
-  final SelectedField field;
-
-  @override
-  List<Object> get props => [field];
-}
-
-final class RouteDrawingInProgress extends ClientMapSeekerState {
-  const RouteDrawingInProgress();
-}
-
-final class TripReadyToDisplay extends ClientMapSeekerState {
-  const TripReadyToDisplay({
-    required this.origin,
-    required this.destination,
-    required this.polylinePoints,
-    required this.distanceKm,
-    required this.durationMinutes,
+class ClientMapSeekerSuccess extends ClientMapSeekerState {
+  const ClientMapSeekerSuccess({
+    this.userPosition,
     this.selectedLatLng,
-    this.selectedField,
+    this.address,
+    this.selectedField = SelectedField.origin,
+    this.driverMarkers = const {},
+    this.isSocketConnected = false,
+    this.isDrawingRoute = false,
+    this.hasCenteredCameraOnce = false,
+    this.originAddress,
+    this.destinationAddress,
+    this.distanceKm,
+    this.durationMinutes,
+    this.polylines = const {},
+    this.origin,
+    this.destination,
+    this.userMarker,
   });
 
-  final String origin;
-  final String destination;
-  final List<PointLatLng> polylinePoints;
-  final double distanceKm;
-  final int durationMinutes;
+  final Position? userPosition;
   final LatLng? selectedLatLng;
-  final SelectedField? selectedField;
+  final String? address;
+  final SelectedField selectedField;
+  final Set<Marker> driverMarkers;
+  final bool isSocketConnected;
+  final bool isDrawingRoute;
+  final bool hasCenteredCameraOnce;
+  final String? originAddress;
+  final String? destinationAddress;
+  final double? distanceKm;
+  final int? durationMinutes;
+  final Map<PolylineId, Polyline> polylines;
+  final LatLng? origin;
+  final LatLng? destination;
+  final Marker? userMarker;
+
+  ClientMapSeekerSuccess copyWith({
+    Position? userPosition,
+    LatLng? selectedLatLng,
+    String? address,
+    SelectedField? selectedField,
+    Set<Marker>? driverMarkers,
+    Set<Polyline>? polylines,
+    bool? isSocketConnected,
+    bool? isDrawingRoute,
+    bool? hasCenteredCameraOnce,
+    LatLng? origin,
+    LatLng? destination,
+    String? originAddress,
+    String? destinationAddress,
+    double? distanceKm,
+    int? durationMinutes,
+    Map<PolylineId, Polyline>? mapPolylines,
+    Marker? userMarker,
+  }) {
+    return ClientMapSeekerSuccess(
+      userPosition: userPosition ?? this.userPosition,
+      selectedLatLng: selectedLatLng ?? this.selectedLatLng,
+      address: address ?? this.address,
+      selectedField: selectedField ?? this.selectedField,
+      driverMarkers: driverMarkers ?? this.driverMarkers,
+      isSocketConnected: isSocketConnected ?? this.isSocketConnected,
+      isDrawingRoute: isDrawingRoute ?? this.isDrawingRoute,
+      hasCenteredCameraOnce:
+          hasCenteredCameraOnce ?? this.hasCenteredCameraOnce,
+      origin: origin ?? this.origin,
+      destination: destination ?? this.destination,
+      originAddress: originAddress ?? this.originAddress,
+      destinationAddress: destinationAddress ?? this.destinationAddress,
+      distanceKm: distanceKm ?? this.distanceKm,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      polylines: mapPolylines ?? this.polylines,
+      userMarker: userMarker ?? this.userMarker,
+    );
+  }
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
+    userPosition,
+    selectedLatLng,
+    address,
+    selectedField,
+    driverMarkers,
+    isSocketConnected,
+    isDrawingRoute,
+    hasCenteredCameraOnce,
     origin,
     destination,
-    polylinePoints,
+    originAddress,
+    destinationAddress,
     distanceKm,
     durationMinutes,
-    selectedLatLng ?? '',
-    selectedField ?? '',
+    polylines,
+    userMarker,
   ];
 }
