@@ -46,14 +46,18 @@ class _ProfileUpdateContentState extends State<ProfileUpdateContent> {
     super.initState();
 
     _nameFocus.addListener(() {
-      _onFocusLost(_nameFocus, _nameController.text, ProfileNameChanged.new);
+      _onFocusLost(
+        _nameFocus,
+        _nameController.text,
+        ProfileUpdateNameChanged.new,
+      );
     });
 
     _lastNameFocus.addListener(() {
       _onFocusLost(
         _lastNameFocus,
         _lastNameController.text,
-        ProfileLastnameChanged.new,
+        ProfileUpdateLastnameChanged.new,
       );
     });
 
@@ -94,8 +98,8 @@ class _ProfileUpdateContentState extends State<ProfileUpdateContent> {
       _phoneController.text = widget.user!.phone;
 
       context.read<ProfileUpdateBloc>()
-        ..add(ProfileNameChanged(widget.user!.name))
-        ..add(ProfileLastnameChanged(widget.user!.lastname))
+        ..add(ProfileUpdateNameChanged(widget.user!.name))
+        ..add(ProfileUpdateLastnameChanged(widget.user!.lastname))
         ..add(ProfilePhoneChanged(widget.user!.phone));
 
       _hasInitialized = true;
@@ -132,10 +136,11 @@ class _ProfileUpdateContentState extends State<ProfileUpdateContent> {
           lastNameFocus: _lastNameFocus,
           phoneFocus: _phoneFocus,
           onImagePicked: onImagePicked,
-          onNameChanged: (val) =>
-              context.read<ProfileUpdateBloc>().add(ProfileNameChanged(val)),
+          onNameChanged: (val) => context.read<ProfileUpdateBloc>().add(
+            ProfileUpdateNameChanged(val),
+          ),
           onLastnameChanged: (val) => context.read<ProfileUpdateBloc>().add(
-            ProfileLastnameChanged(val),
+            ProfileUpdateLastnameChanged(val),
           ),
           onPhoneChanged: (val) =>
               context.read<ProfileUpdateBloc>().add(ProfilePhoneChanged(val)),
@@ -187,7 +192,6 @@ class _ProfileUpdateContentState extends State<ProfileUpdateContent> {
 
     if (confirm ?? false) {
       context.read<ProfileUpdateBloc>().add(const SubmitProfileChanges());
-      // FocusScope.of(context).unfocus();
     }
   }
 }

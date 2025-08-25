@@ -20,8 +20,7 @@ class LocationService {
 
   Stream<Position> getPositionStream({
     LocationAccuracy accuracy = LocationAccuracy.best,
-    int distanceFilter =
-        1, // <- bajar a 0/1 para pruebas //TODO CHECK THIS FOR PERFORMANCE
+    int distanceFilter = 1, // <- //TODO CHECK THIS FOR PERFORMANCE
   }) {
     return Geolocator.getPositionStream(
       locationSettings: LocationSettings(

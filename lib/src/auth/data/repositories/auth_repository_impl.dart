@@ -10,13 +10,9 @@ import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entit
 import 'package:indriver_uber_clone/src/auth/domain/repository/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  const AuthRepositoryImpl({
-    required this.authRemoteDataSource,
-    //  required this.sharedPrefs,
-  });
+  const AuthRepositoryImpl({required this.authRemoteDataSource});
 
   final AuthRemoteDataSource authRemoteDataSource;
-  // final SharedPrefs sharedPrefs;
 
   @override
   ResultFuture<AuthResponseEntity> signIn({

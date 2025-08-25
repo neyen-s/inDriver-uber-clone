@@ -11,6 +11,7 @@ class SessionManager {
   static const _sessionKey = 'user';
 
   static Future<void> saveSession(AuthResponseDTO session) async {
+    //TODO UPDATE TO SECURE STORAGE
     _session = session;
     await SharedPrefsAdapter.saveDto(_sessionKey, session.toJson());
   }

@@ -2,21 +2,24 @@ import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:formz/formz.dart';
+import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
+import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/last_name_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/name_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/phone_entity.dart';
-import 'package:indriver_uber_clone/src/auth/domain/repository/auth_repository.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/profile/domain/usecases/update_user_use_case.dart';
 
 part 'profile_update_event.dart';
 part 'profile_update_state.dart';
 
 class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
-  ProfileUpdateBloc(this.updateUserUseCase, this.authRepository)
+  ProfileUpdateBloc(this.updateUserUseCase, this.authUseCases)
     : super(const ProfileUpdateInitial()) {
-    on<ProfileNameChanged>(_onNameChanged);
-    on<ProfileLastnameChanged>(_onLastnameChanged);
+    on<ProfileUpdateNameChanged>(_onNameChanged);
+    on<ProfileUpdateLastnameChanged>(_onLastnameChanged);
     on<ProfilePhoneChanged>(_onPhoneChanged);
     on<ProfileImageChanged>(_onImageChanged);
 
@@ -24,39 +27,34 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
   }
 
   final UpdateUserUseCase updateUserUseCase;
-  final AuthRepository authRepository;
+  final AuthUseCases authUseCases;
+
   File? _imageFile;
 
   void _onNameChanged(
-    ProfileNameChanged event,
+    ProfileUpdateNameChanged event,
     Emitter<ProfileUpdateState> emit,
   ) {
-    final name = NameEntity.dirty(event.name);
-    final isValid = Formz.validate([name, state.lastname, state.phone]);
-
+    final current = _extractInputs();
     emit(
       ProfileUpdateValidating(
-        name: name,
-        lastname: state.lastname,
-        phone: state.phone,
-        isValid: isValid,
+        name: NameEntity.dirty(event.value),
+        lastname: current.lastname,
+        phone: current.phone,
       ),
     );
   }
 
   void _onLastnameChanged(
-    ProfileLastnameChanged event,
+    ProfileUpdateLastnameChanged event,
     Emitter<ProfileUpdateState> emit,
   ) {
-    final lastname = LastnameEntity.dirty(event.lastname);
-    final isValid = Formz.validate([state.name, lastname, state.phone]);
-
+    final current = _extractInputs();
     emit(
       ProfileUpdateValidating(
-        name: state.name,
-        lastname: lastname,
-        phone: state.phone,
-        isValid: isValid,
+        name: current.name,
+        lastname: LastnameEntity.dirty(event.value),
+        phone: current.phone,
       ),
     );
   }
@@ -65,15 +63,12 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
     ProfilePhoneChanged event,
     Emitter<ProfileUpdateState> emit,
   ) {
-    final phone = PhoneEntity.dirty(event.phone);
-    final isValid = Formz.validate([state.name, state.lastname, phone]);
-
+    final current = _extractInputs();
     emit(
       ProfileUpdateValidating(
-        name: state.name,
-        lastname: state.lastname,
-        phone: phone,
-        isValid: isValid,
+        name: current.name,
+        lastname: current.lastname,
+        phone: PhoneEntity.dirty(event.phone),
       ),
     );
   }
@@ -89,37 +84,30 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
     SubmitProfileChanges event,
     Emitter<ProfileUpdateState> emit,
   ) async {
-    final name = NameEntity.dirty(state.name.value);
-    final lastname = LastnameEntity.dirty(state.lastname.value);
-    final phone = PhoneEntity.dirty(state.phone.value);
+    final current = _extractInputs();
+
+    final name = NameEntity.dirty(current.name.value);
+    final lastname = LastnameEntity.dirty(current.lastname.value);
+    final phone = PhoneEntity.dirty(current.phone.value);
+
     final isValid = Formz.validate([name, lastname, phone]);
+    if (!isValid) {
+      emit(
+        ProfileUpdateValidating(name: name, lastname: lastname, phone: phone),
+      );
+      return;
+    }
 
-    emit(
-      ProfileUpdateValidating(
-        name: name,
-        lastname: lastname,
-        phone: phone,
-        isValid: isValid,
-      ),
-    );
-
-    if (!isValid) return;
-
-    emit(
-      ProfileUpdateSubmitting(
-        name: name,
-        lastname: lastname,
-        phone: phone,
-        isValid: true,
-      ),
-    );
+    emit(ProfileUpdateSubmitting(name: name, lastname: lastname, phone: phone));
 
     try {
-      final sessionResult = await authRepository.getUserSession();
+      final sessionResult = await authUseCases.getUserSessionUseCase();
       final session = sessionResult.fold(
         (failure) => throw Exception('Sesión no encontrada'),
         (dto) => dto,
       );
+
+      debugPrint('SESION USER : ${session.user} ');
 
       final updatedUser = session.user.copyWith(
         name: name.value,
@@ -127,7 +115,11 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
         phone: phone.value,
       );
 
-      final result = await updateUserUseCase(
+      debugPrint(
+        ' USER: $updatedUser , TOKEN: ${session.token}, FILE: $_imageFile ',
+      );
+
+      final updateResult = await updateUserUseCase(
         UpdateProfileParams(
           user: updatedUser,
           token: session.token,
@@ -135,31 +127,47 @@ class ProfileUpdateBloc extends Bloc<ProfileUpdateEvent, ProfileUpdateState> {
         ),
       );
 
-      await result.fold(
-        (failure) async => emit(
-          ProfileUpdateError(
-            message: failure.message,
-            name: name,
-            lastname: lastname,
-            phone: phone,
-            isValid: true,
-          ),
-        ),
-        (user) async {
-          await authRepository.saveUserSession(session.copyWith(user: user));
-          emit(const ProfileUpdateSuccess());
-        },
+      final newUser = await foldOrEmitError<UserEntity, ProfileUpdateState>(
+        updateResult,
+        emit,
+        ProfileUpdateFailure.new,
       );
+      if (newUser == null) return;
+
+      final newSession = session.copyWith(user: newUser);
+      await authUseCases.saveUserSessionUseCase(newSession);
+
+      emit(ProfileUpdateSuccess());
     } catch (e) {
-      emit(
-        ProfileUpdateError(
-          message: e.toString(),
-          name: name,
-          lastname: lastname,
-          phone: phone,
-          isValid: true,
-        ),
-      );
+      emit(ProfileUpdateFailure(e.toString()));
     }
   }
+
+  _InputBundle _extractInputs() {
+    return switch (state) {
+      final ProfileUpdateInitial s => _InputBundle(s.name, s.lastname, s.phone),
+      final ProfileUpdateValidating s => _InputBundle(
+        s.name,
+        s.lastname,
+        s.phone,
+      ),
+      final ProfileUpdateSubmitting s => _InputBundle(
+        s.name,
+        s.lastname,
+        s.phone,
+      ),
+      _ => _InputBundle(
+        const NameEntity.pure(),
+        const LastnameEntity.pure(),
+        const PhoneEntity.pure(),
+      ),
+    };
+  }
+}
+
+class _InputBundle {
+  _InputBundle(this.name, this.lastname, this.phone);
+  final NameEntity name;
+  final LastnameEntity lastname;
+  final PhoneEntity phone;
 }

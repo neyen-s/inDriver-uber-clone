@@ -7,20 +7,20 @@ sealed class ProfileUpdateEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-final class ProfileNameChanged extends ProfileUpdateEvent {
-  const ProfileNameChanged(this.name);
-  final String name;
+class ProfileUpdateNameChanged extends ProfileUpdateEvent {
+  const ProfileUpdateNameChanged(this.value);
+  final String value;
 
   @override
-  List<Object?> get props => [name];
+  List<Object?> get props => [value];
 }
 
-final class ProfileLastnameChanged extends ProfileUpdateEvent {
-  const ProfileLastnameChanged(this.lastname);
-  final String lastname;
+class ProfileUpdateLastnameChanged extends ProfileUpdateEvent {
+  const ProfileUpdateLastnameChanged(this.value);
+  final String value;
 
   @override
-  List<Object?> get props => [lastname];
+  List<Object?> get props => [value];
 }
 
 final class ProfilePhoneChanged extends ProfileUpdateEvent {
