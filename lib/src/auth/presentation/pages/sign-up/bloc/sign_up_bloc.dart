@@ -17,7 +17,7 @@ part 'sign_up_state.dart';
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   SignUpBloc(this.authUseCases) : super(const SignUpInitial()) {
     on<SignUpNameChanged>(_onNameChanged);
-    on<SignUpLastNameChanged>(_onLastnameChanged);
+    on<SignUpLastNameChanged>(_onLastNameChanged);
     on<SignUpEmailChanged>(_onEmailChanged);
     on<SignUpPhoneChanged>(_onPhoneChanged);
     on<SignUpPasswordChanged>(_onPasswordChanged);
@@ -39,7 +39,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     _emitValidationState(emit);
   }
 
-  void _onLastnameChanged(
+  void _onLastNameChanged(
     SignUpLastNameChanged event,
     Emitter<SignUpState> emit,
   ) {
@@ -111,6 +111,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     SignUpSubmitted event,
     Emitter<SignUpState> emit,
   ) async {
+    // marcar todos los inputs como dirty
     _email = EmailEntity.dirty(_email.value);
     _password = PasswordEntity.dirty(_password.value);
     _confirmPassword = ConfirmPasswordEntity.dirty(
@@ -130,7 +131,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       _phone,
     ]);
 
-    // Emitir estado de validación (aunque sea inválido)
+    // Emitir estado de validación (con los campos actualizados)
     emit(
       SignUpValidating(
         email: _email,
@@ -145,8 +146,9 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
 
     if (!isValid) return;
 
+    // Ahora emitimos Loading (antes Submitting)
     emit(
-      SignUpSubmitting(
+      SignUpLoading(
         email: _email,
         password: _password,
         confirmPassword: _confirmPassword,
@@ -167,18 +169,22 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     );
 
     result.fold(
-      (failure) => emit(
-        SignUpFailure(
-          email: _email,
-          password: _password,
-          confirmPassword: _confirmPassword,
-          name: _name,
-          lastName: _lastname,
-          phone: _phone,
-          message: failure.errorMessage,
-        ),
-      ),
-      (response) => emit(SignUpSuccess(authResponse: response)),
+      (failure) {
+        emit(
+          SignUpFailure(
+            message: failure.errorMessage,
+            email: _email,
+            password: _password,
+            confirmPassword: _confirmPassword,
+            name: _name,
+            lastName: _lastname,
+            phone: _phone,
+          ),
+        );
+      },
+      (response) {
+        emit(SignUpSuccess(authResponse: response));
+      },
     );
   }
 }

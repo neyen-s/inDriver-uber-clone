@@ -4,7 +4,7 @@ sealed class SignUpState extends Equatable {
   const SignUpState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 final class SignUpInitial extends SignUpState {
@@ -30,11 +30,19 @@ final class SignUpValidating extends SignUpState {
   final bool isValid;
 
   @override
-  List<Object> get props => [name, lastName, email, phone, password, isValid];
+  List<Object?> get props => [
+    name,
+    lastName,
+    email,
+    phone,
+    password,
+    confirmPassword,
+    isValid,
+  ];
 }
 
-final class SignUpSubmitting extends SignUpState {
-  const SignUpSubmitting({
+final class SignUpLoading extends SignUpState {
+  const SignUpLoading({
     required this.name,
     required this.lastName,
     required this.email,
@@ -42,6 +50,7 @@ final class SignUpSubmitting extends SignUpState {
     required this.password,
     required this.confirmPassword,
   });
+
   final NameEntity name;
   final LastnameEntity lastName;
   final EmailEntity email;
@@ -50,7 +59,14 @@ final class SignUpSubmitting extends SignUpState {
   final ConfirmPasswordEntity confirmPassword;
 
   @override
-  List<Object> get props => [name, lastName, email, phone, password];
+  List<Object?> get props => [
+    name,
+    lastName,
+    email,
+    phone,
+    password,
+    confirmPassword,
+  ];
 }
 
 final class SignUpSuccess extends SignUpState {
@@ -58,27 +74,36 @@ final class SignUpSuccess extends SignUpState {
   final AuthResponseEntity authResponse;
 
   @override
-  List<Object> get props => [authResponse];
+  List<Object?> get props => [authResponse];
 }
 
 final class SignUpFailure extends SignUpState {
   const SignUpFailure({
+    required this.message,
     required this.name,
     required this.lastName,
     required this.email,
     required this.phone,
     required this.password,
     required this.confirmPassword,
-    required this.message,
   });
+
+  final String message;
   final NameEntity name;
   final LastnameEntity lastName;
   final EmailEntity email;
   final PhoneEntity phone;
   final PasswordEntity password;
   final ConfirmPasswordEntity confirmPassword;
-  final String message;
 
   @override
-  List<Object> get props => [name, lastName, email, phone, password, message];
+  List<Object?> get props => [
+    message,
+    name,
+    lastName,
+    email,
+    phone,
+    password,
+    confirmPassword,
+  ];
 }

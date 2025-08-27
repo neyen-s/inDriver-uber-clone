@@ -239,7 +239,7 @@ class _SignUpContentState extends State<SignUpContent> {
                                           ),
                                         ),
                                   onPressed: vm.isSubmitting || !vm.isValid
-                                      ? null
+                                      ? () {}
                                       : () => context.read<SignUpBloc>().add(
                                           const SignUpSubmitted(),
                                         ),
