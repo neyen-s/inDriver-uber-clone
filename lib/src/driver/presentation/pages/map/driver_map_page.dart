@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 
@@ -25,16 +26,19 @@ class _DriverMapPageState extends State<DriverMapPage> {
   );
   final Set<Marker> _markers = {};
   late DriverMapBloc _driverMapBloc;
+  late SocketBloc _socketBloc;
 
   @override
   void initState() {
     super.initState();
+    print('------DriverMapPage initState------');
     _driverMapBloc = context.read<DriverMapBloc>();
+    // _socketBloc = context.read<SocketBloc>();
     _mapController = Completer<GoogleMapController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _driverMapBloc
-        ..add(const ConnectSocketIo())
-        ..add(const DriverLocationStreamStarted());
+      //_socketBloc.add(ConnectSocket());
+      print('Calling Driver Location Stream from drver map page');
+      _driverMapBloc.add(const DriverLocationStreamStarted());
     });
   }
 
@@ -43,7 +47,7 @@ class _DriverMapPageState extends State<DriverMapPage> {
     _mapController.future.then((controller) {
       controller.dispose();
     });
-    _driverMapBloc.add(const DisconnectSocketIo());
+    //  _socketBloc.add(DisconnectSocket());
     super.dispose();
   }
 
@@ -52,8 +56,8 @@ class _DriverMapPageState extends State<DriverMapPage> {
     return Scaffold(
       body: BlocListener<DriverMapBloc, DriverMapState>(
         listener: (context, state) async {
-          if (state is DriverMapPositionWithMarker) {
-            await _updateMarkerAndCamera(state.marker);
+          if (state is DriverMapLoaded) {
+            await _updateMarkerAndCamera(state.markers.first);
           }
           if (state is DriverMapError) {
             ScaffoldMessenger.of(
@@ -78,8 +82,7 @@ class _DriverMapPageState extends State<DriverMapPage> {
               bottom: 20,
               child: ElevatedButton(
                 onPressed: () {
-                  print('ConnectSocketIo');
-                  context.read<DriverMapBloc>().add(const ConnectSocketIo());
+                  //print('ConnectSocketIo');
                 },
                 child: const Text('socket test'),
               ),

@@ -9,6 +9,7 @@ part 'roles_state.dart';
 class RolesBloc extends Bloc<RolesEvent, RolesState> {
   RolesBloc(this.authUseCases) : super(RolesInitial()) {
     on<RolesEvent>(_onGetRolesList);
+    on<SelectRole>(_onSelectRole);
   }
 
   AuthUseCases authUseCases;
@@ -27,5 +28,9 @@ class RolesBloc extends Bloc<RolesEvent, RolesState> {
 
       emit(RolesLoaded(roles));
     });
+  }
+
+  void _onSelectRole(SelectRole event, Emitter<RolesState> emit) {
+    emit(RoleSelected(event.role));
   }
 }

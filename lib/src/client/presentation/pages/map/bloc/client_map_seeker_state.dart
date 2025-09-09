@@ -24,6 +24,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     this.userPosition,
     this.selectedField = SelectedField.origin,
     this.driverMarkers = const {},
+    //  this.driverPositions = const {},
     this.isSocketConnected = false,
     this.hasCenteredCameraOnce = false,
     this.originAddress,
@@ -37,7 +38,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
 
   final Position? userPosition;
   final SelectedField selectedField;
-  final Set<Marker> driverMarkers;
+  final Map<String, Marker> driverMarkers;
+  //  final Map<String, LatLng> driverPositions; //TODO DELETE THIS DIDNT WORK!!
   final bool isSocketConnected;
   final bool hasCenteredCameraOnce;
   final String? originAddress;
@@ -51,7 +53,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
   ClientMapSeekerSuccess copyWith({
     Position? userPosition,
     SelectedField? selectedField,
-    Set<Marker>? driverMarkers,
+    Map<String, Marker>? driverMarkers,
+    // Map<String, LatLng>? driverPositions,
     Set<Polyline>? polylines,
     bool? isSocketConnected,
     bool? hasCenteredCameraOnce,
@@ -67,6 +70,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
       userPosition: userPosition ?? this.userPosition,
       selectedField: selectedField ?? this.selectedField,
       driverMarkers: driverMarkers ?? this.driverMarkers,
+      //   driverPositions: driverPositions ?? this.driverPositions,
       isSocketConnected: isSocketConnected ?? this.isSocketConnected,
       hasCenteredCameraOnce:
           hasCenteredCameraOnce ?? this.hasCenteredCameraOnce,
@@ -85,6 +89,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     userPosition,
     selectedField,
     driverMarkers,
+    //   driverPositions,
     isSocketConnected,
     hasCenteredCameraOnce,
     origin,

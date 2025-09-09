@@ -4,7 +4,7 @@ sealed class ClientMapSeekerEvent extends Equatable {
   const ClientMapSeekerEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class GetCurrentPositionRequested extends ClientMapSeekerEvent {}
@@ -20,27 +20,6 @@ final class GetAddressFromLatLng extends ClientMapSeekerEvent {
   @override
   List<Object> get props => [latLng, selectedField];
 }
-
-/* final class ConfirmTripDataEntered extends ClientMapSeekerEvent {
-  const ConfirmTripDataEntered({
-    required this.origin,
-    required this.destination,
-    required this.originLatLng,
-    required this.destinationLatLng,
-  });
-  final String origin;
-  final String destination;
-  final LatLng originLatLng;
-  final LatLng destinationLatLng;
-
-  @override
-  List<Object> get props => [
-    origin,
-    destination,
-    originLatLng,
-    destinationLatLng,
-  ];
-} */
 
 final class CancelTripConfirmation extends ClientMapSeekerEvent {
   const CancelTripConfirmation();
@@ -72,36 +51,38 @@ class DrawRouteRequested extends ClientMapSeekerEvent {
   ];
 }
 
-class ConnectSocketIo extends ClientMapSeekerEvent {
-  const ConnectSocketIo();
-}
-
-class DisconnectSocketIo extends ClientMapSeekerEvent {
-  const DisconnectSocketIo();
-}
-
-class ListenDriverPositionSocket extends ClientMapSeekerEvent {
-  const ListenDriverPositionSocket(this.lat, this.lng);
-  final double lat;
-  final double lng;
-  @override
-  List<Object> get props => [lat, lng];
-}
-
 class AddDriverPositionMarker extends ClientMapSeekerEvent {
   const AddDriverPositionMarker({
     required this.idSocket,
-    required this.id,
     required this.lat,
     required this.lng,
   });
 
   final String idSocket;
-  final int id;
   final double lat;
   final double lng;
   @override
-  List<Object> get props => [idSocket, id, lat, lng];
+  List<Object> get props => [idSocket, lat, lng];
 }
 
 class ClientMapCameraCentered extends ClientMapSeekerEvent {}
+
+class RemoveDriverPositionMarker extends ClientMapSeekerEvent {
+  const RemoveDriverPositionMarker(this.idSocket);
+  final String idSocket;
+
+  @override
+  List<Object> get props => [idSocket];
+}
+
+class ClearDriverMarkers extends ClientMapSeekerEvent {
+  const ClearDriverMarkers();
+}
+
+class DriversSnapshotReceived extends ClientMapSeekerEvent {
+  const DriversSnapshotReceived(this.drivers);
+  final Map<String, LatLng> drivers;
+
+  @override
+  List<Object?> get props => [drivers];
+}

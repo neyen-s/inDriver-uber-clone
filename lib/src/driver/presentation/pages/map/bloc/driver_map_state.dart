@@ -4,27 +4,21 @@ sealed class DriverMapState extends Equatable {
   const DriverMapState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 final class DriverMapInitial extends DriverMapState {}
 
 class DriverMapLoading extends DriverMapState {}
 
-class DriverMapPositionLoaded extends DriverMapState {
-  const DriverMapPositionLoaded(this.position);
-  final Position position;
+class DriverMapLoaded extends DriverMapState {
+  const DriverMapLoaded({required this.position, required this.markers});
+
+  final Position? position;
+  final List<Marker> markers; //marker list of all the drivers
 
   @override
-  List<Object> get props => [position];
-}
-
-class DriverMapPositionWithMarker extends DriverMapState {
-  const DriverMapPositionWithMarker(this.marker);
-  final Marker marker;
-
-  @override
-  List<Object> get props => [marker];
+  List<Object?> get props => [position, markers];
 }
 
 class DriverMapError extends DriverMapState {

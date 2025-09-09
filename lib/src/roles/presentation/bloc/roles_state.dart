@@ -28,3 +28,12 @@ final class RolesLoaded extends RolesState {
   @override
   List<Object> get props => [roles];
 }
+
+final class RoleSelected extends RolesState {
+  const RoleSelected(this.role);
+
+  final UserRoleEntity role;
+
+  @override
+  List<Object> get props => [role];
+}

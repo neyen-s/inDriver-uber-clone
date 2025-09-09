@@ -56,7 +56,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     Emitter<SignInState> emit,
   ) async {
     final result = await authUseCases.getUserSessionUseCase();
-
+    print('result: $result');
     result.fold(
       (_) => emit(SessionInvalid()),
       (authResponse) => emit(SessionValid(authResponse)),

@@ -33,7 +33,7 @@ Set<Marker> handleMarkers({
   }
 
   if (state is ClientMapSeekerSuccess) {
-    markers.addAll(state.driverMarkers);
+    markers.addAll(state.driverMarkers.values);
   }
 
   final hasRoute =

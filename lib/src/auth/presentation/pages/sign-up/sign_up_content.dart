@@ -93,7 +93,6 @@ class _SignUpContentState extends State<SignUpContent> {
                           SaveUserSession(authResponse: authResponse),
                         );
 
-                        // Navegar a otra pantalla si querés
                         await Navigator.pushReplacementNamed(
                           context,
                           ClientHomePage.routeName,
@@ -101,16 +100,17 @@ class _SignUpContentState extends State<SignUpContent> {
                       }
 
                       final vm = SignUpViewModel.fromState(state);
-
-                      syncController(_nameController, vm.name.value);
-                      syncController(_lastNameController, vm.lastname.value);
-                      syncController(_emailController, vm.email.value);
-                      syncController(_phoneController, vm.phone.value);
-                      syncController(_passwordController, vm.password.value);
-                      syncController(
-                        _confirmPasswordController,
-                        vm.confirmPassword.value,
-                      );
+                      if (mounted) {
+                        syncController(_nameController, vm.name.value);
+                        syncController(_lastNameController, vm.lastname.value);
+                        syncController(_emailController, vm.email.value);
+                        syncController(_phoneController, vm.phone.value);
+                        syncController(_passwordController, vm.password.value);
+                        syncController(
+                          _confirmPasswordController,
+                          vm.confirmPassword.value,
+                        );
+                      }
                     },
                     builder: (context, state) {
                       final vm = SignUpViewModel.fromState(state);

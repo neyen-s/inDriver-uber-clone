@@ -13,7 +13,9 @@ class RoleRouter {
       debugPrint('is CLIENT');
       Navigator.pushReplacementNamed(context, ClientHomePage.routeName);
     } else {
-      debugPrint('---ELSE DEFAULT---');
+      debugPrint(
+        '---ERRO WHILE REDIRECTING USER, REDIRECTING TO SIGN IN PAGE---',
+      );
       Navigator.pushReplacementNamed(context, SignInPage.routeName);
     }
   }

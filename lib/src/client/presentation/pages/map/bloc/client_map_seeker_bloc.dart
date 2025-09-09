@@ -7,9 +7,10 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
+import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/secrets.dart';
 
@@ -20,7 +21,7 @@ class ClientMapSeekerBloc
     extends Bloc<ClientMapSeekerEvent, ClientMapSeekerState> {
   ClientMapSeekerBloc(
     this._geolocatorUseCases,
-    this._socketUseCases, {
+    this.socketBloc, {
     DebouncerLocation? debouncer,
   }) : _debouncer =
            debouncer ?? DebouncerLocation(const Duration(milliseconds: 500)),
@@ -31,25 +32,47 @@ class ClientMapSeekerBloc
     on<CancelTripConfirmation>(_onCancelTripConfirmation);
     on<ChangeSelectedFieldRequested>(_onChangeSelectedFieldRequested);
     on<DrawRouteRequested>(_onDrawRouteRequested);
-    on<ConnectSocketIo>(_onConnectSocketIo);
-    on<DisconnectSocketIo>(_onDisconnectSocketIo);
-    on<ListenDriverPositionSocket>(_onListenDriverPositionSocket);
-    on<AddDriverPositionMarker>(_onAddDriverPositionMarker);
     on<ClientMapCameraCentered>(_onClientMapCameraCentered);
+
+    on<AddDriverPositionMarker>(_onAddDriverPositionMarker);
+    on<RemoveDriverPositionMarker>(_onRemoveDriverPositionMarker);
+    on<ClearDriverMarkers>(_onClearDriverMarkers);
+    on<DriversSnapshotReceived>(_onDriversSnapshotReceived);
+
+    // Socket Subscriptions events
+    _listenToSocket();
   }
 
   final DebouncerLocation _debouncer;
   final GeolocatorUseCases _geolocatorUseCases;
-  final SocketUseCases _socketUseCases;
+  final SocketBloc socketBloc;
 
+  StreamSubscription? _socketSub;
   StreamSubscription<dynamic>? _socketStreamSub;
   StreamSubscription<Position>? _positionStreamSub;
-
   LatLng? lastLatLng;
+
+  // dentro de la clase ClientMapSeekerBloc
+  DateTime? _lastNonEmptySnapshotAt;
+  final Duration _emptySnapshotGrace = const Duration(seconds: 2);
+
+  // Escuchar estados del socket
+
+  void _listenToSocket() {
+    print('ENTRO EN LISTEN TO SOCKET');
+    _socketSub = socketBloc.stream.listen((socketState) {
+      print('ClientMapSeekerBloc received socket state: $socketState');
+      if (socketState is SocketDriverPositionsUpdated) {
+        // En lugar de añadir uno a uno, mandamos el snapshot completo
+        add(DriversSnapshotReceived(Map.from(socketState.drivers)));
+      }
+    });
+  }
 
   @override
   Future<void> close() {
     _debouncer.dispose();
+    _socketSub?.cancel();
     _socketStreamSub?.cancel();
     _positionStreamSub?.cancel();
     return super.close();
@@ -59,7 +82,7 @@ class ClientMapSeekerBloc
     GetCurrentPositionRequested event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    emit(ClientMapSeekerLoading());
+    // emit(ClientMapSeekerLoading());
 
     final result = await _geolocatorUseCases.findPositionUseCase();
     result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
@@ -152,7 +175,7 @@ class ClientMapSeekerBloc
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
 
-      emit(ClientMapSeekerLoading());
+      //emit(ClientMapSeekerLoading());
 
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
 
@@ -209,86 +232,12 @@ class ClientMapSeekerBloc
   }
 
   // --------------------------
-  // SOCKET: conectar y suscribirse
-  Future<void> _onConnectSocketIo(
-    ConnectSocketIo event,
-    Emitter<ClientMapSeekerState> emit,
-  ) async {
-    final result = await _socketUseCases.connectSocketUseCase();
-
-    result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (_) {
-      final current = state is ClientMapSeekerSuccess
-          ? state as ClientMapSeekerSuccess
-          : const ClientMapSeekerSuccess();
-      emit(current.copyWith(isSocketConnected: true));
-
-      // luego lanzamos la escucha de driver positions
-      //  add(const ListenDriverPositionSocket());
-    });
-  }
-
-  Future<void> _onDisconnectSocketIo(
-    DisconnectSocketIo event,
-    Emitter<ClientMapSeekerState> emit,
-  ) async {
-    await _socketUseCases.disconnectSocketUseCase();
-    await _socketStreamSub?.cancel();
-
-    final current = state is ClientMapSeekerSuccess
-        ? state as ClientMapSeekerSuccess
-        : const ClientMapSeekerSuccess();
-    emit(current.copyWith(isSocketConnected: false));
-  }
-
-  // --------------------------
-  // Suscribirse al stream del socket y actualizar markers
-  Future<void> _onListenDriverPositionSocket(
-    ListenDriverPositionSocket event,
-    Emitter<ClientMapSeekerState> emit,
-  ) async {
-    // Cancela suscripción previa si existiera
-    await _socketStreamSub?.cancel();
-
-    final result = await _socketUseCases.onSocketMessageUseCase(
-      'new_driver_position',
-    );
-
-    result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
-      stream,
-    ) {
-      // Si necesitas un icono de marker, créalo una vez y guárdalo en el estado.
-      // Aquí asumimos que getMarkerUseCase crea un Marker dado id y LatLng,
-      // pero para eficiencia deberías crear el BitmapDescriptor una vez (icon).
-      _socketStreamSub = stream.listen((data) {
-        try {
-          final idSocket = data['id_socket'] as String;
-          final id = data['id'] as int;
-          final lat = (data['lat'] as num).toDouble();
-          final lng = (data['lng'] as num).toDouble();
-
-          // En vez de crear el Marker sin el icon (coste),
-          // puedes crear una "marker info" y delegar icon -> getMarkerUseCase
-          add(
-            AddDriverPositionMarker(
-              idSocket: idSocket,
-              id: id,
-              lat: lat,
-              lng: lng,
-            ),
-          );
-        } catch (e) {
-          debugPrint('Invalid driver data from socket: $e');
-        }
-      });
-    });
-  }
-
-  // --------------------------
   // Evento que crea/actualiza el marker (usa usecases)
   Future<void> _onAddDriverPositionMarker(
     AddDriverPositionMarker event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
+    print('-----_onAddDriverPositionMarker -----');
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
@@ -297,32 +246,131 @@ class ClientMapSeekerBloc
       'assets/img/car-placeholder.png',
     );
 
-    iconResult.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
+    final icon = await foldOrEmitError<BitmapDescriptor, ClientMapSeekerState>(
+      iconResult,
+      emit,
+      (msg) => ClientMapSeekerError(msg),
+    );
+    if (icon == null) return;
+
+    final markerResult = await _geolocatorUseCases.getMarkerUseCase(
+      event.idSocket,
+      'Driver',
+      'Available driver',
+      LatLng(event.lat, event.lng),
       icon,
-    ) async {
+    );
+
+    final marker = await foldOrEmitError<Marker, ClientMapSeekerState>(
+      markerResult,
+      emit,
+      (msg) => ClientMapSeekerError(msg),
+    );
+    if (marker == null) return;
+
+    print('markerResult: $markerResult');
+    final updated = Map<String, Marker>.from(current.driverMarkers)
+      ..[event.idSocket] = marker;
+    /*     final updated = Map<String, LatLng>.from(current.driverPositions)
+      ..[event.idSocket] = LatLng(event.lat, event.lng); */
+
+    print('emit');
+    emit(current.copyWith(driverMarkers: updated));
+  }
+
+  void _onRemoveDriverPositionMarker(
+    RemoveDriverPositionMarker event,
+    Emitter<ClientMapSeekerState> emit,
+  ) {
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+
+    final updated = Map<String, Marker>.from(current.driverMarkers)
+      ..remove(event.idSocket);
+
+    emit(current.copyWith(driverMarkers: updated));
+  }
+
+  void _onClearDriverMarkers(
+    ClearDriverMarkers event,
+    Emitter<ClientMapSeekerState> emit,
+  ) {
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+
+    // Vaciar el map/Set de driverMarkers
+    emit(
+      current.copyWith(driverMarkers: <String, Marker>{}),
+    ); // si ya cambiaste a Map<String,Marker>
+  }
+
+  Future<void> _onDriversSnapshotReceived(
+    DriversSnapshotReceived event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    print('_onDriversSnapshotReceived: ${event.drivers.length} drivers');
+
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+
+    // Si snapshot vacío y hace poco tuvimos uno no vacío, lo ignoramos
+    if (event.drivers.isEmpty) {
+      final last = _lastNonEmptySnapshotAt;
+      if (last != null &&
+          DateTime.now().difference(last) < _emptySnapshotGrace) {
+        print(
+          'Ignored empty snapshot because last non-empty was ${DateTime.now().difference(last).inMilliseconds} ms ago',
+        );
+        return;
+      }
+      // Si no hubo non-empty reciente, procedemos a limpiar
+      emit(current.copyWith(driverMarkers: <String, Marker>{}));
+      return;
+    }
+
+    // snapshot no vacío -> actualizamos timestamp y construimos markers
+    _lastNonEmptySnapshotAt = DateTime.now();
+
+    // Reutiliza icon una sola vez (eficiencia)
+    final iconResult = await _geolocatorUseCases.createMarkerUseCase(
+      'assets/img/car-placeholder.png',
+    );
+
+    final icon = await foldOrEmitError<BitmapDescriptor, ClientMapSeekerState>(
+      iconResult,
+      emit,
+      (msg) => ClientMapSeekerError(msg),
+    );
+    if (icon == null) return;
+
+    final newMarkers = <String, Marker>{};
+    for (final entry in event.drivers.entries) {
+      final driverId = entry.key;
+      final pos = entry.value;
+
       final markerResult = await _geolocatorUseCases.getMarkerUseCase(
-        event.idSocket,
+        driverId,
         'Driver',
         'Available driver',
-        LatLng(event.lat, event.lng),
+        LatLng(pos.latitude, pos.longitude),
         icon,
       );
 
-      markerResult.fold(
-        (failure) => emit(ClientMapSeekerError(failure.message)),
-        (marker) {
-          // copiamos y actualizamos set
-          final updated = {
-            ...current.driverMarkers.where(
-              (m) => m.markerId.value != event.idSocket,
-            ),
-            marker,
-          };
-
-          emit(current.copyWith(driverMarkers: updated));
-        },
+      final marker = await foldOrEmitError<Marker, ClientMapSeekerState>(
+        markerResult,
+        emit,
+        (msg) => ClientMapSeekerError(msg),
       );
-    });
+
+      if (marker != null) {
+        newMarkers[driverId] = marker;
+      }
+    }
+
+    emit(current.copyWith(driverMarkers: newMarkers));
   }
 
   void _onClientMapCameraCentered(

@@ -16,7 +16,7 @@ class SocketRepositoryImpl implements SocketRepository {
   ResultFuture<void> connect() async {
     try {
       debugPrint('Connecting to socket...');
-      socket.connect();
+      await socket.connect();
       return const Right(null);
     } catch (e) {
       return Left(SocketFailure(message: e.toString()));

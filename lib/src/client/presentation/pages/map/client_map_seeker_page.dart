@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
@@ -45,6 +46,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? destinationLatLng;
   bool showMapPadding = false;
   SelectedField currentSelectedField = SelectedField.origin;
+  late SocketBloc _socketBloc;
 
   BitmapDescriptor? _originIcon;
   BitmapDescriptor? _destinationIcon;
@@ -52,8 +54,15 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   @override
   void initState() {
     super.initState();
-
     _mapController = Completer();
+    print('--------------entro en client map sekeeer-----');
+
+    // _socketBloc = context.read<SocketBloc>();
+
+    /*     WidgetsBinding.instance.addPostFrameCallback((_) {
+     // _socketBloc.add(ConnectSocket());
+    }); */
+
     _loadCustomIcons().then((_) async {
       await _mapController.future;
       context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
@@ -88,6 +97,10 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         })
         .catchError((_) {});
     _mapController = Completer();
+    /*     _socketBloc.add(DisconnectSocket());
+    try {
+      context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
+    } catch (_) {} */
     super.dispose();
   }
 
@@ -128,18 +141,28 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
           builder: (context, state) {
             // Si está migrado, usa datos del success
             var markersFromState = <Marker>{};
+
             var polylinesFromState = <Polyline>{};
             var isTripReady = false;
 
             if (state is ClientMapSeekerSuccess) {
-              // markers
-              markersFromState = handleMarkers(
-                state: state,
-                originLatLng: originLatLng,
-                destinationLatLng: destinationLatLng,
-                originIcon: _originIcon,
-                destinationIcon: _destinationIcon,
+              debugPrint(
+                'UI sees driverMarkers count: ${state.driverMarkers.length}',
               );
+              /*         debugPrint(
+                'UI driverMarkers ids: ${state.driverMarkers.map((m) => m.markerId.value).toList()}',
+              ); */
+              // markers
+              markersFromState = {
+                ...handleMarkers(
+                  state: state,
+                  originLatLng: originLatLng,
+                  destinationLatLng: destinationLatLng,
+                  originIcon: _originIcon,
+                  destinationIcon: _destinationIcon,
+                ),
+                ...state.driverMarkers.values.toSet(),
+              };
 
               polylinesFromState = state.polylines.values.toSet();
 

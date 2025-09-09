@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
+import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/data/repositories/geolocator_repository_impl.dart';
 import 'package:indriver_uber_clone/core/data/repositories/socket_repository_impl.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
@@ -66,6 +67,7 @@ Future<void> _initCore() async {
     ..registerLazySingleton<RolesBloc>(() => RolesBloc(sl()))
     ..registerLazySingleton<Client>(Client.new)
     ..registerLazySingleton<SessionBloc>(SessionBloc.new)
+    ..registerLazySingleton<SocketBloc>(() => SocketBloc(sl()))
     ..registerLazySingleton(AppNavigatorService.new)
     ..registerLazySingleton(MapMarkerIconService.new)
     ..registerLazySingleton(LocationService.new)

@@ -149,7 +149,7 @@ class _SignInContentState extends State<SignInContent> {
                                       ),
                                     ),
                               onPressed: vm.isSubmitting || !vm.isValid
-                                  ? null
+                                  ? () {} //TODO CHECK THIS
                                   : () => context.read<SignInBloc>().add(
                                       const SignInSubmitted(),
                                     ),
