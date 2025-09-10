@@ -22,22 +22,31 @@ class _RolesItemState extends State<RolesItem> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        // LoadingService.show(context, message: 'Loading Role...');
-
         final socketBloc = context.read<SocketBloc>();
 
         if (widget.role.id == 'CLIENT') {
+          // Disconectar primero
           socketBloc.add(DisconnectSocket());
+
+          // Esperamos hasta recibir SocketDisconnected o SocketError (timeout por seguridad)
+          try {
+            await socketBloc.stream
+                .firstWhere((s) => s is SocketDisconnected || s is SocketError)
+                .timeout(const Duration(seconds: 2));
+          } catch (_) {
+            // Timeout o error -> seguimos de todas formas (opcional: log)
+            debugPrint(
+              'RolesItem: timeout waiting for SocketDisconnected (continuing)',
+            );
+          }
+
+          // ahora limpio marcadores y reconecto
           context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
           socketBloc.add(ConnectSocket());
         }
 
-        // Avisamos al RolesBloc qué rol eligió
+        // Seleccion de rol y navegacion
         context.read<RolesBloc>().add(SelectRole(widget.role));
-
-        print('navigating to ${widget.role.route}');
-        //  LoadingService.hide(context);
-
         await Navigator.pushReplacementNamed(context, widget.role.route);
       },
       child: Column(

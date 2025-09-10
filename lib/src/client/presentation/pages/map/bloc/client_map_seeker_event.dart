@@ -86,3 +86,5 @@ class DriversSnapshotReceived extends ClientMapSeekerEvent {
   @override
   List<Object?> get props => [drivers];
 }
+
+class ResetCameraRequested extends ClientMapSeekerEvent {}

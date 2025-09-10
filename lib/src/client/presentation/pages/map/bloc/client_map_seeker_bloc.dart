@@ -33,6 +33,7 @@ class ClientMapSeekerBloc
     on<ChangeSelectedFieldRequested>(_onChangeSelectedFieldRequested);
     on<DrawRouteRequested>(_onDrawRouteRequested);
     on<ClientMapCameraCentered>(_onClientMapCameraCentered);
+    on<ResetCameraRequested>(_onResetCameraRequested);
 
     on<AddDriverPositionMarker>(_onAddDriverPositionMarker);
     on<RemoveDriverPositionMarker>(_onRemoveDriverPositionMarker);
@@ -83,17 +84,30 @@ class ClientMapSeekerBloc
     Emitter<ClientMapSeekerState> emit,
   ) async {
     // emit(ClientMapSeekerLoading());
-
+    print(' -----_onGetCurrentPositionRequested -----');
     final result = await _geolocatorUseCases.findPositionUseCase();
+
     result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
       position,
     ) {
+      print('Current position: $position');
       // emit a success state if not already
       final current = state is ClientMapSeekerSuccess
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
+      print('emitting new position current: $current');
       emit(current.copyWith(userPosition: position));
     });
+  }
+
+  Future<void> _onResetCameraRequested(
+    ResetCameraRequested event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+    emit(current.copyWith(hasCenteredCameraOnce: false));
   }
 
   Future<void> _onGetAddressFromLatLng(
@@ -159,9 +173,11 @@ class ClientMapSeekerBloc
     ChangeSelectedFieldRequested event,
     Emitter<ClientMapSeekerState> emit,
   ) {
+    print('-----_onChangeSelectedFieldRequested -----');
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
+    print('selectedField: ${event.selectedField}');
 
     emit(current.copyWith(selectedField: event.selectedField));
   }

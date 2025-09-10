@@ -59,14 +59,14 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
 
     // _socketBloc = context.read<SocketBloc>();
 
-    /*     WidgetsBinding.instance.addPostFrameCallback((_) {
-     // _socketBloc.add(ConnectSocket());
-    }); */
-
+    //WidgetsBinding.instance.addPostFrameCallback((_) {
     _loadCustomIcons().then((_) async {
       await _mapController.future;
+      print('Load customIcons complete, calling GetCurrentPositionRequested');
+      context.read<ClientMapSeekerBloc>().add(ResetCameraRequested());
       context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
     });
+    //  });
 
     originFocusNode.addListener(() {
       if (originFocusNode.hasFocus) {
@@ -97,10 +97,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         })
         .catchError((_) {});
     _mapController = Completer();
-    /*     _socketBloc.add(DisconnectSocket());
-    try {
-      context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
-    } catch (_) {} */
     super.dispose();
   }
 
