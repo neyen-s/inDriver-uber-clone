@@ -9,7 +9,7 @@ class LoadingService {
     if (_isShowing) return;
     _isShowing = true;
 
-    showDialog(
+    showDialog<Widget>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withValues(alpha: 0.4),

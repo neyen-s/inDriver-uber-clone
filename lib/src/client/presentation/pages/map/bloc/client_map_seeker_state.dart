@@ -9,8 +9,6 @@ sealed class ClientMapSeekerState extends Equatable {
 
 class ClientMapSeekerInitial extends ClientMapSeekerState {}
 
-class ClientMapSeekerLoading extends ClientMapSeekerState {}
-
 class ClientMapSeekerError extends ClientMapSeekerState {
   const ClientMapSeekerError(this.message);
   final String message;
@@ -24,9 +22,9 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     this.userPosition,
     this.selectedField = SelectedField.origin,
     this.driverMarkers = const {},
-    //  this.driverPositions = const {},
     this.isSocketConnected = false,
     this.hasCenteredCameraOnce = false,
+    this.isLoading = false,
     this.originAddress,
     this.destinationAddress,
     this.distanceKm,
@@ -39,9 +37,9 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
   final Position? userPosition;
   final SelectedField selectedField;
   final Map<String, Marker> driverMarkers;
-  //  final Map<String, LatLng> driverPositions; //TODO DELETE THIS DIDNT WORK!!
   final bool isSocketConnected;
   final bool hasCenteredCameraOnce;
+  final bool isLoading;
   final String? originAddress;
   final String? destinationAddress;
   final double? distanceKm;
@@ -54,10 +52,10 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     Position? userPosition,
     SelectedField? selectedField,
     Map<String, Marker>? driverMarkers,
-    // Map<String, LatLng>? driverPositions,
     Set<Polyline>? polylines,
     bool? isSocketConnected,
     bool? hasCenteredCameraOnce,
+    bool? isLoading,
     LatLng? origin,
     LatLng? destination,
     String? originAddress,
@@ -70,10 +68,10 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
       userPosition: userPosition ?? this.userPosition,
       selectedField: selectedField ?? this.selectedField,
       driverMarkers: driverMarkers ?? this.driverMarkers,
-      //   driverPositions: driverPositions ?? this.driverPositions,
       isSocketConnected: isSocketConnected ?? this.isSocketConnected,
       hasCenteredCameraOnce:
           hasCenteredCameraOnce ?? this.hasCenteredCameraOnce,
+      isLoading: isLoading ?? this.isLoading,
       origin: origin ?? this.origin,
       destination: destination ?? this.destination,
       originAddress: originAddress ?? this.originAddress,
@@ -89,9 +87,9 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     userPosition,
     selectedField,
     driverMarkers,
-    //   driverPositions,
     isSocketConnected,
     hasCenteredCameraOnce,
+    isLoading,
     origin,
     destination,
     originAddress,

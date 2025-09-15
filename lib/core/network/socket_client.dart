@@ -21,7 +21,7 @@ class SocketClient {
   }) {
     if (_connectCompleter != null) return _connectCompleter!.future;
     if (_socket != null) {
-      // ya conectado o intentando -> devuelve el future existente si existe
+      //Already connected or connecting -> return existing future if any
       if (_connectCompleter != null) {
         return _connectCompleter!.future;
       }

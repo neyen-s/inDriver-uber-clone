@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 
@@ -26,18 +25,13 @@ class _DriverMapPageState extends State<DriverMapPage> {
   );
   final Set<Marker> _markers = {};
   late DriverMapBloc _driverMapBloc;
-  late SocketBloc _socketBloc;
 
   @override
   void initState() {
     super.initState();
-    print('------DriverMapPage initState------');
     _driverMapBloc = context.read<DriverMapBloc>();
-    // _socketBloc = context.read<SocketBloc>();
     _mapController = Completer<GoogleMapController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      //_socketBloc.add(ConnectSocket());
-      print('Calling Driver Location Stream from drver map page');
       _driverMapBloc.add(const DriverLocationStreamStarted());
     });
   }

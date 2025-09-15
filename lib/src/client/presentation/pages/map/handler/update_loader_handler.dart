@@ -8,13 +8,17 @@ void updateLoader(BuildContext context) {
   final clientState = context.read<ClientMapSeekerBloc>().state;
   final mapLifecycle = context.read<MapLifecycleCubit>().state;
 
-  final blocLoading =
-      clientState is ClientMapSeekerLoading ||
-      clientState is ClientMapSeekerInitial;
-
   final mapReady = mapLifecycle == MapLifecycleState.ready;
 
-  if (blocLoading || !mapReady) {
+  var shouldShow = false;
+
+  if (clientState is ClientMapSeekerSuccess) {
+    shouldShow = clientState.isLoading || !mapReady;
+  } else {
+    shouldShow = !mapReady;
+  }
+
+  if (shouldShow) {
     LoadingService.show(context, message: 'Loading location...');
   } else {
     LoadingService.hide(context);

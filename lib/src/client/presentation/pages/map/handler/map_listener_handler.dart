@@ -27,10 +27,6 @@ Future<void> handleMapStateChange({
 
     onUpdateSelectedField(s.selectedField);
 
-    print(
-      's.userPosition != null : ${s.userPosition != null} && !s.hasCenteredCameraOnce : ${!s.hasCenteredCameraOnce}',
-    );
-
     // Updates the camera if theres is a userPosition
     if (s.userPosition != null && !s.hasCenteredCameraOnce) {
       final latLng = LatLng(
@@ -42,7 +38,6 @@ Future<void> handleMapStateChange({
       if (!(latLng.latitude.abs() < 0.000001 &&
           latLng.longitude.abs() < 0.000001)) {
         try {
-          print('Moving camera to user position: $latLng');
           await moveCameraTo(
             controller: mapController,
             target: latLng,

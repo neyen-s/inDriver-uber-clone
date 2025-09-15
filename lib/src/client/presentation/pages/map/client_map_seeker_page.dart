@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
@@ -46,7 +45,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   LatLng? destinationLatLng;
   bool showMapPadding = false;
   SelectedField currentSelectedField = SelectedField.origin;
-  late SocketBloc _socketBloc;
+  late ClientMapSeekerBloc clientBloc;
 
   BitmapDescriptor? _originIcon;
   BitmapDescriptor? _destinationIcon;
@@ -55,16 +54,13 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   void initState() {
     super.initState();
     _mapController = Completer();
-    print('--------------entro en client map sekeeer-----');
+    clientBloc = context.read<ClientMapSeekerBloc>();
 
-    // _socketBloc = context.read<SocketBloc>();
-
-    //WidgetsBinding.instance.addPostFrameCallback((_) {
     _loadCustomIcons().then((_) async {
       await _mapController.future;
-      print('Load customIcons complete, calling GetCurrentPositionRequested');
-      context.read<ClientMapSeekerBloc>().add(ResetCameraRequested());
-      context.read<ClientMapSeekerBloc>().add(GetCurrentPositionRequested());
+      clientBloc
+        ..add(ResetCameraRequested())
+        ..add(GetCurrentPositionRequested());
     });
     //  });
 
@@ -145,9 +141,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
               debugPrint(
                 'UI sees driverMarkers count: ${state.driverMarkers.length}',
               );
-              /*         debugPrint(
-                'UI driverMarkers ids: ${state.driverMarkers.map((m) => m.markerId.value).toList()}',
-              ); */
+
               // markers
               markersFromState = {
                 ...handleMarkers(
@@ -296,8 +290,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
       destinationLatLng = latLng;
     }
     await moveCameraTo(controller: _mapController, target: latLng, zoom: 16);
-    context.read<ClientMapSeekerBloc>().add(
-      GetAddressFromLatLng(latLng, selectedField: field),
-    );
+    clientBloc.add(GetAddressFromLatLng(latLng, selectedField: field));
   }
 }

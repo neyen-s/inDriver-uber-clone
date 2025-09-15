@@ -14,7 +14,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     on<ConnectSocket>(_onConnectSocket);
     on<DisconnectSocket>(_onDisconnectSocket);
 
-    // handlers que *sí* usan emit(...) dentro de su scope (correcto)
     on<SocketDriversSnapshotReceived>(_onDriversSnapshotReceived);
     on<SocketDriverPositionReceived>(_onDriverPositionReceived);
     on<SocketDriverDisconnectedReceived>(_onDriverDisconnectedReceived);
@@ -33,9 +32,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
   bool _isConnecting = false;
   bool _isConnected = false;
 
-  // -------------------------
-  // Connect / Disconnect
-  // -------------------------
   Future<void> _onConnectSocket(
     ConnectSocket event,
     Emitter<SocketState> emit,
@@ -50,19 +46,16 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     try {
       debugPrint('SocketBloc: trying to connect (awaiting repo)...');
 
-      // 1) Lanzamos la conexión (inicia la creación del socket y la conexión) PERO
-      // no esperamos aquí a que termine la conexión. Esto permite que el socket
-      // exista y se pueda usar para registrar listeners inmediatamente.
+      //Creates the socket and starts connecting, but does NOT wait for
+      // connection. This allows registering listeners immediately.
       final connectFuture = _socketUseCases.connectSocketUseCase();
-      // 2) Registramos listeners (initial_drivers, new_driver_position, driver_disconnected)
-      // IMPORTANT: _handleInitialDrivers() y _listenDriverPositions() usan socket.on(...) internamente.
-      // Dado que socket ya fue creado dentro de connect(), ahora podemos registrarlos antes de await.
-      _handleInitialDrivers();
-      _listenDriverPositions();
 
-      // 3) Ahora esperamos a que la conexión realmente se confirme.
+      //Listeners
+      unawaited(_handleInitialDrivers());
+      unawaited(_listenDriverPositions());
+
+      // Now we wait for the conecction to finish
       await connectFuture;
-      // pedir snapshot/forzar server a enviar
       try {
         await _socketUseCases.sendSocketMessageUseCase(
           'request_initial_drivers',
@@ -71,9 +64,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
         debugPrint('SocketBloc: requested initial drivers snapshot');
       } catch (e) {
         debugPrint('SocketBloc: error requesting initial drivers -> $e');
-        // fallback HTTP opcional:
-        // final httpSnapshot = await driversRepository.getDriversSnapshotHttp();
-        // add(SocketDriversSnapshotReceived(httpSnapshot));
       }
       emit(SocketConnected());
       _isConnected = true;
@@ -103,41 +93,38 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     }
   }
 
-  // -------------------------
-  // Inicial snapshot (no emite aquí; añade evento)
-  // -------------------------
-
   Future<void> _handleInitialDrivers() async {
-    print(' SocketBloc: requesting initial drivers snapshot');
+    debugPrint(' SocketBloc: requesting initial drivers snapshot');
     final res = await _socketUseCases.onSocketMessageUseCase('initial_drivers');
     res.fold(
       (failure) => addError(
         Exception('Socket initial_drivers error: ${failure.message}'),
       ),
       (stream) {
-        final sub = stream.listen((data) {
-          if (data == null) return;
-          if (data is Map) {
-            final snapshot = <String, LatLng>{};
-            data.forEach((k, v) {
-              final lat = _parseToDouble(v['lat']);
-              final lng = _parseToDouble(v['lng']);
-              if (lat != null && lng != null)
-                snapshot[k.toString()] = LatLng(lat, lng);
-            });
-            add(SocketDriversSnapshotReceived(snapshot));
-          }
-        }, onError: (e, st) => debugPrint('initial_drivers stream error: $e'));
+        final sub = stream.listen(
+          (data) {
+            if (data == null) return;
+            if (data is Map) {
+              final snapshot = <String, LatLng>{};
+              data.forEach((k, v) {
+                final lat = _parseToDouble(v['lat']);
+                final lng = _parseToDouble(v['lng']);
+                if (lat != null && lng != null) {
+                  snapshot[k.toString()] = LatLng(lat, lng);
+                }
+              });
+              add(SocketDriversSnapshotReceived(snapshot));
+            }
+          },
+          onError: (Object e, StackTrace st) =>
+              debugPrint('initial_drivers stream error: $e'),
+        );
         _socketSubscriptions.add(sub);
       },
     );
   }
 
-  // -------------------------
-  // Escuchar updates y desconexiones (no emiten: añaden eventos)
-  // -------------------------
   Future<void> _listenDriverPositions() async {
-    // new_driver_position (posiciones nuevas / updates)
     final resPositions = await _socketUseCases.onSocketMessageUseCase(
       'new_driver_position',
     );
@@ -155,7 +142,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
               if (data == null) return;
 
               if (data is Map) {
-                dynamic rawId =
+                final dynamic rawId =
                     data['id'] ??
                     data['id_socket'] ??
                     data['driver_id'] ??
@@ -166,14 +153,13 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
                 final lng = _parseToDouble(data['lng']);
 
                 if (driverId == null || lat == null || lng == null) {
-                  print('Ignored new_driver_position (incomplete): $data');
+                  debugPrint('Ignored new_driver_position (incomplete): $data');
                   return;
                 }
 
-                // En lugar de llamar emit(...) aquí, añadimos un evento que el bloc
-                // procesará dentro de su handler (donde sí se puede usar emit).
-                print(
-                  '--- new_driver_position: id=$driverId lat=$lat lng=$lng emitting now SocketDriverPositionReceived',
+                debugPrint(
+                  '--- new_driver_position: id=$driverId lat=$lat lng=$lng'
+                  ' emitting now SocketDriverPositionReceived',
                 );
                 add(
                   SocketDriverPositionReceived(
@@ -183,16 +169,17 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
                   ),
                 );
               } else {
-                print(
-                  'new_driver_position: unexpected payload type: ${data.runtimeType}',
+                debugPrint(
+                  'new_driver_position: unexpected payload type:'
+                  ' ${data.runtimeType}',
                 );
               }
             } catch (e, st) {
-              print('Error parsing new_driver_position: $e\n$st');
+              debugPrint('Error parsing new_driver_position: $e\n$st');
             }
           },
-          onError: (e, st) {
-            print('Stream error on new_driver_position: $e\n$st');
+          onError: (Object e, StackTrace st) {
+            debugPrint('Stream error on new_driver_position: $e\n$st');
           },
         );
 
@@ -217,7 +204,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
             try {
               if (data == null) return;
               if (data is Map) {
-                dynamic rawId =
+                final dynamic rawId =
                     data['id'] ??
                     data['id_socket'] ??
                     data['driver_id'] ??
@@ -226,19 +213,22 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
                 if (driverId != null) {
                   add(SocketDriverDisconnectedReceived(idSocket: driverId));
                 } else {
-                  print('---driver_disconnected: payload without id: $data');
+                  debugPrint(
+                    '---driver_disconnected: payload without id: $data',
+                  );
                 }
               } else {
-                print(
-                  '----driver_disconnected: unexpected payload type: ${data.runtimeType}',
+                debugPrint(
+                  '----driver_disconnected: unexpected payload type:'
+                  '${data.runtimeType}',
                 );
               }
             } catch (e, st) {
-              print('Error parsing driver_disconnected: $e\n$st');
+              debugPrint('Error parsing driver_disconnected: $e\n$st');
             }
           },
-          onError: (e, st) {
-            print('Stream error on driver_disconnected: $e\n$st');
+          onError: (Object e, StackTrace st) {
+            debugPrint('Stream error on driver_disconnected: $e\n$st');
           },
         );
 
@@ -247,22 +237,21 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     );
   }
 
-  // -------------------------
-  // Event handlers (estos sí emiten directamente)
-  // -------------------------
   void _onDriversSnapshotReceived(
     SocketDriversSnapshotReceived event,
     Emitter<SocketState> emit,
   ) {
-    print(
-      'SocketBloc ON snapshot -> emit count=${event.drivers.length}, keys=${event.drivers.keys.toList()}',
+    debugPrint(
+      'SocketBloc ON snapshot -> emit count=${event.drivers.length},'
+      ' keys=${event.drivers.keys.toList()}',
     );
 
     _drivers
       ..clear()
       ..addAll(event.drivers);
-    print(
-      '-- _onDriversSnapshotReceived : SocketBloc EMIT drivers count: ${_drivers.length}, keys: ${_drivers.keys.toList()}',
+    debugPrint(
+      '-- _onDriversSnapshotReceived : SocketBloc EMIT drivers count:'
+      ' ${_drivers.length}, keys: ${_drivers.keys.toList()}',
     );
     emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
   }
@@ -271,14 +260,16 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     SocketDriverPositionReceived event,
     Emitter<SocketState> emit,
   ) {
-    print(
-      'SocketBloc ON update -> id=${event.idSocket} lat=${event.lat} lng=${event.lng}',
+    debugPrint(
+      'SocketBloc ON update -> id=${event.idSocket}'
+      ' lat=${event.lat} lng=${event.lng}',
     );
     _pendingRemovals.remove(event.idSocket)?.cancel();
 
     _drivers[event.idSocket] = LatLng(event.lat, event.lng);
-    print(
-      'SocketBloc EMIT drivers count: ${_drivers.length}, keys: ${_drivers.keys.toList()}',
+    debugPrint(
+      'SocketBloc EMIT drivers count: ${_drivers.length},'
+      ' keys: ${_drivers.keys.toList()}',
     );
 
     emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
@@ -289,13 +280,11 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     Emitter<SocketState> emit,
   ) {
     final id = event.idSocket;
-    // cancelar timer previo si existe
     _pendingRemovals[id]?.cancel();
 
-    // programamos un Timer que añadirá un evento cuando expire
+    //Allows a delay before removing, in case of quick reconnect
     _pendingRemovals[id] = Timer(_clientRemovalDelay, () {
       _pendingRemovals.remove(id);
-      // en lugar de emitir, añadimos un evento al bloc
       add(SocketDriverRemovalTimeout(id));
     });
   }
@@ -307,12 +296,11 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     final id = event.idSocket;
     if (_drivers.containsKey(id)) {
       _drivers.remove(id);
-      print(
-        '-- (client) finalize removal: SocketBloc EMIT drivers count: ${_drivers.length}, keys: ${_drivers.keys.toList()}',
+      debugPrint(
+        '-- (client) finalize removal: SocketBloc EMIT drivers count:'
+        ' ${_drivers.length}, keys: ${_drivers.keys.toList()}',
       );
       emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
-    } else {
-      // nada que hacer (posible reconexión previa ya canceló)
     }
   }
 
@@ -331,9 +319,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     }
   }
 
-  // -------------------------
-  // Util helpers
-  // -------------------------
   static double? _parseToDouble(dynamic value) {
     if (value == null) return null;
     if (value is double) return value;

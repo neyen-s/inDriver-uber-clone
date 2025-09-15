@@ -53,18 +53,12 @@ class ClientMapSeekerBloc
   StreamSubscription<Position>? _positionStreamSub;
   LatLng? lastLatLng;
 
-  // dentro de la clase ClientMapSeekerBloc
   DateTime? _lastNonEmptySnapshotAt;
   final Duration _emptySnapshotGrace = const Duration(seconds: 2);
 
-  // Escuchar estados del socket
-
   void _listenToSocket() {
-    print('ENTRO EN LISTEN TO SOCKET');
     _socketSub = socketBloc.stream.listen((socketState) {
-      print('ClientMapSeekerBloc received socket state: $socketState');
       if (socketState is SocketDriverPositionsUpdated) {
-        // En lugar de añadir uno a uno, mandamos el snapshot completo
         add(DriversSnapshotReceived(Map.from(socketState.drivers)));
       }
     });
@@ -83,20 +77,17 @@ class ClientMapSeekerBloc
     GetCurrentPositionRequested event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    // emit(ClientMapSeekerLoading());
-    print(' -----_onGetCurrentPositionRequested -----');
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+    emit(current.copyWith(isLoading: true));
+
     final result = await _geolocatorUseCases.findPositionUseCase();
 
     result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
       position,
     ) {
-      print('Current position: $position');
-      // emit a success state if not already
-      final current = state is ClientMapSeekerSuccess
-          ? state as ClientMapSeekerSuccess
-          : const ClientMapSeekerSuccess();
-      print('emitting new position current: $current');
-      emit(current.copyWith(userPosition: position));
+      emit(current.copyWith(userPosition: position, isLoading: false));
     });
   }
 
@@ -134,7 +125,6 @@ class ClientMapSeekerBloc
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
 
-      // Diferenciar por selectedField
       if (event.selectedField == SelectedField.origin) {
         emit(
           current.copyWith(
@@ -157,7 +147,6 @@ class ClientMapSeekerBloc
     }
   }
 
-  // --------------------------
   void _onCancelTripConfirmation(
     CancelTripConfirmation event,
     Emitter<ClientMapSeekerState> emit,
@@ -173,11 +162,9 @@ class ClientMapSeekerBloc
     ChangeSelectedFieldRequested event,
     Emitter<ClientMapSeekerState> emit,
   ) {
-    print('-----_onChangeSelectedFieldRequested -----');
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
-    print('selectedField: ${event.selectedField}');
 
     emit(current.copyWith(selectedField: event.selectedField));
   }
@@ -191,7 +178,7 @@ class ClientMapSeekerBloc
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
 
-      //emit(ClientMapSeekerLoading());
+      emit(current.copyWith(isLoading: true));
 
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
 
@@ -211,7 +198,7 @@ class ClientMapSeekerBloc
       if (response.routes.isNotEmpty) {
         final route = response.routes.first;
 
-        // 🔹 Construir polyline
+        // Build Polyline
         final points = route.polylinePoints ?? [];
         final latLngPoints = points
             .map((p) => LatLng(p.latitude, p.longitude))
@@ -229,7 +216,7 @@ class ClientMapSeekerBloc
           polyline.polylineId: polyline,
         };
 
-        // 🔹 Extraer distancia y duración
+        // Distance in km and duration in minutes
         final distanceKm = (route.distanceMeters ?? 0) / 1000;
         final durationMinutes = ((route.duration ?? 0) / 60).round();
         emit(
@@ -237,23 +224,21 @@ class ClientMapSeekerBloc
             mapPolylines: updatedPolylines,
             distanceKm: distanceKm,
             durationMinutes: durationMinutes,
+            isLoading: false,
           ),
         );
       } else {
-        emit(const ClientMapSeekerError('No se pudo dibujar la ruta.'));
+        emit(const ClientMapSeekerError('Could not find route.'));
       }
     } catch (e) {
-      emit(ClientMapSeekerError('Error al trazar ruta: $e'));
+      emit(ClientMapSeekerError('Error While drawing route: $e'));
     }
   }
 
-  // --------------------------
-  // Evento que crea/actualiza el marker (usa usecases)
   Future<void> _onAddDriverPositionMarker(
     AddDriverPositionMarker event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    print('-----_onAddDriverPositionMarker -----');
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
@@ -265,7 +250,7 @@ class ClientMapSeekerBloc
     final icon = await foldOrEmitError<BitmapDescriptor, ClientMapSeekerState>(
       iconResult,
       emit,
-      (msg) => ClientMapSeekerError(msg),
+      ClientMapSeekerError.new,
     );
     if (icon == null) return;
 
@@ -280,17 +265,13 @@ class ClientMapSeekerBloc
     final marker = await foldOrEmitError<Marker, ClientMapSeekerState>(
       markerResult,
       emit,
-      (msg) => ClientMapSeekerError(msg),
+      ClientMapSeekerError.new,
     );
     if (marker == null) return;
 
-    print('markerResult: $markerResult');
     final updated = Map<String, Marker>.from(current.driverMarkers)
       ..[event.idSocket] = marker;
-    /*     final updated = Map<String, LatLng>.from(current.driverPositions)
-      ..[event.idSocket] = LatLng(event.lat, event.lng); */
 
-    print('emit');
     emit(current.copyWith(driverMarkers: updated));
   }
 
@@ -316,41 +297,36 @@ class ClientMapSeekerBloc
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
 
-    // Vaciar el map/Set de driverMarkers
-    emit(
-      current.copyWith(driverMarkers: <String, Marker>{}),
-    ); // si ya cambiaste a Map<String,Marker>
+    emit(current.copyWith(driverMarkers: <String, Marker>{}));
   }
 
   Future<void> _onDriversSnapshotReceived(
     DriversSnapshotReceived event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
-    print('_onDriversSnapshotReceived: ${event.drivers.length} drivers');
-
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
 
-    // Si snapshot vacío y hace poco tuvimos uno no vacío, lo ignoramos
+    //if recently had non-empty, ignore empty,
+    //For when it desconects and reconect from the socket quickly
     if (event.drivers.isEmpty) {
       final last = _lastNonEmptySnapshotAt;
       if (last != null &&
           DateTime.now().difference(last) < _emptySnapshotGrace) {
-        print(
-          'Ignored empty snapshot because last non-empty was ${DateTime.now().difference(last).inMilliseconds} ms ago',
+        debugPrint(
+          'Ignored empty snapshot because last non-empty was'
+          ' ${DateTime.now().difference(last).inMilliseconds} ms ago',
         );
         return;
       }
-      // Si no hubo non-empty reciente, procedemos a limpiar
       emit(current.copyWith(driverMarkers: <String, Marker>{}));
       return;
     }
 
-    // snapshot no vacío -> actualizamos timestamp y construimos markers
+    //shanpshot not empty -> update timestamp and build markers
     _lastNonEmptySnapshotAt = DateTime.now();
 
-    // Reutiliza icon una sola vez (eficiencia)
     final iconResult = await _geolocatorUseCases.createMarkerUseCase(
       'assets/img/car-placeholder.png',
     );
@@ -358,7 +334,7 @@ class ClientMapSeekerBloc
     final icon = await foldOrEmitError<BitmapDescriptor, ClientMapSeekerState>(
       iconResult,
       emit,
-      (msg) => ClientMapSeekerError(msg),
+      ClientMapSeekerError.new,
     );
     if (icon == null) return;
 
@@ -378,7 +354,7 @@ class ClientMapSeekerBloc
       final marker = await foldOrEmitError<Marker, ClientMapSeekerState>(
         markerResult,
         emit,
-        (msg) => ClientMapSeekerError(msg),
+        ClientMapSeekerError.new,
       );
 
       if (marker != null) {

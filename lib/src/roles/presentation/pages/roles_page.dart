@@ -20,7 +20,6 @@ class _RolesPageState extends State<RolesPage> {
   @override
   void initState() {
     super.initState();
-    print('entroo en roles page--------------');
     context.read<RolesBloc>().add(GetRolesList());
   }
 
@@ -40,17 +39,8 @@ class _RolesPageState extends State<RolesPage> {
           ),
           BlocListener<SocketBloc, SocketState>(
             listener: (context, state) async {
-              /*               if (state is SocketConnected) {
-                // Cuando el socket está conectado, navegamos
-                final rolesBloc = context.read<RolesBloc>();
-                if (rolesBloc.state is RoleSelected) {
-                  final role = (rolesBloc.state as RoleSelected).role;
-                  await Navigator.pushReplacementNamed(context, role.route);
-                }
-              } */
-
               if (state is SocketError) {
-                CoreUtils.showSnackBar(context, "Error al conectar socket");
+                CoreUtils.showSnackBar(context, 'ErrorConnecting to socket');
               }
             },
           ),

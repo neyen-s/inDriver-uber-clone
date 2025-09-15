@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
-import 'package:indriver_uber_clone/core/services/loader_service.dart';
-import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
 
@@ -25,27 +23,23 @@ class _RolesItemState extends State<RolesItem> {
         final socketBloc = context.read<SocketBloc>();
 
         if (widget.role.id == 'CLIENT') {
-          // Disconectar primero
           socketBloc.add(DisconnectSocket());
 
-          // Esperamos hasta recibir SocketDisconnected o SocketError (timeout por seguridad)
+          // Wait for SocketDisconnected or SocketError
           try {
             await socketBloc.stream
                 .firstWhere((s) => s is SocketDisconnected || s is SocketError)
                 .timeout(const Duration(seconds: 2));
           } catch (_) {
-            // Timeout o error -> seguimos de todas formas (opcional: log)
             debugPrint(
               'RolesItem: timeout waiting for SocketDisconnected (continuing)',
             );
           }
-
-          // ahora limpio marcadores y reconecto
+          //Clean markers and reconnect
           context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
           socketBloc.add(ConnectSocket());
         }
-
-        // Seleccion de rol y navegacion
+        //Role selection and navigation
         context.read<RolesBloc>().add(SelectRole(widget.role));
         await Navigator.pushReplacementNamed(context, widget.role.route);
       },
