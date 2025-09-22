@@ -8,20 +8,30 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
+import 'package:indriver_uber_clone/src/driver/domain/entities/driver_position_entity.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
 
 part 'driver_map_event.dart';
 part 'driver_map_state.dart';
 
 class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
-  DriverMapBloc(this._socketBloc, this.authUseCases, this._geolocatorUseCases)
-    : super(DriverMapInitial()) {
+  DriverMapBloc(
+    this._socketBloc,
+    this.authUseCases,
+    this._geolocatorUseCases,
+    this._driverPositionUseCases,
+  ) : super(DriverMapInitial()) {
     on<DriverLocationStreamStarted>(_onDriverLocationUpdated);
     on<DriverLocationSentToSocket>(_onDriverLocationSentToSocket);
+
+    on<SaveLoactionData>(_onSaveLocationData);
+    on<DeleteLoactionData>(_onDeleteLocationData);
   }
 
   final GeolocatorUseCases _geolocatorUseCases;
   final SocketBloc _socketBloc;
   final AuthUseCases authUseCases;
+  final DriverPositionUsecases _driverPositionUseCases;
 
   StreamSubscription<void>? _positionSubscription;
 
@@ -128,11 +138,65 @@ class DriverMapBloc extends Bloc<DriverMapEvent, DriverMapState> {
             lng: event.lng,
           ),
         );
+        add(
+          SaveLoactionData(
+            DriverPositionEntity(
+              idDriver: authResponse.user.id,
+              lat: event.lat,
+              lng: event.lng,
+            ),
+          ),
+        );
       } catch (e) {
         debugPrint('**BLOC: ERROR sending position to socket: $e');
         emit(DriverMapError('Error sending position to socket: $e'));
       }
     });
+  }
+
+  Future<void> _onSaveLocationData(
+    SaveLoactionData event,
+    Emitter<DriverMapState> emit,
+  ) async {
+    debugPrint('**BLOC: _onSaveLocationData');
+
+    try {
+      await _driverPositionUseCases.createDriverPositionUsecase(
+        driverPosition: event.driverPositionEntity,
+      );
+    } catch (e) {
+      debugPrint('**BLOC: ERROR saving location data: $e');
+      emit(DriverMapError('Error saving location data: $e'));
+    }
+  }
+
+  Future<void> _onDeleteLocationData(
+    DeleteLoactionData event,
+    Emitter<DriverMapState> emit,
+  ) async {
+    debugPrint('**BLOC: _onDeleteLocationData');
+    try {
+      final result = await _driverPositionUseCases.deleteDriverPositionUsecase(
+        idDriver: event.idDriver,
+      );
+
+      final success = result.fold(
+        (failure) {
+          debugPrint('DeleteDriverPosition failed: ${failure.message}');
+          return false;
+        },
+        (message) {
+          debugPrint('DeleteDriverPosition success: $message');
+          return true;
+        },
+      );
+
+      event.completer?.complete(success);
+    } catch (e, st) {
+      debugPrint('Error deleting location: $e\n$st');
+      event.completer?.complete(false);
+      emit(DriverMapError('Error deleting location data: $e'));
+    }
   }
 
   @override

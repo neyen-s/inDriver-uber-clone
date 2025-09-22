@@ -65,16 +65,4 @@ class UserDTO extends UserEntity {
         ' phone: $phone, image: $image, '
         'notificationToken: $notificationToken, roles: $roles)';
   }
-
-  /*   @override
-  List<Object?> get props => [
-    id,s
-    name,
-    lastname,
-    email,
-    phone,
-    image,
-    notificationToken,
-    roles,
-  ]; */
 }

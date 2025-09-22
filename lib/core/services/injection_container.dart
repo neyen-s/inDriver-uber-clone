@@ -38,6 +38,12 @@ import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sig
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_datasource.dart';
+import 'package:indriver_uber_clone/src/driver/data/repositories/driver_position_repository_impl.dart';
+import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_position_repository.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/create_driver_position_usecase.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/delete_driver_position_usecase.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
@@ -77,7 +83,6 @@ Future<void> _initCore() async {
     ..registerLazySingleton<SocketRepository>(
       () => SocketRepositoryImpl(socket: sl()),
     )
-    // UseCases
     //Socket
     ..registerLazySingleton(() => ConnectSocketUseCase(sl()))
     ..registerLazySingleton(() => DisconnectSocketUseCase(sl()))
@@ -183,6 +188,24 @@ Future<void> _initClientMap() async {
 }
 
 // DRIVER MAP
+
 Future<void> _initDriverMap() async {
-  sl.registerFactory(() => DriverMapBloc(sl(), sl(), sl()));
+  sl
+    ..registerLazySingleton<DriverPositionDatasource>(
+      () => DriverPositionDatasourceImpl(apiClient: sl()),
+    )
+    //repository
+    ..registerLazySingleton<DriverPositionRepository>(
+      () => DriverPositionRepositoryImpl(driverPositionDatasource: sl()),
+    )
+    // UseCases
+    ..registerLazySingleton(() => CreateDriverPositionUsecase(sl()))
+    ..registerLazySingleton(() => DeleteDriverPositionUsecase(sl()))
+    ..registerLazySingleton(
+      () => DriverPositionUsecases(
+        createDriverPositionUsecase: sl(),
+        deleteDriverPositionUsecase: sl(),
+      ),
+    )
+    ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()));
 }

@@ -59,6 +59,20 @@ class HttpApiClient implements ApiClient {
     );
   }
 
+  @override
+  Future<DataMap> delete({
+    required String path,
+    Map<String, String>? headers,
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    return _handleRequest(
+      method: 'DELETE',
+      uri: Uri.http(baseUrl, path),
+      headers: headers,
+      timeout: timeout,
+    );
+  }
+
   Future<DataMap> _handleRequest({
     required String method,
     required Uri uri,
@@ -67,12 +81,24 @@ class HttpApiClient implements ApiClient {
     Duration timeout = const Duration(seconds: 5),
   }) async {
     final requestHeaders = {'Content-Type': 'application/json', ...?headers};
+    print(' requestHeaders: $requestHeaders');
+
+    final accessToken = await SessionManager.accessToken;
+    if (accessToken != null && !requestHeaders.containsKey('Authorization')) {
+      requestHeaders['Authorization'] = 'Bearer $accessToken';
+    }
+    // ------------------------------------------------
+
+    debugPrint('requestHeaders: $requestHeaders');
+    debugPrint('$method Request: $uri');
 
     try {
       debugPrint('$method Request: $uri');
 
       late final http.Response response;
       final encodedBody = jsonEncode(body);
+
+      debugPrint('encodedBody: $encodedBody');
 
       switch (method) {
         case 'POST':
@@ -82,6 +108,10 @@ class HttpApiClient implements ApiClient {
         case 'PUT':
           response = await http
               .put(uri, headers: requestHeaders, body: encodedBody)
+              .timeout(timeout);
+        case 'DELETE':
+          response = await http
+              .delete(uri, headers: requestHeaders)
               .timeout(timeout);
 
         default:
@@ -185,8 +215,12 @@ class HttpApiClient implements ApiClient {
 
     try {
       final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
+      debugPrint('decoded: $decoded');
+      debugPrint('statusCode: $statusCode');
+      debugPrint(' IS statusCode == 201? : ${statusCode == 201}');
 
       if (statusCode >= 200 && statusCode < 300) {
+        print('status code between 200 adn 300');
         return decoded;
       }
 
@@ -222,6 +256,8 @@ class HttpApiClient implements ApiClient {
   Future<String?> _refreshToken() async {
     try {
       final refreshToken = await SessionManager.refreshToken;
+
+      debugPrint('Refreshing token with refreshToken: $refreshToken');
 
       if (refreshToken == null) {
         SessionManager.handleTokenExpired();

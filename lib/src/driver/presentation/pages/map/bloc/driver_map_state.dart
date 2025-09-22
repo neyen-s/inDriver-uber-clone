@@ -12,13 +12,34 @@ final class DriverMapInitial extends DriverMapState {}
 class DriverMapLoading extends DriverMapState {}
 
 class DriverMapLoaded extends DriverMapState {
-  const DriverMapLoaded({required this.position, required this.markers});
+  const DriverMapLoaded({
+    required this.position,
+    required this.markers,
+    this.idDriver,
+    this.isLoading = false,
+  });
 
   final Position? position;
-  final List<Marker> markers; //marker list of all the drivers
+  final List<Marker> markers;
+  final int? idDriver;
+  final bool isLoading; //TODO optional
+
+  DriverMapLoaded copyWith({
+    Position? position,
+    List<Marker>? markers,
+    int? idDriver,
+    bool? isLoading,
+  }) {
+    return DriverMapLoaded(
+      position: position ?? this.position,
+      markers: markers ?? this.markers,
+      idDriver: idDriver ?? this.idDriver,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 
   @override
-  List<Object?> get props => [position, markers];
+  List<Object?> get props => [position, markers, idDriver, isLoading];
 }
 
 class DriverMapError extends DriverMapState {

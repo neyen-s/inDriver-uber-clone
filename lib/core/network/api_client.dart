@@ -10,9 +10,6 @@ abstract class ApiClient {
     Duration timeout = const Duration(seconds: 3),
   });
 
-  // Puedes agregar otros si necesitas:
-  // Future<DataMap> get(...);
-
   Future<DataMap> put({
     required String path,
     Map<String, String>? headers,
@@ -21,4 +18,13 @@ abstract class ApiClient {
     File? file,
     Duration timeout = const Duration(seconds: 3),
   });
+
+  Future<DataMap> delete({
+    required String path,
+    Map<String, String>? headers,
+    Duration timeout = const Duration(seconds: 3),
+  });
+
+  // Add more when needed
+  // Future<DataMap> get(...);
 }

@@ -18,6 +18,7 @@ class SessionManager {
 
   static Future<AuthResponseDTO?> getSession() async {
     _session ??= await SharedPrefsAdapter.readDto<AuthResponseDTO>(
+      //TODO CHECK DATABASE
       _sessionKey,
       AuthResponseDTO.fromJson,
     );

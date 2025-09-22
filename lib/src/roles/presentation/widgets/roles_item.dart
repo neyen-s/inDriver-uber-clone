@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
+import 'package:indriver_uber_clone/core/services/injection_container.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/delete_driver_position_usecase.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
 
 class RolesItem extends StatefulWidget {
@@ -21,8 +24,26 @@ class _RolesItemState extends State<RolesItem> {
     return GestureDetector(
       onTap: () async {
         final socketBloc = context.read<SocketBloc>();
+        final rolesBloc = context.read<RolesBloc>();
+        final authUseCases = sl<AuthUseCases>();
+        final sessionRes = await authUseCases.getUserSessionUseCase();
+        final session = sessionRes.fold((f) => null, (s) => s);
 
-        if (widget.role.id == 'CLIENT') {
+        if (session?.user.id != null) {
+          final idDriver = session!.user.id;
+
+          try {
+            final deleteUsecase = sl<DeleteDriverPositionUsecase>();
+            final result = await deleteUsecase(idDriver: idDriver);
+
+            result.fold(
+              (failure) => debugPrint('Delete failed: ${failure.message}'),
+              (msg) => debugPrint('Delete success: $msg'),
+            );
+          } catch (e) {
+            debugPrint('Error deleting driver position: $e');
+          }
+
           socketBloc.add(DisconnectSocket());
 
           // Wait for SocketDisconnected or SocketError
@@ -40,7 +61,7 @@ class _RolesItemState extends State<RolesItem> {
           socketBloc.add(ConnectSocket());
         }
         //Role selection and navigation
-        context.read<RolesBloc>().add(SelectRole(widget.role));
+        rolesBloc.add(SelectRole(widget.role));
         await Navigator.pushReplacementNamed(context, widget.role.route);
       },
       child: Column(

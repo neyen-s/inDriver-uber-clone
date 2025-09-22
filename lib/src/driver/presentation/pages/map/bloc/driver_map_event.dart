@@ -34,3 +34,14 @@ class AddDriverPositionMarker extends DriverMapEvent {
   @override
   List<Object> get props => [idSocket, id, lat, lng];
 }
+
+class SaveLoactionData extends DriverMapEvent {
+  const SaveLoactionData(this.driverPositionEntity);
+  final DriverPositionEntity driverPositionEntity;
+}
+
+class DeleteLoactionData extends DriverMapEvent {
+  const DeleteLoactionData(this.idDriver, this.completer);
+  final int idDriver;
+  final Completer<bool>? completer;
+}
