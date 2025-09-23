@@ -2,10 +2,15 @@ import 'package:get_it/get_it.dart';
 import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
+import 'package:indriver_uber_clone/core/data/datasources/source/client_request_datasource.dart';
+import 'package:indriver_uber_clone/core/data/repositories/client_request_repository_impl.dart';
 import 'package:indriver_uber_clone/core/data/repositories/geolocator_repository_impl.dart';
 import 'package:indriver_uber_clone/core/data/repositories/socket_repository_impl.dart';
+import 'package:indriver_uber_clone/core/domain/repositories/client_request_repository.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_usecase.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/create_marker_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/find_position_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
@@ -78,10 +83,22 @@ Future<void> _initCore() async {
     ..registerLazySingleton(MapMarkerIconService.new)
     ..registerLazySingleton(LocationService.new)
     ..registerLazySingleton(SocketClient.new)
+    //DataSource
+    ..registerLazySingleton<ClientRequestDataSource>(
+      () => ClientRequestDataSourceImpl(sl()),
+    )
     // Repository
     ..registerLazySingleton<GeolocatorRepository>(GeolocatorRepositoryImpl.new)
     ..registerLazySingleton<SocketRepository>(
       () => SocketRepositoryImpl(socket: sl()),
+    )
+    ..registerLazySingleton<ClientRequestRepository>(
+      () => ClientRequestRepositoryImpl(timeAndDistanceValuesDto: sl()),
+    )
+    // UseCases
+    ..registerLazySingleton(() => GetTimeAndDistanceValuesUsecase(sl()))
+    ..registerLazySingleton(
+      () => ClientRequestsUsecases(getTimeAndDistanceValuesUsecase: sl()),
     )
     //Socket
     ..registerLazySingleton(() => ConnectSocketUseCase(sl()))
@@ -183,7 +200,7 @@ Future<void> _initProfile() async {
 // MAP
 Future<void> _initClientMap() async {
   sl
-    ..registerFactory(() => ClientMapSeekerBloc(sl(), sl()))
+    ..registerFactory(() => ClientMapSeekerBloc(sl(), sl(), sl()))
     ..registerFactory(MapLifecycleCubit.new);
 }
 

@@ -88,3 +88,25 @@ class DriversSnapshotReceived extends ClientMapSeekerEvent {
 }
 
 class ResetCameraRequested extends ClientMapSeekerEvent {}
+
+class GetTimeAndDistanceValuesRequested extends ClientMapSeekerEvent {
+  const GetTimeAndDistanceValuesRequested({
+    required this.originLat,
+    required this.originLng,
+    required this.destinationLat,
+    required this.destinationLng,
+  });
+
+  final double originLat;
+  final double originLng;
+  final double destinationLat;
+  final double destinationLng;
+
+  @override
+  List<Object> get props => [
+    originLat,
+    originLng,
+    destinationLat,
+    destinationLng,
+  ];
+}

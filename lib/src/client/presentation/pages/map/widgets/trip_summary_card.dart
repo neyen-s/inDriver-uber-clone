@@ -21,7 +21,7 @@ class TripSummaryCard extends StatefulWidget {
   final String originAddress;
   final String destinationAddress;
   final double distanceInKm;
-  final Duration duration;
+  final String duration;
   final double price;
   final void Function(String offeredPrice) onConfirmPressed;
   final VoidCallback onCancelPressed;
@@ -37,7 +37,7 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
   void initState() {
     super.initState();
     offeredPriceController = TextEditingController(
-      text: widget.price.toString(),
+      text: widget.price.toStringAsFixed(2),
     );
   }
 
@@ -100,10 +100,7 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
                         'Distance',
                         '${widget.distanceInKm.toStringAsFixed(2)} km',
                       ),
-                      _infoColumn(
-                        'Duration ',
-                        _formatDuration(widget.duration),
-                      ),
+                      _infoColumn('Duration ', widget.duration),
                       _infoColumn(
                         'Avrg Price',
                         '${widget.price.toStringAsFixed(2)}€',
@@ -150,7 +147,7 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
                       ),
 
                       child: Container(
-                        height: 38, // puedes ajustar o hacer dinámico
+                        height: 38,
                         alignment: Alignment.center,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,

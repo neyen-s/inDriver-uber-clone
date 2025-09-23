@@ -73,6 +73,20 @@ class HttpApiClient implements ApiClient {
     );
   }
 
+  @override
+  Future<DataMap> get({
+    required String path,
+    Map<String, String>? headers,
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    return _handleRequest(
+      method: 'GET',
+      uri: Uri.http(baseUrl, path),
+      headers: headers,
+      timeout: timeout,
+    );
+  }
+
   Future<DataMap> _handleRequest({
     required String method,
     required Uri uri,
@@ -113,7 +127,10 @@ class HttpApiClient implements ApiClient {
           response = await http
               .delete(uri, headers: requestHeaders)
               .timeout(timeout);
-
+        case 'GET':
+          response = await http
+              .get(uri, headers: requestHeaders)
+              .timeout(timeout);
         default:
           throw UnimplementedError('Method $method not implemented');
       }

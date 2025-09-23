@@ -8,6 +8,9 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
+import 'package:indriver_uber_clone/core/domain/entities/time_and_distance_values_entity.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_usecase.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
@@ -21,7 +24,8 @@ class ClientMapSeekerBloc
     extends Bloc<ClientMapSeekerEvent, ClientMapSeekerState> {
   ClientMapSeekerBloc(
     this._geolocatorUseCases,
-    this.socketBloc, {
+    this.socketBloc,
+    this.clientRequestsUsecases, {
     DebouncerLocation? debouncer,
   }) : _debouncer =
            debouncer ?? DebouncerLocation(const Duration(milliseconds: 500)),
@@ -34,7 +38,9 @@ class ClientMapSeekerBloc
     on<DrawRouteRequested>(_onDrawRouteRequested);
     on<ClientMapCameraCentered>(_onClientMapCameraCentered);
     on<ResetCameraRequested>(_onResetCameraRequested);
+    on<GetTimeAndDistanceValuesRequested>(_onGetTimeAndDistanceValues);
 
+    //socket related events
     on<AddDriverPositionMarker>(_onAddDriverPositionMarker);
     on<RemoveDriverPositionMarker>(_onRemoveDriverPositionMarker);
     on<ClearDriverMarkers>(_onClearDriverMarkers);
@@ -47,6 +53,7 @@ class ClientMapSeekerBloc
   final DebouncerLocation _debouncer;
   final GeolocatorUseCases _geolocatorUseCases;
   final SocketBloc socketBloc;
+  final ClientRequestsUsecases clientRequestsUsecases;
 
   StreamSubscription? _socketSub;
   StreamSubscription<dynamic>? _socketStreamSub;
@@ -178,10 +185,28 @@ class ClientMapSeekerBloc
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
 
-      emit(current.copyWith(isLoading: true));
+      // Guardamos origin/destination e indicamos loading
+      emit(
+        current.copyWith(
+          origin: event.origin,
+          destination: event.destination,
+          isLoading: true,
+        ),
+      );
 
+      // Llamada al service que calcula time & distance (sin encolar)
+      final timeResult = await clientRequestsUsecases
+          .getTimeAndDistanceValuesUsecase(
+            TimeAndDistanceParams(
+              originLat: event.origin.latitude,
+              originLng: event.origin.longitude,
+              destinationLat: event.destination.latitude,
+              destinationLng: event.destination.longitude,
+            ),
+          );
+
+      // Calculamos la polyline (pues esta llamada también puede tardar)
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
-
       final request = RoutesApiRequest(
         origin: PointLatLng(event.origin.latitude, event.origin.longitude),
         destination: PointLatLng(
@@ -195,41 +220,64 @@ class ClientMapSeekerBloc
         request: request,
       );
 
-      if (response.routes.isNotEmpty) {
-        final route = response.routes.first;
-
-        // Build Polyline
-        final points = route.polylinePoints ?? [];
-        final latLngPoints = points
-            .map((p) => LatLng(p.latitude, p.longitude))
-            .toList();
-
-        final polyline = Polyline(
-          polylineId: const PolylineId('route'),
-          color: Colors.blue,
-          width: 5,
-          points: latLngPoints,
-        );
-
-        final updatedPolylines = {
-          ...current.polylines,
-          polyline.polylineId: polyline,
-        };
-
-        // Distance in km and duration in minutes
-        final distanceKm = (route.distanceMeters ?? 0) / 1000;
-        final durationMinutes = ((route.duration ?? 0) / 60).round();
-        emit(
-          current.copyWith(
-            mapPolylines: updatedPolylines,
-            distanceKm: distanceKm,
-            durationMinutes: durationMinutes,
-            isLoading: false,
-          ),
-        );
-      } else {
+      if (response.routes.isEmpty) {
         emit(const ClientMapSeekerError('Could not find route.'));
+        return;
       }
+
+      final route = response.routes.first;
+      final points = route.polylinePoints ?? [];
+      final latLngPoints = points
+          .map((p) => LatLng(p.latitude, p.longitude))
+          .toList();
+
+      final polyline = Polyline(
+        polylineId: const PolylineId('route'),
+        color: Colors.blue,
+        width: 5,
+        points: latLngPoints,
+      );
+
+      final updatedPolylines = {
+        ...current.polylines,
+        polyline.polylineId: polyline,
+      };
+
+      // Extraer valores del timeResult (si success)
+      TimeAndDistanceValuesEntity? timeAndDistanceValues;
+      double distanceKmFromApi = 0;
+      int durationMinutesFromApi = 0;
+
+      timeResult.fold(
+        (failure) {
+          debugPrint('GetTimeAndDistanceValues FAILED: ${failure.message}');
+          timeAndDistanceValues = null;
+        },
+        (val) {
+          timeAndDistanceValues = val;
+          distanceKmFromApi = val.distance?.value ?? 0.0;
+          durationMinutesFromApi = (val.duration?.value?.round()) ?? 0;
+        },
+      );
+
+      // Preferir valores del API de time/distance si existen, sino usar los derivados de la route
+      final distanceKm = distanceKmFromApi != 0
+          ? distanceKmFromApi
+          : (route.distanceMeters ?? 0) / 1000;
+      final durationMinutes = durationMinutesFromApi != 0
+          ? durationMinutesFromApi
+          : ((route.duration ?? 0) / 60).round();
+
+      // Emitimos un único estado final completo (incluye quitar loader)
+      emit(
+        current.copyWith(
+          mapPolylines: updatedPolylines,
+          distanceKm: distanceKm,
+          durationMinutes: durationMinutes,
+          timeAndDistanceValues: timeAndDistanceValues,
+          isLoading: false,
+        ),
+      );
     } catch (e) {
       emit(ClientMapSeekerError('Error While drawing route: $e'));
     }
@@ -373,6 +421,57 @@ class ClientMapSeekerBloc
       emit(
         (state as ClientMapSeekerSuccess).copyWith(hasCenteredCameraOnce: true),
       );
+    }
+  }
+
+  Future<void> _onGetTimeAndDistanceValues(
+    GetTimeAndDistanceValuesRequested event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    print('**BLOC _onGetTimeAndDistanceValues ');
+
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+
+    // Usamos los datos que vienen en el evento, no los del state.
+    final originLat = event.originLat;
+    final originLng = event.originLng;
+    final destinationLat = event.destinationLat;
+    final destinationLng = event.destinationLng;
+
+    // Seguridad: si por alguna razón faltan coords en el event, fallback al state
+    if (originLat == null ||
+        originLng == null ||
+        destinationLat == null ||
+        destinationLng == null) {
+      final origin = current.origin;
+      final destination = current.destination;
+      if (origin == null || destination == null) {
+        emit(const ClientMapSeekerError('Origin or destination is null'));
+        return;
+      }
+    }
+
+    try {
+      final result = await clientRequestsUsecases
+          .getTimeAndDistanceValuesUsecase(
+            TimeAndDistanceParams(
+              originLat: originLat ?? current.origin!.latitude,
+              originLng: originLng ?? current.origin!.longitude,
+              destinationLat: destinationLat ?? current.destination!.latitude,
+              destinationLng: destinationLng ?? current.destination!.longitude,
+            ),
+          );
+
+      result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
+        timeAndDistanceValues,
+      ) {
+        // combinamos con el estado actual (no perder polylines, etc.)
+        emit(current.copyWith(timeAndDistanceValues: timeAndDistanceValues));
+      });
+    } catch (e) {
+      emit(ClientMapSeekerError('Error getting time/distance values: $e'));
     }
   }
 }

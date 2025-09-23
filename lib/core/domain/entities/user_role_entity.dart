@@ -5,14 +5,7 @@ class UserRoleEntity {
     required this.image,
     required this.route,
   });
-  factory UserRoleEntity.fromJson(Map<String, dynamic> json) {
-    return UserRoleEntity(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      image: json['image'] as String,
-      route: json['route'] as String,
-    );
-  }
+
   const UserRoleEntity.empty() : id = '', name = '', image = '', route = '';
 
   final String id;

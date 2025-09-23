@@ -230,6 +230,14 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                             destinationText: _destinationController.text,
                           ),
                         );
+                        /*    context.read<ClientMapSeekerBloc>().add(
+                          GetTimeAndDistanceValuesRequested(
+                            originLat: originLatLng!.latitude,
+                            originLng: originLatLng!.longitude,
+                            destinationLat: destinationLatLng!.latitude,
+                            destinationLng: destinationLatLng!.longitude,
+                          ),
+                        ); */
                       }
                     },
                   ),
@@ -240,20 +248,42 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
       ),
       bottomSheet: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
         builder: (context, state) {
+          if (state is ClientMapSeekerSuccess) {
+            print(
+              'DE POLYLINE: state.durationMinutes ?? 0 : ${state.durationMinutes ?? 0}',
+            );
+            print(
+              'DE POLYLINE: state.distanceKm ?? 0.0 : ${state.distanceKm ?? 0}',
+            );
+            print(
+              'STATE.timeAndDistanceValues?.DURATION.text ?? "" : ${state.timeAndDistanceValues?.duration.text ?? ""}',
+            );
+            print(
+              'STATE.timeAndDistanceValues?.DISTANCE.text ?? "" : ${state.timeAndDistanceValues?.distance.text ?? ""}',
+            );
+            print(
+              'STATE.timeAndDistanceValues?.RECOMENDED VALUE.text ?? "" : ${state.timeAndDistanceValues?.recommendedValue ?? ""}',
+            );
+          }
           if (state is ClientMapSeekerSuccess &&
               state.distanceKm != null &&
               state.durationMinutes != null &&
-              state.polylines.isNotEmpty) {
+              state.polylines.isNotEmpty &&
+              state.timeAndDistanceValues != null) {
             return TripSummaryCard(
               context: context,
-              originAddress: state.originAddress ?? '',
-              destinationAddress: state.destinationAddress ?? '',
+              originAddress: state.timeAndDistanceValues?.originAddresses ?? '',
+              destinationAddress:
+                  state.timeAndDistanceValues?.destinationAddresses ?? '',
               distanceInKm: state.distanceKm ?? 0.0,
-              duration: Duration(minutes: state.durationMinutes ?? 0),
-              price: calculateTripPrice(
-                state.distanceKm ?? 0.0,
-                state.durationMinutes ?? 0,
-              ),
+              duration: state.timeAndDistanceValues?.duration.text ?? '',
+              //Duration(minutes: state.durationMinutes ?? 0),
+              price:
+                  state.timeAndDistanceValues?.recommendedValue ??
+                  calculateTripPrice(
+                    state.distanceKm ?? 0.0,
+                    state.durationMinutes ?? 0,
+                  ),
               onCancelPressed: () {
                 context.read<ClientMapSeekerBloc>().add(
                   const CancelTripConfirmation(),

@@ -25,6 +25,9 @@ abstract class ApiClient {
     Duration timeout = const Duration(seconds: 3),
   });
 
-  // Add more when needed
-  // Future<DataMap> get(...);
+  Future<DataMap> get({
+    required String path,
+    Map<String, String>? headers,
+    Duration timeout = const Duration(seconds: 3),
+  });
 }
