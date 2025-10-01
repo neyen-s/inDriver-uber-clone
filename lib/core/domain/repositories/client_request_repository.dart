@@ -1,5 +1,6 @@
 import 'package:indriver_uber_clone/core/domain/entities/time_and_distance_values_entity.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
+import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 
 abstract class ClientRequestRepository {
   ResultFuture<TimeAndDistanceValuesEntity> getTimeAndDistanceClientRequests(
@@ -7,5 +8,9 @@ abstract class ClientRequestRepository {
     double originLng,
     double destinationLat,
     double destinationLng,
+  );
+
+  ResultFuture<bool> createClientRequest(
+    ClientRequestEntity clientRequestEntity,
   );
 }

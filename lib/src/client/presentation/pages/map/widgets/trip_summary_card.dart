@@ -117,6 +117,7 @@ class _TripSummaryCardState extends State<TripSummaryCard> {
                     filled: true,
                     focusNode: FocusNode(),
                     validator: validatePrice,
+
                     customInputFormatters: [DecimalTextInputFormatter()],
                     suffixIcon: const Icon(Icons.euro_symbol),
                   ),

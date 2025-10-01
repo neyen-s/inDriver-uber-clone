@@ -40,6 +40,7 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_out_use_case.da
 import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
@@ -93,12 +94,16 @@ Future<void> _initCore() async {
       () => SocketRepositoryImpl(socket: sl()),
     )
     ..registerLazySingleton<ClientRequestRepository>(
-      () => ClientRequestRepositoryImpl(timeAndDistanceValuesDto: sl()),
+      () => ClientRequestRepositoryImpl(clientRequestDataSource: sl()),
     )
     // UseCases
     ..registerLazySingleton(() => GetTimeAndDistanceValuesUsecase(sl()))
+    ..registerLazySingleton(() => CreateClientRequestUseCase(sl()))
     ..registerLazySingleton(
-      () => ClientRequestsUsecases(getTimeAndDistanceValuesUsecase: sl()),
+      () => ClientRequestsUsecases(
+        getTimeAndDistanceValuesUsecase: sl(),
+        createClientRequestUseCase: sl(),
+      ),
     )
     //Socket
     ..registerLazySingleton(() => ConnectSocketUseCase(sl()))
@@ -200,7 +205,7 @@ Future<void> _initProfile() async {
 // MAP
 Future<void> _initClientMap() async {
   sl
-    ..registerFactory(() => ClientMapSeekerBloc(sl(), sl(), sl()))
+    ..registerFactory(() => ClientMapSeekerBloc(sl(), sl(), sl(), sl()))
     ..registerFactory(MapLifecycleCubit.new);
 }
 

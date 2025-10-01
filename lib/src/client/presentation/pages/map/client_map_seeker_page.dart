@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
@@ -277,7 +278,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   state.timeAndDistanceValues?.destinationAddresses ?? '',
               distanceInKm: state.distanceKm ?? 0.0,
               duration: state.timeAndDistanceValues?.duration.text ?? '',
-              //Duration(minutes: state.durationMinutes ?? 0),
               price:
                   state.timeAndDistanceValues?.recommendedValue ??
                   calculateTripPrice(
@@ -289,7 +289,15 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   const CancelTripConfirmation(),
                 );
               },
-              onConfirmPressed: (offer) {},
+
+              onConfirmPressed: (offer) {
+                print('*****offer desde UI: $offer');
+                double offerDouble = double.tryParse(offer) ?? 0.0;
+                print('*****offerDouble desde UI: $offerDouble');
+                context.read<ClientMapSeekerBloc>().add(
+                  CreateClientRequest(fareOffered: offerDouble),
+                );
+              },
             );
           }
           return const SizedBox.shrink();

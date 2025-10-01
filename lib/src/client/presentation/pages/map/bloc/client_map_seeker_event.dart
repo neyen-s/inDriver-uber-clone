@@ -110,3 +110,10 @@ class GetTimeAndDistanceValuesRequested extends ClientMapSeekerEvent {
     destinationLng,
   ];
 }
+
+class CreateClientRequest extends ClientMapSeekerEvent {
+  const CreateClientRequest({required this.fareOffered});
+  final double fareOffered;
+  @override
+  List<Object?> get props => [fareOffered];
+}

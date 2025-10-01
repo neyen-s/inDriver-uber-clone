@@ -30,7 +30,9 @@ class TimeAndDistanceValuesEntity {
 
   @override
   String toString() {
-    return 'TimeAndDistanceValuesEntity(recommendedValue: $recommendedValue, destinationAddresses: $destinationAddresses, originAddresses: $originAddresses, distance: $distance, duration: $duration)';
+    return 'TimeAndDistanceValuesEntity(recommendedValue: $recommendedValue,'
+        ' destinationAddresses: $destinationAddresses, originAddresses:'
+        ' $originAddresses, distance: $distance, duration: $duration)';
   }
 }
 

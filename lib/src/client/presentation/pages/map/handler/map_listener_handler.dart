@@ -23,6 +23,12 @@ Future<void> handleMapStateChange({
   required void Function(bool) onSetShowMapPadding,
 }) async {
   if (state is ClientMapSeekerSuccess) {
+    if (state.clientRequestSended ?? false) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request sent')));
+    }
+
     final s = state;
 
     onUpdateSelectedField(s.selectedField);

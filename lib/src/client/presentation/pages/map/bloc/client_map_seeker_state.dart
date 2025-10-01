@@ -33,6 +33,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     this.origin,
     this.destination,
     this.timeAndDistanceValues,
+    this.createdClientRequest,
+    this.clientRequestSended,
   });
 
   final Position? userPosition;
@@ -49,6 +51,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
   final LatLng? origin;
   final LatLng? destination;
   final TimeAndDistanceValuesEntity? timeAndDistanceValues;
+  final ClientRequestEntity? createdClientRequest;
+  final bool? clientRequestSended;
 
   ClientMapSeekerSuccess copyWith({
     Position? userPosition,
@@ -66,6 +70,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     int? durationMinutes,
     Map<PolylineId, Polyline>? mapPolylines,
     TimeAndDistanceValuesEntity? timeAndDistanceValues,
+    ClientRequestEntity? createdClientRequest,
+    bool? clientRequestSended,
   }) {
     return ClientMapSeekerSuccess(
       userPosition: userPosition ?? this.userPosition,
@@ -84,6 +90,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
       polylines: mapPolylines ?? this.polylines,
       timeAndDistanceValues:
           timeAndDistanceValues ?? this.timeAndDistanceValues,
+      createdClientRequest: createdClientRequest ?? this.createdClientRequest,
+      clientRequestSended: clientRequestSended ?? this.clientRequestSended,
     );
   }
 
@@ -103,5 +111,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     durationMinutes,
     polylines,
     timeAndDistanceValues,
+    createdClientRequest,
+    clientRequestSended,
   ];
 }

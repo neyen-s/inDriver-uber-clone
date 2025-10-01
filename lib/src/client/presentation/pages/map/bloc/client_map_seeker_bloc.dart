@@ -16,6 +16,9 @@ import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/secrets.dart';
+import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
+import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
 
 part 'client_map_seeker_event.dart';
 part 'client_map_seeker_state.dart';
@@ -25,7 +28,8 @@ class ClientMapSeekerBloc
   ClientMapSeekerBloc(
     this._geolocatorUseCases,
     this.socketBloc,
-    this.clientRequestsUsecases, {
+    this.clientRequestsUsecases,
+    this.authUseCases, {
     DebouncerLocation? debouncer,
   }) : _debouncer =
            debouncer ?? DebouncerLocation(const Duration(milliseconds: 500)),
@@ -39,6 +43,7 @@ class ClientMapSeekerBloc
     on<ClientMapCameraCentered>(_onClientMapCameraCentered);
     on<ResetCameraRequested>(_onResetCameraRequested);
     on<GetTimeAndDistanceValuesRequested>(_onGetTimeAndDistanceValues);
+    on<CreateClientRequest>(_onCreateClientRequest);
 
     //socket related events
     on<AddDriverPositionMarker>(_onAddDriverPositionMarker);
@@ -54,6 +59,7 @@ class ClientMapSeekerBloc
   final GeolocatorUseCases _geolocatorUseCases;
   final SocketBloc socketBloc;
   final ClientRequestsUsecases clientRequestsUsecases;
+  final AuthUseCases authUseCases;
 
   StreamSubscription? _socketSub;
   StreamSubscription<dynamic>? _socketStreamSub;
@@ -473,5 +479,66 @@ class ClientMapSeekerBloc
     } catch (e) {
       emit(ClientMapSeekerError('Error getting time/distance values: $e'));
     }
+  }
+
+  Future<void> _onCreateClientRequest(
+    CreateClientRequest event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+
+    final authResponse = await authUseCases.getUserSessionUseCase();
+
+    await authResponse.fold(
+      (failure) async {
+        emit(ClientMapSeekerError(failure.message));
+      },
+      (authResponse) async {
+        try {
+          debugPrint('**BLOC: creating Client request...');
+          final response = await clientRequestsUsecases
+              .createClientRequestUseCase(
+                CreateClientRequestParams(
+                  clientRequestEntity: ClientRequestEntity(
+                    idClient: authResponse.user.id,
+                    fareOffered: event.fareOffered,
+                    pickupDescription:
+                        current.timeAndDistanceValues?.originAddresses ?? '',
+                    destinationDescription:
+                        current.timeAndDistanceValues?.destinationAddresses ??
+                        '',
+                    pickupLat: current.origin?.latitude ?? 0.0,
+                    pickupLng: current.origin?.longitude ?? 0.0,
+                    destinationLat: current.destination?.latitude ?? 0.0,
+                    destinationLng: current.destination?.longitude ?? 0.0,
+                  ),
+                ),
+              );
+
+          await response.fold(
+            (failure) async {
+              emit(ClientMapSeekerError(failure.message));
+            },
+            (clientRequest) async {
+              debugPrint('**BLOC: Client request created: $clientRequest');
+              emit(
+                current.copyWith(
+                  clientRequestSended: true,
+                  polylines: {},
+                  mapPolylines: {},
+                ),
+              );
+              await Future.delayed(const Duration(milliseconds: 100));
+              emit(current.copyWith(clientRequestSended: false));
+            },
+          );
+        } catch (e) {
+          debugPrint('**BLOC: ERROR CREATING CLIENT REQUEST: $e');
+          emit(ClientMapSeekerError('ERROR CREATING CLIENT REQUEST: $e'));
+        }
+      },
+    );
   }
 }

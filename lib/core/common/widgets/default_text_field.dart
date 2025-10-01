@@ -22,6 +22,7 @@ class DefaultTextField extends StatelessWidget {
     this.overrideValidator = false,
     this.componentMargin,
     this.customInputFormatters,
+    this.onChanged,
   });
 
   final String? Function(String?)? validator;
@@ -32,6 +33,7 @@ class DefaultTextField extends StatelessWidget {
   final bool readOnly;
   final FocusNode focusNode;
   final VoidCallback? onFocusLost;
+  final ValueChanged<String>? onChanged;
   final Widget? suffixIcon;
   final IconData? prefixIcon;
   final String? hintText;
@@ -70,6 +72,7 @@ class DefaultTextField extends StatelessWidget {
           keyboardType: keyboardType,
           obscureText: obscureText,
           readOnly: readOnly,
+          onChanged: onChanged,
           decoration: InputDecoration(
             errorText: errorText,
 

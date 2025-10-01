@@ -5,11 +5,13 @@ import 'package:indriver_uber_clone/core/domain/repositories/client_request_repo
 import 'package:indriver_uber_clone/core/errors/exceptions.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
+import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
+import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 
 class ClientRequestRepositoryImpl implements ClientRequestRepository {
-  const ClientRequestRepositoryImpl({required this.timeAndDistanceValuesDto});
+  const ClientRequestRepositoryImpl({required this.clientRequestDataSource});
 
-  final ClientRequestDataSource timeAndDistanceValuesDto;
+  final ClientRequestDataSource clientRequestDataSource;
 
   @override
   ResultFuture<TimeAndDistanceValuesDto> getTimeAndDistanceClientRequests(
@@ -19,7 +21,7 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
     double destinationLng,
   ) async {
     try {
-      final timeAndDistanceValues = await timeAndDistanceValuesDto
+      final timeAndDistanceValues = await clientRequestDataSource
           .getTimeAndDistanceClientRequest(
             originLat: originLat,
             originLng: originLng,
@@ -27,6 +29,24 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
             destinationLng: destinationLng,
           );
       return Right(timeAndDistanceValues);
+    } on ServerException catch (e) {
+      return Left(
+        ServerFailure(message: e.toString(), statusCode: e.statusCode),
+      );
+    }
+  }
+
+  @override
+  @override
+  ResultFuture<bool> createClientRequest(
+    ClientRequestEntity clientRequestEntity,
+  ) async {
+    try {
+      final clientRequestDto = ClientRequestDTO.fromEntity(clientRequestEntity);
+      await clientRequestDataSource.createClientRequest(
+        clientRequestDTO: clientRequestDto,
+      );
+      return const Right(true);
     } on ServerException catch (e) {
       return Left(
         ServerFailure(message: e.toString(), statusCode: e.statusCode),
