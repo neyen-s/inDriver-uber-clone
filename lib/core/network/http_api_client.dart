@@ -228,34 +228,68 @@ class HttpApiClient implements ApiClient {
 
   DataMap _handleResponse(http.Response response) {
     final statusCode = response.statusCode;
-    final responseBody = response.body;
+    final responseBody = response.body.trim();
 
     try {
-      final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
-      debugPrint('decoded: $decoded');
+      if (responseBody.isEmpty) {
+        debugPrint('Empty response body, returning {}');
+        if (statusCode >= 200 && statusCode < 300) return <String, dynamic>{};
+        throw ServerException(
+          message: 'Empty response',
+          statusCode: '$statusCode',
+        );
+      }
+
+      final decodedRaw = jsonDecode(responseBody);
+      debugPrint('decoded: $decodedRaw');
       debugPrint('statusCode: $statusCode');
       debugPrint(' IS statusCode == 201? : ${statusCode == 201}');
 
-      if (statusCode >= 200 && statusCode < 300) {
-        print('status code between 200 adn 300');
-        return decoded;
-      }
-
-      if (statusCode == 401) {
-        final isTokenExpired =
-            decoded['code'] == 'token_not_valid' &&
-            ((decoded['messages'] as List<dynamic>?)?.any(
-                  (msg) => msg['message'] == 'Token is expired',
-                ) ??
-                false);
-
-        if (isTokenExpired) {
-          throw const TokenExpiredException(message: 'Token expired');
+      if (decodedRaw is List) {
+        debugPrint('decoded is List with length: ${decodedRaw.length}');
+        if (statusCode >= 200 && statusCode < 300) {
+          return <String, dynamic>{'data': decodedRaw};
         }
+        // error con lista - envolvemos mensaje genérico
+        throw ServerException(
+          message: 'Server error',
+          statusCode: '$statusCode',
+        );
       }
 
-      final message = decoded['message']?.toString() ?? 'Unknown error';
-      throw ServerException(message: message, statusCode: '$statusCode');
+      // Si es un Map (objeto JSON), lo devolvemos tal cual
+      if (decodedRaw is Map<String, dynamic>) {
+        final decoded = decodedRaw;
+        debugPrint('decoded: $decoded');
+        debugPrint('statusCode: $statusCode');
+        debugPrint(' IS statusCode == 201? : ${statusCode == 201}');
+
+        if (statusCode >= 200 && statusCode < 300) {
+          return decoded;
+        }
+
+        if (statusCode == 401) {
+          final isTokenExpired =
+              decoded['code'] == 'token_not_valid' &&
+              ((decoded['messages'] as List<dynamic>?)?.any(
+                    (msg) => msg['message'] == 'Token is expired',
+                  ) ??
+                  false);
+
+          if (isTokenExpired) {
+            throw const TokenExpiredException(message: 'Token expired');
+          }
+        }
+
+        final message = decoded['message']?.toString() ?? 'Unknown error';
+        throw ServerException(message: message, statusCode: '$statusCode');
+      }
+
+      // Tipo inesperado
+      throw ServerException(
+        message: 'Invalid JSON response type',
+        statusCode: '$statusCode',
+      );
     } catch (e) {
       debugPrint('Error decoding response: $responseBody');
 
@@ -263,6 +297,7 @@ class HttpApiClient implements ApiClient {
         throw const TokenExpiredException(message: 'Token expired');
       }
 
+      // Si jsonDecode lanzó, devolvemos un ServerException manejable
       throw ServerException(
         message: 'Invalid JSON response',
         statusCode: '$statusCode',

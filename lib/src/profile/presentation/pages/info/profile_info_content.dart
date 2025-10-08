@@ -66,7 +66,7 @@ class ProfileInfoContent extends StatelessWidget {
           children: [
             Container(
               width: 100.w,
-              margin: EdgeInsets.only(top: 20.h, bottom: 10.h),
+              margin: EdgeInsets.only(top: 15.h, bottom: 0.h),
               child: AspectRatio(
                 aspectRatio: 1,
                 child: ClipOval(

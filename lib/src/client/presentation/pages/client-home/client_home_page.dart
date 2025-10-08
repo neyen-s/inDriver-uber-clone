@@ -53,6 +53,8 @@ class ClientHomePage extends StatelessWidget {
                 switch (section) {
                   case GenericHomeScaffoldSection.map:
                     return const ClientMapSeekerPage();
+                  case GenericHomeScaffoldSection.clientRequests:
+                    return const SizedBox.shrink();
                   case GenericHomeScaffoldSection.profile:
                     return const ProfileInfoPage();
                   case GenericHomeScaffoldSection.roles:

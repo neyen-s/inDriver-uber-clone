@@ -7,6 +7,7 @@ import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/dto/client_request_response_dto.dart';
 
 class ClientRequestRepositoryImpl implements ClientRequestRepository {
   const ClientRequestRepositoryImpl({required this.clientRequestDataSource});
@@ -37,7 +38,6 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
   }
 
   @override
-  @override
   ResultFuture<bool> createClientRequest(
     ClientRequestEntity clientRequestEntity,
   ) async {
@@ -47,6 +47,23 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
         clientRequestDTO: clientRequestDto,
       );
       return const Right(true);
+    } on ServerException catch (e) {
+      return Left(
+        ServerFailure(message: e.toString(), statusCode: e.statusCode),
+      );
+    }
+  }
+
+  @override
+  ResultFuture<List<ClientRequestResponseDto>> getNearbyTripRequest(
+    double driverLat,
+    double driverLng,
+  ) async {
+    try {
+      final clientRequestResponse = await clientRequestDataSource
+          .getNearbyTripRequest(driverLat, driverLng);
+
+      return Right(clientRequestResponse);
     } on ServerException catch (e) {
       return Left(
         ServerFailure(message: e.toString(), statusCode: e.statusCode),

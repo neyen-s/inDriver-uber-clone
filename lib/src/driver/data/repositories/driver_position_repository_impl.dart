@@ -34,4 +34,18 @@ class DriverPositionRepositoryImpl implements DriverPositionRepository {
       return Left(ServerFailure(message: e.toString(), statusCode: e));
     }
   }
+
+  @override
+  ResultFuture<DriverPositionDTO> getDriverPosition({
+    required int idDriver,
+  }) async {
+    try {
+      final result = await driverPositionDatasource.getDriverPosition(
+        idDriver: idDriver.toString(),
+      );
+      return Right(result);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString(), statusCode: e));
+    }
+  }
 }

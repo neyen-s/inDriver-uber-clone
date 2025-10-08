@@ -7,4 +7,6 @@ abstract class DriverPositionRepository {
   ResultFuture<bool> create({required DriverPositionEntity driverPosition});
 
   ResultFuture<bool> delete({required int idDriver});
+
+  ResultFuture<DriverPositionEntity> getDriverPosition({required int idDriver});
 }

@@ -47,9 +47,11 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_
 import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_datasource.dart';
 import 'package:indriver_uber_clone/src/driver/data/repositories/driver_position_repository_impl.dart';
 import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_position_repository.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/client-requests/get_nearby_trip_request_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/create_driver_position_usecase.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/delete_driver_position_usecase.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/get_driver_position_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
@@ -59,6 +61,8 @@ import 'package:indriver_uber_clone/src/profile/domain/usecases/update_user_use_
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/bloc/profile_update_bloc.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
+
+import '../../src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -99,10 +103,12 @@ Future<void> _initCore() async {
     // UseCases
     ..registerLazySingleton(() => GetTimeAndDistanceValuesUsecase(sl()))
     ..registerLazySingleton(() => CreateClientRequestUseCase(sl()))
+    ..registerLazySingleton(() => GetNearbyTripRequestUseCase(sl()))
     ..registerLazySingleton(
       () => ClientRequestsUsecases(
         getTimeAndDistanceValuesUsecase: sl(),
         createClientRequestUseCase: sl(),
+        getNearbyTripRequestUseCase: sl(),
       ),
     )
     //Socket
@@ -223,11 +229,14 @@ Future<void> _initDriverMap() async {
     // UseCases
     ..registerLazySingleton(() => CreateDriverPositionUsecase(sl()))
     ..registerLazySingleton(() => DeleteDriverPositionUsecase(sl()))
+    ..registerLazySingleton(() => GetDriverPositionUseCase(sl()))
     ..registerLazySingleton(
       () => DriverPositionUsecases(
         createDriverPositionUsecase: sl(),
         deleteDriverPositionUsecase: sl(),
+        getDriverPositionUseCase: sl(),
       ),
     )
-    ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()));
+    ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()))
+    ..registerFactory(() => DriverClientRequestsBloc(sl(), sl(), sl()));
 }

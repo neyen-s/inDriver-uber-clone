@@ -42,7 +42,7 @@ class ClientMapSeekerBloc
     on<DrawRouteRequested>(_onDrawRouteRequested);
     on<ClientMapCameraCentered>(_onClientMapCameraCentered);
     on<ResetCameraRequested>(_onResetCameraRequested);
-    on<GetTimeAndDistanceValuesRequested>(_onGetTimeAndDistanceValues);
+    // on<GetTimeAndDistanceValuesRequested>(_onGetTimeAndDistanceValues);
     on<CreateClientRequest>(_onCreateClientRequest);
 
     //socket related events
@@ -201,6 +201,7 @@ class ClientMapSeekerBloc
       );
 
       // Llamada al service que calcula time & distance (sin encolar)
+      print('orign: ${event.origin}, destination: ${event.destination}');
       final timeResult = await clientRequestsUsecases
           .getTimeAndDistanceValuesUsecase(
             TimeAndDistanceParams(
@@ -281,6 +282,8 @@ class ClientMapSeekerBloc
           distanceKm: distanceKm,
           durationMinutes: durationMinutes,
           timeAndDistanceValues: timeAndDistanceValues,
+          origin: event.origin,
+          destination: event.destination,
           isLoading: false,
         ),
       );
@@ -430,7 +433,7 @@ class ClientMapSeekerBloc
     }
   }
 
-  Future<void> _onGetTimeAndDistanceValues(
+  /*   Future<void> _onGetTimeAndDistanceValues(
     GetTimeAndDistanceValuesRequested event,
     Emitter<ClientMapSeekerState> emit,
   ) async {
@@ -479,7 +482,7 @@ class ClientMapSeekerBloc
     } catch (e) {
       emit(ClientMapSeekerError('Error getting time/distance values: $e'));
     }
-  }
+  } */
 
   Future<void> _onCreateClientRequest(
     CreateClientRequest event,
@@ -496,6 +499,19 @@ class ClientMapSeekerBloc
         emit(ClientMapSeekerError(failure.message));
       },
       (authResponse) async {
+        print(
+          '----------------------------urrent.origin?.latitude: ${current.origin?.latitude}',
+        );
+        print(
+          '----------------------------current.origin?.longitude: ${current.origin?.longitude}',
+        );
+        print(
+          '----------------------------current.destination?.longitude: ${current.destination?.latitude}',
+        );
+        print(
+          '----------------------------current.destination?.longitude: ${current.destination?.longitude}',
+        );
+
         try {
           debugPrint('**BLOC: creating Client request...');
           final response = await clientRequestsUsecases

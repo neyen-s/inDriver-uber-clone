@@ -223,6 +223,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   ConfirmRouteBtn(
                     onPressed: () {
                       if (originLatLng != null && destinationLatLng != null) {
+                        print('******originLatLng  $originLatLng');
                         context.read<ClientMapSeekerBloc>().add(
                           DrawRouteRequested(
                             origin: originLatLng!,
@@ -264,6 +265,12 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
             );
             print(
               'STATE.timeAndDistanceValues?.RECOMENDED VALUE.text ?? "" : ${state.timeAndDistanceValues?.recommendedValue ?? ""}',
+            );
+            print(
+              '_____________________ ORIGIN  state.timeAndDistanceValues?.destinationAddresses , ${state.timeAndDistanceValues?.originAddresses}',
+            );
+            print(
+              '_____________________ destinationAddress state.timeAndDistanceValues?.destinationAddresses , ${state.timeAndDistanceValues?.destinationAddresses}',
             );
           }
           if (state is ClientMapSeekerSuccess &&

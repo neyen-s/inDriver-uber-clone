@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_values_dto.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/dto/client_request_response_dto.dart';
 
 sealed class ClientRequestDataSource {
   const ClientRequestDataSource();
@@ -15,6 +17,11 @@ sealed class ClientRequestDataSource {
   Future<bool> createClientRequest({
     required ClientRequestDTO clientRequestDTO,
   });
+
+  Future<List<ClientRequestResponseDto>> getNearbyTripRequest(
+    double driverLat,
+    double driverLng,
+  );
 }
 
 class ClientRequestDataSourceImpl implements ClientRequestDataSource {
@@ -33,11 +40,11 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
       path:
           '/client-requests/$originLat/$originLng/$destinationLat/$destinationLng',
     );
-    print('**getTimeAndDistanceClientRequest RESPONSE: $response');
+    debugPrint('**getTimeAndDistanceClientRequest RESPONSE: $response');
 
     final dto = TimeAndDistanceValuesDto.fromJson(response);
 
-    print('**getTimeAndDistanceClientRequest DTO: $dto');
+    debugPrint('**getTimeAndDistanceClientRequest DTO: $dto');
 
     return dto;
   }
@@ -46,13 +53,42 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
   Future<bool> createClientRequest({
     required ClientRequestDTO clientRequestDTO,
   }) async {
-    print('**createClientRequest DTO: $clientRequestDTO');
+    debugPrint('**createClientRequest DTO: $clientRequestDTO');
     final response = await apiClient.post(
       path: '/client-requests',
       body: clientRequestDTO.toJson(),
     );
 
-    print('**createClientRequest RESPONSE: $response');
+    debugPrint('**createClientRequest RESPONSE: $response');
     return true;
+  }
+
+  @override
+  Future<List<ClientRequestResponseDto>> getNearbyTripRequest(
+    double driverLat,
+    double driverLng,
+  ) async {
+    debugPrint('**getNearbyTripRequest');
+    final response = await apiClient.get(
+      path: '/client-requests/$driverLat/$driverLng',
+    );
+    final clientRequestResponseDtos = <ClientRequestResponseDto>[];
+
+    debugPrint(
+      '**getNearbyTripRequest DTO: ${clientRequestResponseDtos.length}',
+    );
+    ('--RESPONSE: ${response['data']}');
+
+    response['data'].forEach((element) {
+      clientRequestResponseDtos.add(
+        ClientRequestResponseDto.fromJson(element as Map<String, dynamic>),
+      );
+    });
+
+    debugPrint(
+      '**getNearbyTripRequest DTO: ${clientRequestResponseDtos.length}',
+    );
+
+    return clientRequestResponseDtos;
   }
 }
