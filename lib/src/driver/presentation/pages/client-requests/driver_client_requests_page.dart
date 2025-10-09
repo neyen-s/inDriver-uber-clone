@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:indriver_uber_clone/core/services/loader_service.dart';
+import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/driver_client_requests_item.dart';
 
@@ -37,6 +38,13 @@ class _ClientRequestsPageState extends State<DriverClientRequestsPage> {
                   LoadingService.show(context);
                 } else {
                   LoadingService.hide(context);
+                }
+
+                if (state.driverTripRequest != null) {
+                  CoreUtils.showSnackBar(
+                    context,
+                    'Your offer has been sent successfully',
+                  );
                 }
               },
               builder: (context, state) {

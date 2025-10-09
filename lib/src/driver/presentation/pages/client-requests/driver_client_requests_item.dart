@@ -1,9 +1,14 @@
+import 'dart:ffi';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_button.dart';
+import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
+import 'package:indriver_uber_clone/src/driver/domain/entities/driver_request_entity.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 
 class DriverClientRequestsItem extends StatelessWidget {
@@ -166,7 +171,7 @@ class DriverClientRequestsItem extends StatelessWidget {
                   onPressed: () async {
                     await _onCounterofferPressed(
                       context,
-                      clientRequestResponse?.fareOffered,
+                      clientRequestResponse,
                     );
                   },
                 ),
@@ -234,9 +239,11 @@ class DriverClientRequestsItem extends StatelessWidget {
 
   Future<void> _onCounterofferPressed(
     BuildContext context,
-    double? fare,
+    ClientRequestResponseEntity? clientRequestResponse,
   ) async {
-    final controller = TextEditingController(text: fare.toString());
+    final controller = TextEditingController(
+      text: clientRequestResponse?.fareOffered.toString(),
+    );
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -273,7 +280,39 @@ class DriverClientRequestsItem extends StatelessWidget {
     if (confirm ?? false) {
       final fare = double.tryParse(controller.text) ?? 0.0;
       debugPrint('Counteroffer sent with fare: $fare');
-      //TODO API CALL TO ACCEPT REQUEST
+      debugPrint(
+        'clientRequestResponse.googleDistanceMatrix.duration.value ${clientRequestResponse?.googleDistanceMatrix.duration.value}',
+      );
+
+      if (clientRequestResponse != null && state.idDriver != null) {
+        context.read<DriverClientRequestsBloc>().add(
+          CreateDriverTripRequestEvent(
+            driverTripRequestEntity: DriverTripRequestEntity(
+              idClientRequest: clientRequestResponse.idClient,
+              idDriver: state.idDriver ?? 0,
+              fareOffered: fare,
+              time:
+                  clientRequestResponse.googleDistanceMatrix.duration.value
+                      .toDouble() /
+                  60,
+
+              distance:
+                  clientRequestResponse.googleDistanceMatrix.distance.value
+                      .toDouble() /
+                  1000,
+            ),
+          ),
+        );
+      } else {
+        debugPrint(
+          'Error sending COUNTEROFFER: clientRequestResponse or'
+          ' idDriver is null',
+        );
+        CoreUtils.showSnackBar(
+          context,
+          'Error: Unable to send counteroffer, try again later',
+        );
+      }
     }
   }
 }

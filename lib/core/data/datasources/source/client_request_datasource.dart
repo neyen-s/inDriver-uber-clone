@@ -77,7 +77,7 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     debugPrint(
       '**getNearbyTripRequest DTO: ${clientRequestResponseDtos.length}',
     );
-    ('--RESPONSE: ${response['data']}');
+    debugPrint('--RESPONSE: ${response['data']}');
 
     response['data'].forEach((element) {
       clientRequestResponseDtos.add(

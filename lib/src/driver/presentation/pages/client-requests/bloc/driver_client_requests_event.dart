@@ -13,3 +13,21 @@ class GetNearbyTripRequestEvent extends DriverClientRequestsEvent {
   @override
   List<Object> get props => [];
 }
+
+class CreateDriverTripRequestEvent extends DriverClientRequestsEvent {
+  const CreateDriverTripRequestEvent({required this.driverTripRequestEntity});
+
+  final DriverTripRequestEntity driverTripRequestEntity;
+
+  @override
+  List<Object> get props => [driverTripRequestEntity];
+}
+
+class FareOfferedChangeEvent extends DriverClientRequestsEvent {
+  const FareOfferedChangeEvent({required this.fareOffered});
+
+  final double fareOffered;
+
+  @override
+  List<Object> get props => [fareOffered];
+}

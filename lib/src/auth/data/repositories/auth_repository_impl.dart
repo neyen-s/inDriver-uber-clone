@@ -64,7 +64,10 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(data);
       } else {
         return const Left(
-          CacheFaliure(message: 'No user session found', statusCode: 404),
+          CacheFaliure(
+            message: 'No user session found',
+            statusCode: 404,
+          ), //TODO CHECK REDIRECTION TO LOGIN PAFE WHEN TOKEN FAILS
         );
       }
     } on CacheException catch (e) {

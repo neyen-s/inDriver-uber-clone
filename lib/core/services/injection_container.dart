@@ -45,9 +45,15 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bl
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_datasource.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_trip_request_data_source.dart';
 import 'package:indriver_uber_clone/src/driver/data/repositories/driver_position_repository_impl.dart';
+import 'package:indriver_uber_clone/src/driver/data/repositories/driver_trip_request_repository_impl.dart';
 import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_position_repository.dart';
+import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_trip_request_repository.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/client-requests/get_nearby_trip_request_use_case.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/create_driver_trip_request_use_case.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/driver_trip_offers_use_cases.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/get_driver_trip_request_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/create_driver_position_usecase.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/delete_driver_position_usecase.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
@@ -222,9 +228,15 @@ Future<void> _initDriverMap() async {
     ..registerLazySingleton<DriverPositionDatasource>(
       () => DriverPositionDatasourceImpl(apiClient: sl()),
     )
+    ..registerLazySingleton<DriverTripRequestDatasource>(
+      () => DriverTripRequestDatasourceImpl(apiClient: sl()),
+    )
     //repository
     ..registerLazySingleton<DriverPositionRepository>(
       () => DriverPositionRepositoryImpl(driverPositionDatasource: sl()),
+    )
+    ..registerLazySingleton<DriverTripRequestRepository>(
+      () => DriverTripRequestRepositoryImpl(driverTripRequestDatasource: sl()),
     )
     // UseCases
     ..registerLazySingleton(() => CreateDriverPositionUsecase(sl()))
@@ -237,6 +249,14 @@ Future<void> _initDriverMap() async {
         getDriverPositionUseCase: sl(),
       ),
     )
+    ..registerLazySingleton(() => CreateDriverTripRequestUseCase(sl()))
+    ..registerLazySingleton(() => GetDriverTripRequestUseCase(sl()))
+    ..registerLazySingleton(
+      () => DriverTripOffersUseCases(
+        createDriverTripOfferUseCase: sl(),
+        getDriverTripOffersUseCase: sl(),
+      ),
+    )
     ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()))
-    ..registerFactory(() => DriverClientRequestsBloc(sl(), sl(), sl()));
+    ..registerFactory(() => DriverClientRequestsBloc(sl(), sl(), sl(), sl()));
 }
