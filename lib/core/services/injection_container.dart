@@ -27,7 +27,7 @@ import 'package:indriver_uber_clone/core/network/socket_client.dart';
 import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
 import 'package:indriver_uber_clone/core/services/location_service.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
-import 'package:indriver_uber_clone/core/services/shared_prefs_adapter.dart';
+import 'package:indriver_uber_clone/core/services/secure_storage_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/source/auth_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/auth/data/repositories/auth_repository_impl.dart';
@@ -59,6 +59,7 @@ import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/get_driver_position_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/profile/data/repositories/profile_repository_impl.dart';
@@ -67,8 +68,6 @@ import 'package:indriver_uber_clone/src/profile/domain/usecases/update_user_use_
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/bloc/profile_update_bloc.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
-
-import '../../src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -85,7 +84,7 @@ Future<void> init() async {
 Future<void> _initCore() async {
   sl
     ..registerLazySingleton<ApiClient>(() => HttpApiClient(baseUrl: apiProject))
-    ..registerLazySingleton<SharedPrefsAdapter>(SharedPrefsAdapter.new)
+    ..registerLazySingleton<SecureStorageAdapter>(SecureStorageAdapter.new)
     ..registerLazySingleton<RolesBloc>(() => RolesBloc(sl()))
     ..registerLazySingleton<Client>(Client.new)
     ..registerLazySingleton<SessionBloc>(SessionBloc.new)

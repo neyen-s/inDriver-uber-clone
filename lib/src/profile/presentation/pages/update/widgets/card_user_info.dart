@@ -6,6 +6,7 @@ import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/viewmodels/profile_update_view_model.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/image_picker_button.dart';
+import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/network_avatar.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/profile_textfield.dart';
 
 class CardUserInfo extends StatelessWidget {
@@ -66,12 +67,10 @@ class CardUserInfo extends StatelessWidget {
                       child: ClipOval(
                         child: imageFile != null
                             ? Image.file(imageFile!, fit: BoxFit.cover)
-                            : FadeInImage.assetNetwork(
-                                placeholder: 'assets/img/user.png',
-                                image: user?.image ?? '',
-                                fit: BoxFit.cover,
-                                imageErrorBuilder: (_, _, _) =>
-                                    Image.asset('assets/img/user.png'),
+                            : NetworkAvatar(
+                                imageUrl: user?.image,
+                                size: 100.w,
+                                assetFallback: 'assets/img/user.png',
                               ),
                       ),
                     ),

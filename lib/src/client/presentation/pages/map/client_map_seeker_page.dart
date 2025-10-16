@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
@@ -16,6 +15,7 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/ma
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/markers_hanlder.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/on_map_tap_handler.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/update_loader_handler.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map/helpers/location_permission_helper.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/confirm_route_btn.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_search_fields.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_view.dart';
@@ -29,7 +29,8 @@ class ClientMapSeekerPage extends StatefulWidget {
   State<ClientMapSeekerPage> createState() => _ClientMapSeekerPageState();
 }
 
-class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
+class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
+    with WidgetsBindingObserver {
   late Completer<GoogleMapController> _mapController;
 
   final TextEditingController _pickUpController = TextEditingController();
@@ -54,16 +55,25 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _mapController = Completer();
     clientBloc = context.read<ClientMapSeekerBloc>();
 
-    _loadCustomIcons().then((_) async {
-      await _mapController.future;
-      clientBloc
-        ..add(ResetCameraRequested())
-        ..add(GetCurrentPositionRequested());
+    //Loads the custom icons and then initializes camera + location permissions
+    _loadCustomIcons().then((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        //Calls the helper; we pass the callback to
+        // be executed when there is permission.
+        LocationPermissionHelper.ensurePermissionAndInit(
+          context: context,
+          onGranted: () {
+            context.read<ClientMapSeekerBloc>().add(
+              GetCurrentPositionRequested(),
+            );
+          },
+        );
+      });
     });
-    //  });
 
     originFocusNode.addListener(() {
       if (originFocusNode.hasFocus) {
@@ -84,6 +94,8 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+
     _pickUpController.dispose();
     _destinationController.dispose();
     originFocusNode.dispose();
@@ -95,6 +107,22 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
         .catchError((_) {});
     _mapController = Completer();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      // vuelve de ajustes o diálogo -> re-check
+      LocationPermissionHelper.onAppResumed(
+        context: context,
+        onGranted: () {
+          context.read<ClientMapSeekerBloc>().add(
+            GetCurrentPositionRequested(),
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -120,7 +148,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
                   onSetShowMapPadding: (v) => showMapPadding = v,
                 );
               }
-
+              if (!context.mounted) return;
               updateLoader(context);
             },
           ),
@@ -299,7 +327,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage> {
 
               onConfirmPressed: (offer) {
                 print('*****offer desde UI: $offer');
-                double offerDouble = double.tryParse(offer) ?? 0.0;
+                final offerDouble = double.tryParse(offer) ?? 0.0;
                 print('*****offerDouble desde UI: $offerDouble');
                 context.read<ClientMapSeekerBloc>().add(
                   CreateClientRequest(fareOffered: offerDouble),

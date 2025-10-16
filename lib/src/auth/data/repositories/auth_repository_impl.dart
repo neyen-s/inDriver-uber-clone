@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:indriver_uber_clone/core/errors/exceptions.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/mappers/auth_response_mapper.dart';
@@ -25,10 +25,8 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       return Right(user);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: e));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -50,28 +48,24 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return Right(user);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: 500));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
   @override
   ResultFuture<AuthResponseDTO> getUserSession() async {
     try {
-      final data =
-          await SessionManager.getSession(); //check when database info changes
+      final data = await SessionManager.getSession();
 
       if (data != null) {
         return Right(data);
       } else {
         return const Left(
-          CacheFaliure(
-            message: 'No user session found',
-            statusCode: 404,
-          ), //TODO CHECK REDIRECTION TO LOGIN PAFE WHEN TOKEN FAILS
+          CacheFaliure(message: 'No user session found', statusCode: 401),
         );
       }
-    } on CacheException catch (e) {
-      return Left(CacheFaliure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -81,8 +75,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await SessionManager.saveSession(authresponse.toDto());
 
       return const Right(null);
-    } on CacheException catch (e) {
-      return Left(CacheFaliure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -91,8 +85,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await SessionManager.clearSession();
       return const Right(null);
-    } on CacheException catch (e) {
-      return Left(CacheFaliure(message: e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 }

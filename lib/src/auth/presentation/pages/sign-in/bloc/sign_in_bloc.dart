@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:formz/formz.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/form-entities/email_entity.dart';
@@ -56,7 +57,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     Emitter<SignInState> emit,
   ) async {
     final result = await authUseCases.getUserSessionUseCase();
-    print('result: $result');
+    debugPrint('result: $result');
     result.fold(
       (_) => emit(SessionInvalid()),
       (authResponse) => emit(SessionValid(authResponse)),
@@ -76,20 +77,41 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
     emit(SignInSubmitting(email: _email, password: _password));
 
-    final result = await authUseCases.signInUseCase(
-      SignInParams(email: _email.value, password: _password.value),
-    );
+    try {
+      final result = await authUseCases.signInUseCase(
+        SignInParams(email: _email.value, password: _password.value),
+      );
 
-    result.fold(
-      (failure) => emit(
+      result.fold(
+        (failure) {
+          emit(
+            SignInFailure(
+              email: _email,
+              password: _password,
+              message: failure.message,
+              statusCode: failure.statusCode,
+            ),
+          );
+        },
+        (response) {
+          emit(SignInSuccess(authResponse: response));
+        },
+      );
+    } catch (e, st) {
+      debugPrint('SignIn _onSubmitted unexpected error: $e\n$st');
+      emit(
         SignInFailure(
           email: _email,
           password: _password,
-          message: failure.errorMessage,
+          message: 'Unexpected error: $e',
         ),
-      ),
-      (response) => emit(SignInSuccess(authResponse: response)),
-    );
+      );
+
+      final isValid = Formz.validate([_email, _password]);
+      emit(
+        SignInValidating(email: _email, password: _password, isValid: isValid),
+      );
+    }
   }
 
   bool _isFormValid(Emitter<SignInState> emit) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc/bloc.dart';
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -13,6 +14,7 @@ import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_
 import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_usecase.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
+import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/secrets.dart';
@@ -95,7 +97,12 @@ class ClientMapSeekerBloc
         : const ClientMapSeekerSuccess();
     emit(current.copyWith(isLoading: true));
 
-    final result = await _geolocatorUseCases.findPositionUseCase();
+    final result = await _geolocatorUseCases.findPositionUseCase().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => const Left(
+        ServerFailure(message: 'Location request timed out', statusCode: 408),
+      ),
+    );
 
     result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
       position,
@@ -253,7 +260,7 @@ class ClientMapSeekerBloc
       // Extraer valores del timeResult (si success)
       TimeAndDistanceValuesEntity? timeAndDistanceValues;
       double distanceKmFromApi = 0;
-      int durationMinutesFromApi = 0;
+      var durationMinutesFromApi = 0;
 
       timeResult.fold(
         (failure) {
@@ -262,8 +269,8 @@ class ClientMapSeekerBloc
         },
         (val) {
           timeAndDistanceValues = val;
-          distanceKmFromApi = val.distance?.value ?? 0.0;
-          durationMinutesFromApi = (val.duration?.value?.round()) ?? 0;
+          distanceKmFromApi = val.distance.value;
+          durationMinutesFromApi = val.duration.value.round();
         },
       );
 
@@ -546,7 +553,7 @@ class ClientMapSeekerBloc
                   mapPolylines: {},
                 ),
               );
-              await Future.delayed(const Duration(milliseconds: 100));
+              await Future<void>.delayed(const Duration(milliseconds: 100));
               emit(current.copyWith(clientRequestSended: false));
             },
           );

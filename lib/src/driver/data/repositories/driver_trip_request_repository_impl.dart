@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:indriver_uber_clone/core/errors/faliures.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_trip_request_dto.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_trip_request_data_source.dart';
@@ -23,11 +23,9 @@ class DriverTripRequestRepositoryImpl implements DriverTripRequestRepository {
       await driverTripRequestDatasource.createDriverTripRequests(
         driverTripRequest: dto,
       );
-      return Right(null);
-    } on ServerFailure catch (e) {
-      return Left(
-        ServerFailure(message: e.toString(), statusCode: e.statusCode),
-      );
+      return const Right(null);
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -42,7 +40,7 @@ class DriverTripRequestRepositoryImpl implements DriverTripRequestRepository {
       );
       return Right(result);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: e));
+      return Left(mapExceptionToFailure(e));
     }
   }
 }

@@ -2,8 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_values_dto.dart';
 import 'package:indriver_uber_clone/core/data/datasources/source/client_request_datasource.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/client_request_repository.dart';
-import 'package:indriver_uber_clone/core/errors/exceptions.dart';
-import 'package:indriver_uber_clone/core/errors/faliures.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
+
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
@@ -30,10 +30,8 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
             destinationLng: destinationLng,
           );
       return Right(timeAndDistanceValues);
-    } on ServerException catch (e) {
-      return Left(
-        ServerFailure(message: e.toString(), statusCode: e.statusCode),
-      );
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -47,10 +45,8 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
         clientRequestDTO: clientRequestDto,
       );
       return const Right(true);
-    } on ServerException catch (e) {
-      return Left(
-        ServerFailure(message: e.toString(), statusCode: e.statusCode),
-      );
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -64,10 +60,8 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
           .getNearbyTripRequest(driverLat, driverLng);
 
       return Right(clientRequestResponse);
-    } on ServerException catch (e) {
-      return Left(
-        ServerFailure(message: e.toString(), statusCode: e.statusCode),
-      );
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
     }
   }
 }

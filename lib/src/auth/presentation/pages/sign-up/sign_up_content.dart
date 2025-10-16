@@ -5,7 +5,6 @@ import 'package:indriver_uber_clone/core/common/widgets/default_button.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field_outlined.dart';
 import 'package:indriver_uber_clone/core/common/widgets/sync_controller.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
-import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/viewmodels/sign_up_view_model.dart';
@@ -27,6 +26,25 @@ class _SignUpContentState extends State<SignUpContent> {
   late final _phoneController = TextEditingController();
   late final _passwordController = TextEditingController();
   late final _confirmPasswordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint('SignUpContent initState. Widget hash: ${hashCode}');
+    debugPrint(
+      'SignUpContent -> Bloc hash: ${context.read<SignUpBloc>().hashCode}',
+    );
+    // sincronizar con el estado actual del bloc una vez montado
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vm = SignUpViewModel.fromState(context.read<SignUpBloc>().state);
+      _nameController.text = vm.name.value;
+      _lastNameController.text = vm.lastname.value;
+      _emailController.text = vm.email.value;
+      _phoneController.text = vm.phone.value;
+      _passwordController.text = vm.password.value;
+      _confirmPasswordController.text = vm.confirmPassword.value;
+    });
+  }
 
   @override
   void dispose() {
@@ -83,9 +101,7 @@ class _SignUpContentState extends State<SignUpContent> {
                     listener: (context, state) async {
                       debugPrint('state: $state');
 
-                      if (state is SignUpFailure) {
-                        CoreUtils.showSnackBar(context, state.message);
-                      } else if (state is SignUpSuccess) {
+                      if (state is SignUpSuccess) {
                         final authResponse = state.authResponse;
                         debugPrint('authResponse: $authResponse');
 
@@ -101,15 +117,34 @@ class _SignUpContentState extends State<SignUpContent> {
 
                       final vm = SignUpViewModel.fromState(state);
                       if (mounted) {
-                        syncController(_nameController, vm.name.value);
-                        syncController(_lastNameController, vm.lastname.value);
-                        syncController(_emailController, vm.email.value);
-                        syncController(_phoneController, vm.phone.value);
-                        syncController(_passwordController, vm.password.value);
-                        syncController(
-                          _confirmPasswordController,
-                          vm.confirmPassword.value,
-                        );
+                        if (_nameController.text != vm.name.value) {
+                          syncController(_nameController, vm.name.value);
+                        }
+                        if (_lastNameController.text != vm.lastname.value) {
+                          syncController(
+                            _lastNameController,
+                            vm.lastname.value,
+                          );
+                        }
+                        if (_emailController.text != vm.email.value) {
+                          syncController(_emailController, vm.email.value);
+                        }
+                        if (_phoneController.text != vm.phone.value) {
+                          syncController(_phoneController, vm.phone.value);
+                        }
+                        if (_passwordController.text != vm.password.value) {
+                          syncController(
+                            _passwordController,
+                            vm.password.value,
+                          );
+                        }
+                        if (_confirmPasswordController.text !=
+                            vm.confirmPassword.value) {
+                          syncController(
+                            _confirmPasswordController,
+                            vm.confirmPassword.value,
+                          );
+                        }
                       }
                     },
                     builder: (context, state) {
@@ -219,7 +254,16 @@ class _SignUpContentState extends State<SignUpContent> {
                                       .read<SignUpBloc>()
                                       .add(SignUpConfirmPasswordChanged(value)),
                                 ),
-
+                                if (vm.error != null)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Text(
+                                      vm.error!,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ),
                                 DefaultButton(
                                   margin: EdgeInsets.only(
                                     top: 20.h,
@@ -238,8 +282,8 @@ class _SignUpContentState extends State<SignUpContent> {
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                  onPressed: vm.isSubmitting || !vm.isValid
-                                      ? () {}
+                                  onPressed: vm.isSubmitting
+                                      ? null
                                       : () => context.read<SignUpBloc>().add(
                                           const SignUpSubmitted(),
                                         ),

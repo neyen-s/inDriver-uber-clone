@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 
@@ -48,7 +49,7 @@ class GeolocatorRepositoryImpl implements GeolocatorRepository {
       final position = await Geolocator.getCurrentPosition();
       return Right(position);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: 404));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -62,7 +63,7 @@ class GeolocatorRepositoryImpl implements GeolocatorRepository {
       );
       return Right(descriptor);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: 400));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -84,7 +85,7 @@ class GeolocatorRepositoryImpl implements GeolocatorRepository {
       );
       return Right(marker);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: 400));
+      return Left(mapExceptionToFailure(e));
     }
   }
 

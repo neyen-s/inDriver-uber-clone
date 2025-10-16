@@ -67,7 +67,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<AuthResponseDTO> refreshToken({required String refreshToken}) async {
     final data = await apiClient.post(
-      path: '/auth/refresh-token',
+      path: '/auth/refresh',
       body: {'refreshToken': refreshToken},
     );
     return AuthResponseDTO.fromJson(data);

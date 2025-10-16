@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/profile_update_page.dart';
+import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/network_avatar.dart';
 
 class ProfileInfoContent extends StatelessWidget {
   const ProfileInfoContent({
@@ -69,15 +70,10 @@ class ProfileInfoContent extends StatelessWidget {
               margin: EdgeInsets.only(top: 15.h, bottom: 0.h),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: ClipOval(
-                  child: FadeInImage.assetNetwork(
-                    placeholder: 'assets/img/user.png',
-                    image: user?.image ?? '',
-                    imageErrorBuilder: (context, error, stackTrace) =>
-                        Image.asset('assets/img/user.png'),
-                    fit: BoxFit.cover,
-                    fadeOutDuration: const Duration(seconds: 1),
-                  ),
+                child: NetworkAvatar(
+                  imageUrl: user?.image,
+                  size: 100.w,
+                  assetFallback: 'assets/img/user.png',
                 ),
               ),
             ),

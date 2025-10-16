@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/rendering.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
-import 'package:indriver_uber_clone/core/errors/faliures.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/network/socket_client.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 
@@ -19,7 +19,7 @@ class SocketRepositoryImpl implements SocketRepository {
       await socket.connect();
       return const Right(null);
     } catch (e) {
-      return Left(SocketFailure(message: e.toString()));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -29,7 +29,7 @@ class SocketRepositoryImpl implements SocketRepository {
       socket.disconnect();
       return const Right(null);
     } catch (e) {
-      return Left(SocketFailure(message: e.toString()));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -40,7 +40,7 @@ class SocketRepositoryImpl implements SocketRepository {
       return const Right(null);
     } catch (e) {
       debugPrint('Error sending message: $e');
-      return Left(SocketFailure(message: e.toString()));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -54,7 +54,7 @@ class SocketRepositoryImpl implements SocketRepository {
       return Right(controller.stream);
     } catch (e) {
       debugPrint('Error listening to event $event: $e');
-      return Left(SocketFailure(message: e.toString()));
+      return Left(mapExceptionToFailure(e));
     }
   }
 }

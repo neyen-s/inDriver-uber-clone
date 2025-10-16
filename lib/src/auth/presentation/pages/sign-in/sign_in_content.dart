@@ -5,7 +5,6 @@ import 'package:indriver_uber_clone/core/common/widgets/default_button.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_text_field_outlined.dart';
 import 'package:indriver_uber_clone/core/common/widgets/sync_controller.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
-import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/sign_up_page.dart';
@@ -24,6 +23,16 @@ class SignInContent extends StatefulWidget {
 class _SignInContentState extends State<SignInContent> {
   late final _emailController = TextEditingController();
   late final _passwordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vm = SignInViewModel.fromState(context.read<SignInBloc>().state);
+      _emailController.text = vm.email.value;
+      _passwordController.text = vm.password.value;
+    });
+  }
 
   @override
   void dispose() {
@@ -57,9 +66,7 @@ class _SignInContentState extends State<SignInContent> {
                   builder: (context, constraints) {
                     return BlocConsumer<SignInBloc, SignInState>(
                       listener: (context, state) async {
-                        if (state is SignInFailure) {
-                          CoreUtils.showSnackBar(context, state.message);
-                        } else if (state is SignInSuccess) {
+                        if (state is SignInSuccess) {
                           final authResponse = state.authResponse;
                           debugPrint('authResponse: $authResponse');
 
@@ -78,8 +85,15 @@ class _SignInContentState extends State<SignInContent> {
 
                         final vm = SignInViewModel.fromState(state);
 
-                        syncController(_emailController, vm.email.value);
-                        syncController(_passwordController, vm.password.value);
+                        if (_emailController.text != vm.email.value) {
+                          syncController(_emailController, vm.email.value);
+                        }
+                        if (_passwordController.text != vm.password.value) {
+                          syncController(
+                            _passwordController,
+                            vm.password.value,
+                          );
+                        }
                       },
                       builder: (context, state) {
                         final vm = SignInViewModel.fromState(state);
@@ -101,9 +115,11 @@ class _SignInContentState extends State<SignInContent> {
                               filled: true,
                               fillColour: Colors.white,
                               controller: _emailController,
-                              errorText: vm.email.isNotValid && !vm.email.isPure
-                                  ? 'Invalid email'
-                                  : null,
+                              errorText:
+                                  vm.emailError ??
+                                  (vm.email.isNotValid && !vm.email.isPure
+                                      ? 'Invalid email'
+                                      : null),
                               onChanged: (value) => context
                                   .read<SignInBloc>()
                                   .add(SignInEmailChanged(value)),
@@ -117,9 +133,10 @@ class _SignInContentState extends State<SignInContent> {
                               obscureText: true,
                               controller: _passwordController,
                               errorText:
-                                  vm.password.isNotValid && !vm.password.isPure
-                                  ? 'Invalid password'
-                                  : null,
+                                  vm.passwordError ??
+                                  (vm.password.isNotValid && !vm.password.isPure
+                                      ? 'Invalid password'
+                                      : null),
                               onChanged: (value) => context
                                   .read<SignInBloc>()
                                   .add(SignInPasswordChanged(value)),
@@ -148,8 +165,8 @@ class _SignInContentState extends State<SignInContent> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                              onPressed: vm.isSubmitting || !vm.isValid
-                                  ? () {} //TODO CHECK THIS
+                              onPressed: vm.isSubmitting
+                                  ? null
                                   : () => context.read<SignInBloc>().add(
                                       const SignInSubmitted(),
                                     ),

@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:indriver_uber_clone/core/errors/exceptions.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
+import 'package:indriver_uber_clone/core/services/secure_storage_adapter.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/sesion_manager.dart';
 
@@ -95,20 +96,18 @@ class HttpApiClient implements ApiClient {
     Duration timeout = const Duration(seconds: 5),
   }) async {
     final requestHeaders = {'Content-Type': 'application/json', ...?headers};
-    print(' requestHeaders: $requestHeaders');
 
     final accessToken = await SessionManager.accessToken;
     if (accessToken != null && !requestHeaders.containsKey('Authorization')) {
       requestHeaders['Authorization'] = 'Bearer $accessToken';
     }
-    // ------------------------------------------------
+    //
 
+    debugPrint('**** HttpApiClient Handling request ****');
     debugPrint('requestHeaders: $requestHeaders');
     debugPrint('$method Request: $uri');
 
     try {
-      debugPrint('$method Request: $uri');
-
       late final http.Response response;
       final encodedBody = jsonEncode(body);
 
@@ -207,13 +206,13 @@ class HttpApiClient implements ApiClient {
       debugPrint('No Internet connection. 503');
       return const ServerException(
         message: 'No Internet connection.',
-        statusCode: '503',
+        statusCode: 503,
       );
     } else if (e is TimeoutException) {
       debugPrint('Request timed out. 408');
       return const ServerException(
         message: 'Request timed out.',
-        statusCode: '408',
+        statusCode: 408,
       );
     } else if (e is ServerException) {
       return e;
@@ -221,7 +220,7 @@ class HttpApiClient implements ApiClient {
       debugPrint('Unexpected error: $e');
       return ServerException(
         message: 'Unexpected client error: $e',
-        statusCode: '500',
+        statusCode: 500,
       );
     }
   }
@@ -230,111 +229,197 @@ class HttpApiClient implements ApiClient {
     final statusCode = response.statusCode;
     final responseBody = response.body.trim();
 
+    // Empty
+    if (responseBody.isEmpty) {
+      debugPrint('Empty response body, returning {}');
+      if (statusCode >= 200 && statusCode < 300) return <String, dynamic>{};
+      throw ServerException(message: 'Empty response', statusCode: statusCode);
+    }
+    //tries to parse JSONin a safe way
     try {
-      if (responseBody.isEmpty) {
-        debugPrint('Empty response body, returning {}');
-        if (statusCode >= 200 && statusCode < 300) return <String, dynamic>{};
-        throw ServerException(
-          message: 'Empty response',
-          statusCode: '$statusCode',
-        );
-      }
-
-      final decodedRaw = jsonDecode(responseBody);
+      final dynamic decodedRaw = jsonDecode(responseBody);
       debugPrint('decoded: $decodedRaw');
       debugPrint('statusCode: $statusCode');
-      debugPrint(' IS statusCode == 201? : ${statusCode == 201}');
 
       if (decodedRaw is List) {
         debugPrint('decoded is List with length: ${decodedRaw.length}');
         if (statusCode >= 200 && statusCode < 300) {
           return <String, dynamic>{'data': decodedRaw};
         }
-        // error con lista - envolvemos mensaje genérico
-        throw ServerException(
-          message: 'Server error',
-          statusCode: '$statusCode',
-        );
+        final fallbackMsg = decodedRaw.isNotEmpty
+            ? decodedRaw.toString()
+            : 'Server error';
+        throw ServerException(message: fallbackMsg, statusCode: statusCode);
       }
 
-      // Si es un Map (objeto JSON), lo devolvemos tal cual
-      if (decodedRaw is Map<String, dynamic>) {
-        final decoded = decodedRaw;
-        debugPrint('decoded: $decoded');
-        debugPrint('statusCode: $statusCode');
-        debugPrint(' IS statusCode == 201? : ${statusCode == 201}');
+      if (decodedRaw is Map) {
+        final decoded = Map<String, dynamic>.from(decodedRaw);
 
+        debugPrint('decoded map: $decoded');
+
+        // OK
         if (statusCode >= 200 && statusCode < 300) {
+          debugPrint('Call successful with status $statusCode');
           return decoded;
         }
 
+        //if it is 401 and contains token expired
         if (statusCode == 401) {
+          final code = decoded['code']?.toString();
+          final messages = decoded['messages'];
           final isTokenExpired =
-              decoded['code'] == 'token_not_valid' &&
-              ((decoded['messages'] as List<dynamic>?)?.any(
-                    (msg) => msg['message'] == 'Token is expired',
-                  ) ??
-                  false);
+              code == 'token_not_valid' &&
+              messages is List &&
+              messages.any(
+                (msg) =>
+                    msg is Map &&
+                    msg['message']?.toString() == 'Token is expired',
+              );
 
           if (isTokenExpired) {
             throw const TokenExpiredException(message: 'Token expired');
           }
+
+          //extracts the message (if not exists, fallback to body)
+          final message =
+              (decoded['message'] ??
+                      decoded['detail'] ??
+                      decoded['error'] ??
+                      responseBody)
+                  .toString();
+          throw ServerException(message: message, statusCode: statusCode);
         }
 
-        final message = decoded['message']?.toString() ?? 'Unknown error';
-        throw ServerException(message: message, statusCode: '$statusCode');
+        final message =
+            (decoded['message'] ??
+                    decoded['detail'] ??
+                    decoded['error'] ??
+                    responseBody)
+                .toString();
+        throw ServerException(message: message, statusCode: statusCode);
       }
 
-      // Tipo inesperado
       throw ServerException(
         message: 'Invalid JSON response type',
-        statusCode: '$statusCode',
+        statusCode: statusCode,
       );
-    } catch (e) {
-      debugPrint('Error decoding response: $responseBody');
+    } on FormatException catch (fe) {
+      debugPrint('Response body is not valid JSON: $fe -- body: $responseBody');
 
-      if (statusCode == 401) {
-        throw const TokenExpiredException(message: 'Token expired');
+      // If it is a large HTML (debug page), do not pass all to user.
+      final looksLikeHtml =
+          responseBody.toLowerCase().contains('<html') ||
+          responseBody.toLowerCase().contains('<!doctype');
+
+      if (statusCode >= 500) {
+        // 5xx type errors with non-JSON body -> generic server error  to client
+        debugPrint(
+          'Server returned non-JSON 5xx; '
+          'returning generic server error to client.',
+        );
+        throw ServerException(message: 'Server error', statusCode: statusCode);
       }
 
-      // Si jsonDecode lanzó, devolvemos un ServerException manejable
-      throw ServerException(
-        message: 'Invalid JSON response',
-        statusCode: '$statusCode',
+      if (looksLikeHtml) {
+        //4xx type errors with HTML body -> extract title if possible
+        final titleMatch = RegExp(
+          '<title>(.*?)</title>',
+          caseSensitive: false,
+          dotAll: true,
+        ).firstMatch(responseBody);
+        final extracted = titleMatch?.group(1)?.trim();
+        final message = extracted != null && extracted.isNotEmpty
+            ? extracted
+            : 'Unexpected server response';
+        throw ServerException(message: message, statusCode: statusCode);
+      }
+
+      // if it's a success status code and the body is not JSON we
+      // return it as 'data'
+      if (statusCode >= 200 && statusCode < 300) {
+        return <String, dynamic>{'data': responseBody};
+      }
+
+      //By default we return body (truncated to avoid giant messages)
+      final truncated = responseBody.length > 300
+          ? '${responseBody.substring(0, 300)}...'
+          : responseBody;
+      throw ServerException(message: truncated, statusCode: statusCode);
+    } catch (e) {
+      // Si ya es ServerException lo re-lanzamos
+      if (e is ServerException) rethrow;
+
+      // Fallback in case of unexpected error
+      debugPrint(
+        'Unhandled _handleResponse error: $e -- responseBody: $responseBody',
       );
+      final fallbackMessage = responseBody.isNotEmpty
+          ? (responseBody.length > 200
+                ? '${responseBody.substring(0, 200)}...'
+                : responseBody)
+          : 'Invalid JSON response';
+      throw ServerException(message: fallbackMessage, statusCode: statusCode);
     }
   }
 
   Future<String?> _refreshToken() async {
     try {
       final refreshToken = await SessionManager.refreshToken;
-
       debugPrint('Refreshing token with refreshToken: $refreshToken');
 
       if (refreshToken == null) {
-        SessionManager.handleTokenExpired();
+        await SessionManager.handleTokenExpired();
         return null;
       }
 
-      final response = await post(
-        path: '/auth/refresh',
-        body: {'refresh': refreshToken},
-      );
+      //Calls directly with http to avoid recursion in _handleRequest
+      final uri = Uri.parse('http://$baseUrl/auth/refresh');
+      final resp = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'refreshToken': refreshToken}),
+          )
+          .timeout(const Duration(seconds: 6));
 
-      final newAccessToken =
-          response['access']
-              as String?; //TODO check later the real name of the variable
-
-      if (newAccessToken != null) {
-        await SessionManager.updateAccessToken(newAccessToken);
-        return newAccessToken;
-      } else {
-        SessionManager.handleTokenExpired();
+      if (resp.statusCode < 200 || resp.statusCode >= 300) {
+        debugPrint('Refresh returned non-2xx: ${resp.statusCode} ${resp.body}');
+        await SessionManager.handleTokenExpired();
         return null;
       }
-    } catch (e) {
-      debugPrint('Error refreshing token: $e');
+
+      final decoded = jsonDecode(resp.body) as Map<String, dynamic>;
+      final rawNewAccess =
+          (decoded['access'] as String?) ??
+          (decoded['access_token'] as String?) ??
+          (decoded['token'] as String?);
+
+      if (rawNewAccess == null) {
+        await SessionManager.handleTokenExpired();
+        return null;
+      }
+
+      final newAccess = rawNewAccess.startsWith('Bearer ')
+          ? rawNewAccess.substring(7)
+          : rawNewAccess;
+      final newRefresh =
+          (decoded['refresh'] as String?) ??
+          (decoded['refreshToken'] as String?) ??
+          (decoded['refresh_token'] as String?);
+
+      await SessionManager.updateAccessToken(newAccess);
+      if (newRefresh != null) {
+        //persisit with a new refresh token if it comes
+        await SecureStorageAdapter.writeToken(
+          SessionManager.refreshKey,
+          newRefresh,
+        );
+      }
+      return newAccess;
+    } catch (e, st) {
+      debugPrint('Error refreshing token: $e\n$st');
+      await SessionManager.handleTokenExpired();
+      return null;
     }
-    return null;
   }
 }

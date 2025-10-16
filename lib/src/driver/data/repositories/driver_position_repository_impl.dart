@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:indriver_uber_clone/core/errors/faliures.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_position_dto.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_datasource.dart';
@@ -21,7 +21,7 @@ class DriverPositionRepositoryImpl implements DriverPositionRepository {
       await driverPositionDatasource.create(driverPosition: dto);
       return const Right(true);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: e));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -31,7 +31,7 @@ class DriverPositionRepositoryImpl implements DriverPositionRepository {
       await driverPositionDatasource.delete(idDriver: idDriver.toString());
       return const Right(true);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: e));
+      return Left(mapExceptionToFailure(e));
     }
   }
 
@@ -45,7 +45,7 @@ class DriverPositionRepositoryImpl implements DriverPositionRepository {
       );
       return Right(result);
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: e));
+      return Left(mapExceptionToFailure(e));
     }
   }
 }

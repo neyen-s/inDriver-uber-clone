@@ -49,6 +49,8 @@ Future<void> handleMapStateChange({
             target: latLng,
             zoom: 16,
           );
+          if (!context.mounted) return;
+
           context.read<ClientMapSeekerBloc>().add(ClientMapCameraCentered());
         } catch (_) {}
       }
@@ -104,6 +106,7 @@ Future<void> handleMapStateChange({
         //(or generates a complete list if you have multiple)
         final firstPolyline = s.polylines.values.first;
         final latLngPoints = firstPolyline.points;
+        if (!context.mounted) return;
 
         FocusScope.of(context).unfocus();
 

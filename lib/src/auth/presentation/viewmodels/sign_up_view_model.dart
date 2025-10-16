@@ -17,6 +17,7 @@ class SignUpViewModel {
     required this.confirmPassword,
     required this.isValid,
     required this.isSubmitting,
+    this.error,
   });
 
   factory SignUpViewModel.fromState(SignUpState state) {
@@ -28,6 +29,7 @@ class SignUpViewModel {
     var confirmPassword = const ConfirmPasswordEntity.pure();
     var isValid = false;
     var isSubmitting = false;
+    String? error;
 
     if (state is SignUpValidating) {
       name = state.name;
@@ -60,6 +62,17 @@ class SignUpViewModel {
       phone = state.phone;
       password = state.password;
       confirmPassword = state.confirmPassword;
+
+      isValid = Formz.validate([
+        name,
+        lastname,
+        email,
+        phone,
+        password,
+        confirmPassword,
+      ]);
+      isSubmitting = false;
+      error = state.message;
     }
 
     return SignUpViewModel(
@@ -71,6 +84,7 @@ class SignUpViewModel {
       confirmPassword: confirmPassword,
       isValid: isValid,
       isSubmitting: isSubmitting,
+      error: error,
     );
   }
 
@@ -82,4 +96,5 @@ class SignUpViewModel {
   final ConfirmPasswordEntity confirmPassword;
   final bool isValid;
   final bool isSubmitting;
+  final String? error;
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
+import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/errors/exceptions.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/mappers/user_mapper.dart';
@@ -31,7 +32,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message, statusCode: e.statusCode));
     } catch (e) {
-      return Left(ServerFailure(message: e.toString(), statusCode: 500));
+      return Left(mapExceptionToFailure(e));
     }
   }
 }

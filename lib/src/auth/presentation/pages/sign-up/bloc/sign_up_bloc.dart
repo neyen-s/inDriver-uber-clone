@@ -111,6 +111,11 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     SignUpSubmitted event,
     Emitter<SignUpState> emit,
   ) async {
+    print(
+      '_onSubmitted ENTER. current state: $state, bloc hash: ${this.hashCode}',
+    );
+
+    if (state is SignUpLoading) return;
     // marcar todos los inputs como dirty
     _email = EmailEntity.dirty(_email.value);
     _password = PasswordEntity.dirty(_password.value);
@@ -132,6 +137,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     ]);
 
     // Emitir estado de validación (con los campos actualizados)
+
     emit(
       SignUpValidating(
         email: _email,
@@ -170,19 +176,36 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
 
     result.fold(
       (failure) {
-        emit(
-          SignUpFailure(
-            message: failure.errorMessage,
-            email: _email,
-            password: _password,
-            confirmPassword: _confirmPassword,
-            name: _name,
-            lastName: _lastname,
-            phone: _phone,
-          ),
+        print('_onSubmitted EMIT SignUpFailure message=${failure.message}');
+
+        // construimos la instancia que emitiríamos
+        final newFailure = SignUpFailure(
+          message: failure.message,
+          email: _email,
+          password: _password,
+          confirmPassword: _confirmPassword,
+          name: _name,
+          lastName: _lastname,
+          phone: _phone,
         );
+
+        // Si ya estamos en un SignUpFailure idéntico, no lo reemitimos
+        if (state is SignUpFailure) {
+          final current = state as SignUpFailure;
+          final sameMessage = current.message == newFailure.message;
+          final sameEmail = current.email.value == newFailure.email.value;
+          // puedes ampliar comparaciones si quieres (nombre, phone...) — con message suele bastar
+          if (sameMessage && sameEmail) {
+            // evitamos reemitir el mismo failure
+            return;
+          }
+        }
+        print('_onSubmitted EMIT SignUpFailure (after checks)');
+        emit(newFailure);
       },
       (response) {
+        print('_onSubmitted EMIT SignUpSuccess');
+
         emit(SignUpSuccess(authResponse: response));
       },
     );

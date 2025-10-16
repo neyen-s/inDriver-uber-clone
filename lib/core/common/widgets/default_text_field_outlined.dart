@@ -71,8 +71,8 @@ class DefaultTextFieldOutlined extends StatelessWidget {
                   child: Wrap(
                     alignment: WrapAlignment.spaceEvenly,
                     children: [
-                      Icon(prefixIcon, color: Colors.white),
-                      Container(height: 20, width: 1, color: Colors.white),
+                      Icon(prefixIcon, color: Colors.black54),
+                      Container(height: 20, width: 1, color: Colors.black87),
                     ],
                   ),
                 )

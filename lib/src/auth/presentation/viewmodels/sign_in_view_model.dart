@@ -9,6 +9,8 @@ class SignInViewModel {
     this.isSubmitting = false,
     this.isValid = false,
     this.error,
+    this.emailError,
+    this.passwordError,
   });
 
   factory SignInViewModel.fromState(SignInState state) {
@@ -25,10 +27,15 @@ class SignInViewModel {
         isSubmitting: true,
       );
     } else if (state is SignInFailure) {
+      String? emailErr;
+      String? passErr;
+
       return SignInViewModel(
         email: state.email,
         password: state.password,
         error: state.message,
+        emailError: emailErr,
+        passwordError: passErr,
       );
     } else {
       return const SignInViewModel(
@@ -42,4 +49,6 @@ class SignInViewModel {
   final bool isSubmitting;
   final bool isValid;
   final String? error;
+  final String? emailError;
+  final String? passwordError;
 }

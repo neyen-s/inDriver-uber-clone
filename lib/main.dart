@@ -7,10 +7,12 @@ import 'package:indriver_uber_clone/core/injection/bloc_providers.dart';
 import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/routes.dart';
+import 'package:indriver_uber_clone/core/services/secure_storage_adapter.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SecureStorageAdapter.init();
   await init();
   //***FOR TESTING***
   // await SessionManager.clearSession();

@@ -8,6 +8,7 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart'
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/delete_driver_position_usecase.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
+import 'package:indriver_uber_clone/src/roles/presentation/utils/normalize_urls.dart';
 
 class RolesItem extends StatefulWidget {
   const RolesItem({required this.role, super.key});
@@ -20,7 +21,23 @@ class RolesItem extends StatefulWidget {
 
 class _RolesItemState extends State<RolesItem> {
   @override
+  void initState() {
+    super.initState();
+    // pre-cache para reducir parpadeo la primera vez (opcional)
+    final url = normalizeUrl(widget.role.image);
+    if (url != null &&
+        (url.startsWith('http://') || url.startsWith('https://'))) {
+      // Intentamos precache, ignoramos errores
+      try {
+        precacheImage(NetworkImage(url), context);
+      } catch (_) {}
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final imageUrl = normalizeUrl(widget.role.image);
+
     return GestureDetector(
       onTap: () async {
         final socketBloc = context.read<SocketBloc>();
@@ -68,11 +85,19 @@ class _RolesItemState extends State<RolesItem> {
         children: [
           SizedBox(
             height: 100.h,
-            child: FadeInImage(
-              image: NetworkImage(widget.role.image),
-              fit: BoxFit.contain,
-              fadeInDuration: const Duration(seconds: 1),
-              placeholder: const AssetImage('assets/img/no-image.png'),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12.r),
+              child: FadeInImage(
+                placeholder: const AssetImage('assets/img/no-image.png'),
+                image:
+                    imageUrl != null &&
+                        (imageUrl.startsWith('http') ||
+                            imageUrl.startsWith('https'))
+                    ? NetworkImage(imageUrl) as ImageProvider
+                    : const AssetImage('assets/img/no-image.png'),
+                fit: BoxFit.contain,
+                fadeInDuration: const Duration(milliseconds: 400),
+              ),
             ),
           ),
           SizedBox(height: 10.h),

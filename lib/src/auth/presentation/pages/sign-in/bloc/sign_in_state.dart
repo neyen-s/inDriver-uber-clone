@@ -4,7 +4,7 @@ abstract class SignInState extends Equatable {
   const SignInState();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class SignInInitial extends SignInState {
@@ -22,7 +22,7 @@ class SignInValidating extends SignInState {
   final bool isValid;
 
   @override
-  List<Object> get props => [email, password, isValid];
+  List<Object?> get props => [email, password, isValid];
 }
 
 class SignInSubmitting extends SignInState {
@@ -31,7 +31,7 @@ class SignInSubmitting extends SignInState {
   final PasswordEntity password;
 
   @override
-  List<Object> get props => [email, password];
+  List<Object?> get props => [email, password];
 }
 
 class SignInSuccess extends SignInState {
@@ -39,7 +39,7 @@ class SignInSuccess extends SignInState {
 
   final AuthResponseEntity authResponse;
   @override
-  List<Object> get props => [authResponse];
+  List<Object?> get props => [authResponse];
 }
 
 class SignInFailure extends SignInState {
@@ -47,13 +47,15 @@ class SignInFailure extends SignInState {
     required this.email,
     required this.password,
     required this.message,
+    this.statusCode,
   });
   final EmailEntity email;
   final PasswordEntity password;
   final String message;
+  final dynamic statusCode;
 
   @override
-  List<Object> get props => [email, password, message];
+  List<Object?> get props => [email, password, message, statusCode];
 }
 
 class SessionValid extends SignInState {
@@ -61,7 +63,7 @@ class SessionValid extends SignInState {
   final AuthResponseEntity authResponse;
 
   @override
-  List<Object> get props => [authResponse];
+  List<Object?> get props => [authResponse];
 }
 
 class SessionInvalid extends SignInState {}
