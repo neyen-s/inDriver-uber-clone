@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// Normaliza una URL para evitar dobles slashes después del host:
-/// - si la url está vacía devuelve null.
-/// - si no empieza por http(s) la devuelve sin tocar (caller decide).
+/// Normalices Url to avoid double slashes after the host:
+/// - if empty return null.
+/// - if it dosnt start with http(s) returns it normally.
 String? _normalizeUrl(String? raw) {
   if (raw == null) return null;
   final trimmed = raw.trim();
   if (trimmed.isEmpty) return null;
 
-  // Si la URL no tiene scheme devolvemos la original (no forzamos agregar host aquí)
+  //If the url dosnt have scheme return it normally
   if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
     return trimmed;
   }
 
-  // Separar scheme://rest para mantener exactamente el scheme y evitar eliminar '://'
+  // Separates scheme://rest to keep exactly the scheme and avoid removing '://'
   final idx = trimmed.indexOf('://');
   if (idx < 0) return trimmed;
 
@@ -21,6 +21,7 @@ String? _normalizeUrl(String? raw) {
   var rest = trimmed.substring(idx + 3);
 
   // Reemplazar secuencias de slashes múltiples por una sola slash en el resto
+  //replaces
   rest = rest.replaceAll(RegExp('/{2,}'), '/');
 
   return '$scheme$rest';
