@@ -28,6 +28,7 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.red,
       body: BlocListener<SignInBloc, SignInState>(
         listener: (context, state) async {
           debugPrint('------SplashPage Listener-----');
@@ -45,15 +46,8 @@ class _SplashPageState extends State<SplashPage> {
           }
         },
         child: AuthBackground(
-          cardHeight: context.height,
-          cardWidth: context.width,
-          borderRadius: BorderRadius.zero,
-
           padding: EdgeInsets.only(left: 12.w),
-          gradientColors: const [
-            Color.fromARGB(255, 12, 38, 145),
-            Color.fromARGB(255, 34, 156, 249),
-          ],
+
           child: const Center(
             child: CircularProgressIndicator(),
           ), // TODOSWITCH THE LOADER

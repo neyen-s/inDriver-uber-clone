@@ -49,15 +49,10 @@ class DefaultTextFieldOutlined extends StatelessWidget {
         controller: controller,
         decoration: InputDecoration(
           border: const OutlineInputBorder(),
-          enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Color.fromARGB(255, 35, 161, 183),
-              width: 2,
-            ),
-          ),
+
           focusedBorder: const OutlineInputBorder(
             borderSide: BorderSide(
-              color: Color.fromARGB(255, 35, 161, 183),
+              color: Color.fromARGB(255, 255, 255, 255),
               width: 2,
             ),
           ),

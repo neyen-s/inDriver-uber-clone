@@ -1,5 +1,6 @@
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
@@ -16,8 +17,19 @@ void main() async {
   await init();
   //***FOR TESTING***
   // await SessionManager.clearSession();
-
-  runApp(DevicePreview(builder: (context) => const MyAppWrapper()));
+  // Lock to portrait only
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  runApp(
+    DevicePreview(
+      /* enabled: false, */
+      // Disable for production,
+      //genertares unwanted spaces when the keyboard appears
+      builder: (context) => const MyAppWrapper(),
+    ),
+  );
 }
 
 class MyAppWrapper extends StatelessWidget {
@@ -48,6 +60,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         navigatorKey: sl<AppNavigatorService>().navigatorKey,
         builder: DevicePreview.appBuilder,
+
         locale: DevicePreview.locale(context),
         debugShowCheckedModeBanner: false,
         title: 'Mi App',

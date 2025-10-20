@@ -21,6 +21,7 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
   Widget build(BuildContext context) {
     user = ModalRoute.of(context)?.settings.arguments as UserEntity?;
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: BlocConsumer<ProfileUpdateBloc, ProfileUpdateState>(
         listener: (context, state) {
           if (state is ProfileUpdateSubmitting) {
