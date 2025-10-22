@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
-import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/core/utils/role_router.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';

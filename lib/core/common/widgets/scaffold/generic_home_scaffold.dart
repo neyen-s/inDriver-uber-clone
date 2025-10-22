@@ -22,6 +22,8 @@ class GenericHomeScaffold<S> extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(drawerTitle)),
+      //extendBodyBehindAppBar: true,
+      // extendBody: true,
       body: buildBody(selectedSection),
       drawer: Drawer(
         child: ListView(

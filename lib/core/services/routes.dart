@@ -3,6 +3,7 @@ import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/sign_up_page.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/client_home_page.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/client_driver_offers_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/driver_home_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/driver_map_page_wrapper.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
@@ -46,6 +47,13 @@ Route<dynamic> generateRoute(RouteSettings settings) {
     case RolesPage.routeName:
       debugPrint('RolesPage.routeName');
       return _pageBuilder((_) => const RolesPage(), settings: settings);
+
+    case ClientDriverOffersPage.routeName:
+      debugPrint('ClientDriverOffersPage.routeName');
+      return _pageBuilder(
+        (_) => const ClientDriverOffersPage(),
+        settings: settings,
+      );
 
     case DriverMapPageWrapper.routeName:
       debugPrint('RolesPage.routeName');

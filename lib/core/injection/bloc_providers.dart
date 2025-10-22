@@ -4,6 +4,7 @@ import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart'
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
@@ -24,6 +25,9 @@ class BlocProviders {
     BlocProvider<MapLifecycleCubit>(create: (_) => sl<MapLifecycleCubit>()),
     BlocProvider<DriverClientRequestsBloc>(
       create: (_) => sl<DriverClientRequestsBloc>(),
+    ),
+    BlocProvider<ClientDriverOffersBloc>(
+      create: (_) => sl<ClientDriverOffersBloc>(),
     ),
   ];
 }

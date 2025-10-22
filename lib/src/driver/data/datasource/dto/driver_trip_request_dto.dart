@@ -1,7 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
-import 'package:indriver_uber_clone/src/driver/domain/entities/driver_request_entity.dart';
+import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 
 class DriverTripRequestDTO extends DriverTripRequestEntity {
   DriverTripRequestDTO({
@@ -30,37 +31,73 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
   }
 
   factory DriverTripRequestDTO.fromJson(Map<String, dynamic> json) {
-    final fare = (json['fare_offered'] as num?)?.toDouble() ?? 0.0;
-    final dist = (json['distance'] as num?)?.toDouble() ?? 0.0;
+    int? tryInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+
+    double tryDouble(dynamic v) {
+      if (v == null) return 0;
+      if (v is double) return v;
+      if (v is int) return v.toDouble();
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0.0;
+      return 0;
+    }
+
+    // Debug: imprime el json que se está parseando (quita en producción)
+    // debugPrint('DriverTripRequestDTO.fromJson json: $json');
+
+    final id = tryInt(json['id']);
+    final idClientRequest = tryInt(json['id_client_request']);
+    final idDriver = tryInt(json['id_driver']);
+    final fare = tryDouble(json['fare_offered']);
+    final timeVal = tryDouble(json['time']);
+    final dist = tryDouble(json['distance']);
+
+    if (idClientRequest == null || idDriver == null) {
+      throw FormatException(
+        'Missing required id_client_request or id_driver in'
+        ' DriverTripRequestDTO: $json',
+      );
+    }
 
     DateTime? created;
     DateTime? updated;
     try {
-      created = json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : null;
+      if (json['created_at'] != null) {
+        created = DateTime.tryParse(json['created_at'].toString());
+      }
     } catch (_) {
       created = null;
     }
     try {
-      updated = json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'] as String)
-          : null;
+      if (json['updated_at'] != null) {
+        updated = DateTime.tryParse(json['updated_at'].toString());
+      }
     } catch (_) {
       updated = null;
     }
 
     UserDTO? driverDto;
-    if (json['driver'] != null && json['driver'] is Map<String, dynamic>) {
-      driverDto = UserDTO.fromJson(json['driver'] as Map<String, dynamic>);
+    try {
+      if (json['driver'] != null && json['driver'] is Map<String, dynamic>) {
+        driverDto = UserDTO.fromJson(json['driver'] as Map<String, dynamic>);
+      }
+    } catch (e) {
+      debugPrint('Warning parsing driver field: $e — value: ${json['driver']}');
+      driverDto = null;
     }
 
     return DriverTripRequestDTO(
-      id: json['id'] as int?,
-      idClientRequest: json['id_client_request'] as int,
-      idDriver: json['id_driver'] as int,
+      id: id,
+      idClientRequest: idClientRequest,
+      idDriver: idDriver,
       fareOffered: fare,
-      time: (json['time'] as double?) ?? 0,
+      time: timeVal,
       distance: dist,
       createdAt: created,
       updatedAt: updated,

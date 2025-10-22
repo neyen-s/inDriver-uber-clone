@@ -3,6 +3,7 @@ import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/client_request_response_dto.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_trip_request_dto.dart';
 
 sealed class ClientRequestDataSource {
   const ClientRequestDataSource();
@@ -21,6 +22,10 @@ sealed class ClientRequestDataSource {
   Future<List<ClientRequestResponseDto>> getNearbyTripRequest(
     double driverLat,
     double driverLng,
+  );
+
+  Future<List<DriverTripRequestDTO>> getDriverTripOffersByClientRequest(
+    int idClientRequest,
   );
 }
 
@@ -90,5 +95,30 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     );
 
     return clientRequestResponseDtos;
+  }
+
+  @override
+  Future<List<DriverTripRequestDTO>> getDriverTripOffersByClientRequest(
+    int idDriver,
+  ) async {
+    debugPrint('**getDriverTripOffersByClientRequest');
+    final response = await apiClient.get(
+      path: '/driver-trip-offers/findByClientRequest/$idDriver',
+    );
+
+    debugPrint('**getDriverTripOffersByClientRequest RESPONSE: $response');
+
+    final driverTripRequestsResponseDtos = <DriverTripRequestDTO>[];
+
+    response['data'].forEach((element) {
+      driverTripRequestsResponseDtos.add(
+        DriverTripRequestDTO.fromJson(element as Map<String, dynamic>),
+      );
+    });
+    debugPrint(
+      '**getDriverTripOffersByClient LIST: $driverTripRequestsResponseDtos',
+    );
+
+    return driverTripRequestsResponseDtos;
   }
 }

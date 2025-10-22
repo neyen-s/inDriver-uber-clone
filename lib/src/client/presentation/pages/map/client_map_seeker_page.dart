@@ -9,6 +9,7 @@ import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/calculate_trip_price.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/client_driver_offers_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/map_listener_handler.dart';
@@ -325,7 +326,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
                 );
               },
 
-              onConfirmPressed: (offer) {
+              onConfirmPressed: (offer) async {
                 print('*****offer desde UI: $offer');
                 final offerDouble = double.tryParse(offer) ?? 0.0;
                 print('*****offerDouble desde UI: $offerDouble');

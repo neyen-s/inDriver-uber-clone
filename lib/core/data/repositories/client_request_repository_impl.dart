@@ -8,6 +8,7 @@ import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/client_request_response_dto.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_trip_request_dto.dart';
 
 class ClientRequestRepositoryImpl implements ClientRequestRepository {
   const ClientRequestRepositoryImpl({required this.clientRequestDataSource});
@@ -60,6 +61,20 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
           .getNearbyTripRequest(driverLat, driverLng);
 
       return Right(clientRequestResponse);
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  ResultFuture<List<DriverTripRequestDTO>> getDriverTripOffersByClientRequest(
+    int idClientRequest,
+  ) async {
+    try {
+      final driverTripOffers = await clientRequestDataSource
+          .getDriverTripOffersByClientRequest(idClientRequest);
+
+      return Right(driverTripOffers);
     } catch (e) {
       return Left(mapExceptionToFailure(e));
     }

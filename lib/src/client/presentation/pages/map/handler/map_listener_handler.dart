@@ -7,6 +7,7 @@ import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/animate_route_with_padding.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/client_driver_offers_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 
 Future<void> handleMapStateChange({
@@ -27,6 +28,11 @@ Future<void> handleMapStateChange({
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Request sent')));
+      debugPrint('Navigating to ${ClientDriverOffersPage.routeName}');
+      await Navigator.pushReplacementNamed(
+        context,
+        ClientDriverOffersPage.routeName,
+      );
     }
 
     final s = state;

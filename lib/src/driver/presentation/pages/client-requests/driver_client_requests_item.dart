@@ -6,7 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_button.dart';
 import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
-import 'package:indriver_uber_clone/src/driver/domain/entities/driver_request_entity.dart';
+import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 
 class DriverClientRequestsItem extends StatelessWidget {
@@ -25,7 +25,7 @@ class DriverClientRequestsItem extends StatelessWidget {
     // Estilos reutilizables
     final titleStyle = TextStyle(
       fontWeight: FontWeight.bold,
-      color: Colors.blueAccent,
+      color: Colors.black,
       fontSize: 16.sp,
     );
     final subtitleBold = TextStyle(
@@ -49,7 +49,7 @@ class DriverClientRequestsItem extends StatelessWidget {
         borderRadius: BorderRadius.all(const Radius.circular(18).r),
         gradient: const LinearGradient(
           colors: [
-            Color.fromARGB(255, 201, 223, 255),
+            Color.fromARGB(255, 191, 200, 212),
             Color.fromARGB(255, 186, 186, 186),
           ],
           begin: Alignment.topRight,
@@ -67,9 +67,16 @@ class DriverClientRequestsItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Fair offered: ${clientRequestResponse?.fareOffered.toStringAsFixed(2) ?? '--'}€',
-                        style: titleStyle,
+                      Row(
+                        children: [
+                          Text('Fair offered:', style: titleStyle),
+                          Text(
+                            ' ${clientRequestResponse?.fareOffered.toStringAsFixed(2) ?? '--'}€',
+                            style: titleStyle.copyWith(
+                              color: const Color.fromARGB(255, 21, 114, 24),
+                            ),
+                          ),
+                        ],
                       ),
 
                       SizedBox(height: 4.h),

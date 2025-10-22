@@ -4,7 +4,7 @@ import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
-import 'package:indriver_uber_clone/src/driver/domain/entities/driver_request_entity.dart';
+import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/driver_trip_offers_use_cases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
 
