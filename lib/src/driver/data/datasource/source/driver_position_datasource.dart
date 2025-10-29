@@ -27,7 +27,9 @@ class DriverPositionDatasourceImpl implements DriverPositionDatasource {
   @override
   Future<String> delete({required String idDriver}) async {
     print('**DELETE: $idDriver');
-    final data = await apiClient.delete(path: '/drivers-position/$idDriver');
+    final data = await apiClient.delete(
+      path: '/drivers-position/delete/$idDriver',
+    );
     return data['message'].toString();
   }
 

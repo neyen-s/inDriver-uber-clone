@@ -29,3 +29,11 @@ class SocketDriverPositionsUpdated extends SocketState {
   @override
   List<Object?> get props => [drivers];
 }
+
+class SocketClientRequestCreated extends SocketState {
+  const SocketClientRequestCreated(this.idClientRequest);
+  final String idClientRequest;
+
+  @override
+  List<Object?> get props => [idClientRequest];
+}

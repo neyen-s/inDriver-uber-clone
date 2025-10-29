@@ -293,7 +293,7 @@ class DriverClientRequestsItem extends StatelessWidget {
         context.read<DriverClientRequestsBloc>().add(
           CreateDriverTripRequestEvent(
             driverTripRequestEntity: DriverTripRequestEntity(
-              idClientRequest: clientRequestResponse.idClient,
+              idClientRequest: clientRequestResponse.id,
               idDriver: state.idDriver ?? 0,
               fareOffered: fare,
               time:

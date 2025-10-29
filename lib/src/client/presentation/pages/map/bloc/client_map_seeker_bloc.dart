@@ -21,6 +21,7 @@ import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
+import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
 part 'client_map_seeker_event.dart';
 part 'client_map_seeker_state.dart';
@@ -506,19 +507,6 @@ class ClientMapSeekerBloc
         emit(ClientMapSeekerError(failure.message));
       },
       (authResponse) async {
-        print(
-          '----------------------------urrent.origin?.latitude: ${current.origin?.latitude}',
-        );
-        print(
-          '----------------------------current.origin?.longitude: ${current.origin?.longitude}',
-        );
-        print(
-          '----------------------------current.destination?.longitude: ${current.destination?.latitude}',
-        );
-        print(
-          '----------------------------current.destination?.longitude: ${current.destination?.longitude}',
-        );
-
         try {
           debugPrint('**BLOC: creating Client request...');
           final response = await clientRequestsUsecases
@@ -544,8 +532,12 @@ class ClientMapSeekerBloc
             (failure) async {
               emit(ClientMapSeekerError(failure.message));
             },
-            (clientRequest) async {
-              debugPrint('**BLOC: Client request created: $clientRequest');
+            (createdID) async {
+              debugPrint(
+                '**BLOC: Client request created createdID: $createdID',
+              );
+
+              // 1) Emitir estado local como tienes (para UI)
               emit(
                 current.copyWith(
                   clientRequestSended: true,
@@ -553,8 +545,29 @@ class ClientMapSeekerBloc
                   mapPolylines: {},
                 ),
               );
+
+              //Notifies socket about new client request
+              try {
+                // suponemos que tienes acceso a socketBloc en este Bloc (lo tienes en ctor)
+                socketBloc.add(
+                  SendNewClientRequestRequested(
+                    idClientRequest: createdID.toString(),
+                  ),
+                );
+              } catch (e) {
+                debugPrint(
+                  'Error notifying socket about new client request: $e',
+                );
+              }
               await Future<void>.delayed(const Duration(milliseconds: 100));
-              emit(current.copyWith(clientRequestSended: false));
+
+              emit(
+                current.copyWith(
+                  clientRequestSended: false,
+                  polylines: {},
+                  mapPolylines: {},
+                ),
+              );
             },
           );
         } catch (e) {

@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
@@ -18,15 +22,42 @@ class DriverClientRequestsBloc
     this.driverPositionUsecases,
     this.authUseCases,
     this.driverTripOffersUseCases,
+    this.socketBloc,
   ) : super(const DriverClientRequestsState()) {
     on<GetNearbyTripRequestEvent>(_onGetNearbyTripRequestEvent);
     on<CreateDriverTripRequestEvent>(_onCreateDriverTripRequestEvent);
+
+    // Start listening to socket events from the provided SocketBloc
+    listenToSocket();
   }
 
   final ClientRequestsUsecases clientRequestsUsecases;
   final DriverPositionUsecases driverPositionUsecases;
   final DriverTripOffersUseCases driverTripOffersUseCases;
   final AuthUseCases authUseCases;
+  final SocketBloc socketBloc;
+
+  StreamSubscription? _socketBlocSub;
+
+  @override
+  Future<void> close() async {
+    await _socketBlocSub?.cancel();
+    return super.close();
+  }
+
+  void listenToSocket() {
+    //subscribe to socketBloc stream and refresh when
+    // a new client request arrives
+    _socketBlocSub = socketBloc.stream.listen((socketState) {
+      if (socketState is SocketClientRequestCreated) {
+        debugPrint(
+          'DriverClientRequestsBloc: detected new client'
+          ' request via SocketBloc -> refreshing list',
+        );
+        add(const GetNearbyTripRequestEvent());
+      }
+    });
+  }
 
   Future<void> _onGetNearbyTripRequestEvent(
     GetNearbyTripRequestEvent event,
@@ -34,39 +65,49 @@ class DriverClientRequestsBloc
   ) async {
     emit(state.copyWith(isLoading: true, hasError: false));
 
-    //gets the Driver id
-    final authEither = await authUseCases.getUserSessionUseCase();
-    final auth = await foldOrEmitError(
-      authEither,
-      emit,
-      (msg) => state.copyWith(isLoading: false, hasError: true),
-    );
-    if (auth == null) return;
+    // Gets the driver id from the state or asks for the user session
+    int driverId;
+    if (state.idDriver != null) {
+      driverId = state.idDriver!;
+    } else {
+      final authEither = await authUseCases.getUserSessionUseCase();
+      final auth = await foldOrEmitError(
+        authEither,
+        emit,
+        (msg) =>
+            state.copyWith(isLoading: false, hasError: true, errorMessage: msg),
+      );
+      if (auth == null) return;
+      driverId = auth.user.id;
+      emit(state.copyWith(idDriver: driverId));
+    }
 
-    //gets the driver position using the user id
+    //gets driver position
     final driverPosEither = await driverPositionUsecases
-        .getDriverPositionUseCase(idDriver: auth.user.id);
+        .getDriverPositionUseCase(idDriver: driverId);
     final driverPos = await foldOrEmitError(
       driverPosEither,
       emit,
-      (msg) => state.copyWith(isLoading: false, hasError: true),
+      (msg) =>
+          state.copyWith(isLoading: false, hasError: true, errorMessage: msg),
     );
     if (driverPos == null) return;
 
-    //gets the client requests
+    //gets nearby client requests
     final requestsEither = await clientRequestsUsecases
         .getNearbyTripRequestUseCase(driverPos.lat, driverPos.lng);
     final requestList = await foldOrEmitError(
       requestsEither,
       emit,
-      (msg) => state.copyWith(isLoading: false, hasError: true),
+      (msg) =>
+          state.copyWith(isLoading: false, hasError: true, errorMessage: msg),
     );
     if (requestList == null) return;
-    print(' in bloc   **_onGetNearbyTripRequestEvent: $requestList');
+
     emit(
       state.copyWith(
         clientRequestResponseEntity: requestList,
-        idDriver: auth.user.id,
+        idDriver: driverId,
         isLoading: false,
         hasError: false,
       ),
@@ -78,14 +119,18 @@ class DriverClientRequestsBloc
     Emitter<DriverClientRequestsState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, hasError: false));
-    print(
-      ' en bloc   **_onCreateDriverTripRequestEvent: ${event.driverTripRequestEntity}',
-    );
+
     final response = await driverTripOffersUseCases
         .createDriverTripOfferUseCase(event.driverTripRequestEntity);
 
     response.fold(
-      (l) => emit(state.copyWith(isLoading: false, hasError: true)),
+      (l) => emit(
+        state.copyWith(
+          isLoading: false,
+          hasError: true,
+          errorMessage: l.message,
+        ),
+      ),
       (r) => emit(state.copyWith(isLoading: false, hasError: false)),
     );
   }

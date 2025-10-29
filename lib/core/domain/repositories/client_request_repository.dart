@@ -12,7 +12,7 @@ abstract class ClientRequestRepository {
     double destinationLng,
   );
 
-  ResultFuture<bool> createClientRequest(
+  ResultFuture<int> createClientRequest(
     ClientRequestEntity clientRequestEntity,
   );
 

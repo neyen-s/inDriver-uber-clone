@@ -17,6 +17,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     on<SocketDriversSnapshotReceived>(_onDriversSnapshotReceived);
     on<SocketDriverPositionReceived>(_onDriverPositionReceived);
     on<SocketDriverDisconnectedReceived>(_onDriverDisconnectedReceived);
+    on<SocketClientRequestReceived>(_onSocketClientRequestReceived);
+    on<SendNewClientRequestRequested>(_onSendNewClientRequestRequested);
 
     on<SendDriverPositionRequested>(_onSendDriverPositionRequested);
     on<SocketDriverRemovalTimeout>(_onDriverRemovalTimeout);
@@ -53,6 +55,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       //Listeners
       unawaited(_handleInitialDrivers());
       unawaited(_listenDriverPositions());
+      unawaited(_listenNewClientRequests());
 
       // Now we wait for the conecction to finish
       await connectFuture;
@@ -237,6 +240,56 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     );
   }
 
+  Future<void> _listenNewClientRequests() async {
+    final res = await _socketUseCases.onSocketMessageUseCase(
+      'created_client_request',
+    );
+    res.fold(
+      (failure) {
+        addError(
+          Exception('Socket created_client_request error: ${failure.message}'),
+        );
+      },
+      (stream) {
+        final sub = stream.listen(
+          (data) {
+            try {
+              if (data == null) return;
+              if (data is Map) {
+                // Puede venir como {'id_client_request': 123} u otros nombres -> robusto
+                final rawId =
+                    data['id_client_request'] ??
+                    data['id'] ??
+                    data['idClientRequest'];
+                final id = rawId?.toString();
+                if (id != null) {
+                  debugPrint(
+                    'SocketBloc: created_client_request received id=$id',
+                  );
+                  add(SocketClientRequestReceived(idClientRequest: id));
+                } else {
+                  debugPrint(
+                    'SocketBloc: created_client_request without id: $data',
+                  );
+                }
+              } else {
+                debugPrint(
+                  'created_client_request: unexpected payload type: ${data.runtimeType}',
+                );
+              }
+            } catch (e, st) {
+              debugPrint('Error parsing created_client_request: $e\n$st');
+            }
+          },
+          onError: (Object e, StackTrace st) {
+            debugPrint('Stream error on created_client_request: $e\n$st');
+          },
+        );
+        _socketSubscriptions.add(sub);
+      },
+    );
+  }
+
   void _onDriversSnapshotReceived(
     SocketDriversSnapshotReceived event,
     Emitter<SocketState> emit,
@@ -316,6 +369,52 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       });
     } catch (e) {
       emit(SocketError('Error sending driver position: $e'));
+    }
+  }
+
+  Future<void> _onSocketClientRequestReceived(
+    SocketClientRequestReceived event,
+    Emitter<SocketState> emit,
+  ) async {
+    try {
+      debugPrint(
+        'SocketBloc: _onSocketClientRequestReceived id=${event.idClientRequest}',
+      );
+      // Emitimos un estado transitorio para que listeners externos reaccionen
+      emit(SocketClientRequestCreated(event.idClientRequest));
+      // Nota: No hacemos fetch aquí; dejamos que el bloc de driver haga el fetch
+      // para mantener la separación de responsabilidades (y usar usecases repos).
+    } catch (e) {
+      emit(SocketError('Error processing new client request: $e'));
+    }
+  }
+
+  Future<void> _onSendNewClientRequestRequested(
+    SendNewClientRequestRequested event,
+    Emitter<SocketState> emit,
+  ) async {
+    try {
+      debugPrint(
+        'SocketBloc: sending new_client_request id=${event.idClientRequest}',
+      );
+      // payload robusto que el backend espera; ajusta nombres si tu backend usa otros campos
+      final payload = {
+        'id_client_request': event.idClientRequest,
+        // opcional: añade otros campos si necesitas (e.g. id_client, lat, lng)
+      };
+
+      await _socketUseCases.sendSocketMessageUseCase(
+        'new_client_request',
+        payload,
+      );
+      debugPrint(
+        'SocketBloc: sendSocketMessageUseCase completed for id=${event.idClientRequest}',
+      );
+
+      // No emitimos un estado nuevo aquí necesariamente; es solo un "fire and forget".
+    } catch (e, st) {
+      debugPrint('SocketBloc: error sending new_client_request: $e\n$st');
+      emit(SocketError('Error sending new client request via socket: $e'));
     }
   }
 

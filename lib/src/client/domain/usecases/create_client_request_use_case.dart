@@ -10,7 +10,7 @@ class CreateClientRequestUseCase
   final ClientRequestRepository _repository;
 
   @override
-  ResultFuture<bool> call(CreateClientRequestParams params) {
+  ResultFuture<int> call(CreateClientRequestParams params) {
     return _repository.createClientRequest(params.clientRequestEntity);
   }
 }

@@ -25,6 +25,7 @@ class DriverHomePage extends StatelessWidget {
         listenWhen: (previous, current) => current is SignOutSuccess,
         listener: (context, state) {
           if (state is SignOutSuccess) {
+            //TODO, make sure socket io is disconnected
             Navigator.pushNamedAndRemoveUntil(
               context,
               SignInPage.routeName,

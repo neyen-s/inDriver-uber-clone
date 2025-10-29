@@ -61,6 +61,7 @@ class _RolesItemState extends State<RolesItem> {
             debugPrint('Error deleting driver position: $e');
           }
 
+          //TODO: NO NEED TO DISCONNECT THE USER, JUST DELETE THE DRIVER MARKERS/DRIVER
           socketBloc.add(DisconnectSocket());
 
           // Wait for SocketDisconnected or SocketError
@@ -75,6 +76,7 @@ class _RolesItemState extends State<RolesItem> {
           }
           //Clean markers and reconnect
           context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
+
           socketBloc.add(ConnectSocket());
         }
         //Role selection and navigation

@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_values_dto.dart';
 import 'package:indriver_uber_clone/core/data/datasources/source/client_request_datasource.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/client_request_repository.dart';
@@ -37,15 +38,47 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
   }
 
   @override
-  ResultFuture<bool> createClientRequest(
+  ResultFuture<int> createClientRequest(
     ClientRequestEntity clientRequestEntity,
   ) async {
     try {
       final clientRequestDto = ClientRequestDTO.fromEntity(clientRequestEntity);
-      await clientRequestDataSource.createClientRequest(
+
+      // Llamada al datasource que devuelve el decoded Map (tu cambio reciente)
+      final response = await clientRequestDataSource.createClientRequest(
         clientRequestDTO: clientRequestDto,
       );
-      return const Right(true);
+
+      // Debug útil
+      debugPrint(
+        'ClientRequestRepositoryImpl.createClientRequest RESPONSE: $response',
+      );
+
+      // Intentar extraer varios posibles caminos al id (robusto)
+      final dynamic rawId =
+          response['data']?['id'] ??
+          response['id'] ??
+          response['data']?['id_client_request'] ??
+          response['id_client_request'];
+
+      if (rawId == null) {
+        return Left(
+          mapExceptionToFailure(
+            Exception('createClientRequest: no id in response'),
+          ),
+        );
+      }
+
+      final idInt = int.tryParse(rawId.toString());
+      if (idInt == null) {
+        return Left(
+          mapExceptionToFailure(
+            Exception('createClientRequest: invalid id format: $rawId'),
+          ),
+        );
+      }
+
+      return Right(idInt);
     } catch (e) {
       return Left(mapExceptionToFailure(e));
     }

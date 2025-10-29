@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
-import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 
 class ClientDriverOffersPage extends StatefulWidget {
   const ClientDriverOffersPage({super.key});

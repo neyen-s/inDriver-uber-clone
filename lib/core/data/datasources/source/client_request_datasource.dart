@@ -15,7 +15,7 @@ sealed class ClientRequestDataSource {
     required double destinationLng,
   });
 
-  Future<bool> createClientRequest({
+  Future<Map<String, dynamic>> createClientRequest({
     required ClientRequestDTO clientRequestDTO,
   });
 
@@ -55,7 +55,7 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
   }
 
   @override
-  Future<bool> createClientRequest({
+  Future<Map<String, dynamic>> createClientRequest({
     required ClientRequestDTO clientRequestDTO,
   }) async {
     debugPrint('**createClientRequest DTO: $clientRequestDTO');
@@ -65,7 +65,7 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     );
 
     debugPrint('**createClientRequest RESPONSE: $response');
-    return true;
+    return response;
   }
 
   @override

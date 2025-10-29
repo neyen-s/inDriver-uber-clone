@@ -192,13 +192,14 @@ Future<void> _initAuth() async {
 // CLIENT
 
 Future<void> _initClient() async {
-  sl..registerFactory(() => ClientDriverOffersBloc(sl()))
-  ..registerFactory(() => ClientHomeBloc(sl()));
+  sl
+    ..registerFactory(() => ClientDriverOffersBloc(sl()))
+    ..registerFactory(() => ClientHomeBloc(sl()));
 }
 
 // DRIVER
 Future<void> _initDriver() async {
-  sl.registerFactory(() => DriverHomeBloc(sl()));
+  sl.registerFactory(() => DriverHomeBloc(sl(), sl()));
 }
 
 // PROFILE
@@ -264,5 +265,7 @@ Future<void> _initDriverMap() async {
       ),
     )
     ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()))
-    ..registerFactory(() => DriverClientRequestsBloc(sl(), sl(), sl(), sl()));
+    ..registerFactory(
+      () => DriverClientRequestsBloc(sl(), sl(), sl(), sl(), sl()),
+    );
 }

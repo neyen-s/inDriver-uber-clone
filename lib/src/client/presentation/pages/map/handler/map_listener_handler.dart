@@ -29,10 +29,11 @@ Future<void> handleMapStateChange({
         context,
       ).showSnackBar(const SnackBar(content: Text('Request sent')));
       debugPrint('Navigating to ${ClientDriverOffersPage.routeName}');
-      await Navigator.pushReplacementNamed(
+
+      /*   await Navigator.pushReplacementNamed( //TODO : NAVIGATE TO DRIVER OFFER
         context,
         ClientDriverOffersPage.routeName,
-      );
+      ); */
     }
 
     final s = state;

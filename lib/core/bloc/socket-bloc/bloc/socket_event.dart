@@ -63,3 +63,20 @@ class SocketDriverRemovalTimeout extends SocketEvent {
   @override
   List<Object?> get props => [idSocket];
 }
+
+final class SocketClientRequestReceived extends SocketEvent {
+  const SocketClientRequestReceived({required this.idClientRequest});
+  final String idClientRequest;
+
+  @override
+  List<Object?> get props => [idClientRequest];
+}
+
+// socket_event.dart
+final class SendNewClientRequestRequested extends SocketEvent {
+  const SendNewClientRequestRequested({required this.idClientRequest});
+  final String idClientRequest;
+
+  @override
+  List<Object?> get props => [idClientRequest];
+}
