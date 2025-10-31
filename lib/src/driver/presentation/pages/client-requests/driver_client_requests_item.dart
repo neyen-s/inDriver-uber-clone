@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_button.dart';
+import 'package:indriver_uber_clone/core/common/widgets/user_profile_img.dart';
 import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
@@ -60,7 +61,6 @@ class DriverClientRequestsItem extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
         child: Column(
           children: [
-            // Header (avatar + name + fare)
             Row(
               children: [
                 Expanded(
@@ -91,7 +91,7 @@ class DriverClientRequestsItem extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 12.w),
-                _avatar(client?.image),
+                UserProfileImg(imageUrl: client?.image),
               ],
             ),
 
@@ -211,34 +211,6 @@ class DriverClientRequestsItem extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _avatar(String? imageUrl) {
-    final trimmed = imageUrl?.trim() ?? '';
-    final uri = trimmed.isNotEmpty ? Uri.tryParse(trimmed) : null;
-    final isValidNetworkImage =
-        uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        (uri.host.isNotEmpty);
-
-    return SizedBox(
-      width: 55.w,
-      height: 55.w,
-      child: ClipOval(
-        child: isValidNetworkImage
-            ? Image.network(
-                trimmed,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    Image.asset('assets/img/user.png', fit: BoxFit.cover),
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(child: CupertinoActivityIndicator());
-                },
-              )
-            : Image.asset('assets/img/user.png', fit: BoxFit.cover),
-      ),
     );
   }
 

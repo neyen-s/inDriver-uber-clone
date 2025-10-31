@@ -35,6 +35,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     this.timeAndDistanceValues,
     this.createdClientRequest,
     this.clientRequestSended,
+    this.isEstimated,
   });
 
   final Position? userPosition;
@@ -53,6 +54,8 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
   final TimeAndDistanceValuesEntity? timeAndDistanceValues;
   final ClientRequestEntity? createdClientRequest;
   final bool? clientRequestSended;
+  //boolean to detect if the route is estimated
+  final bool? isEstimated;
 
   ClientMapSeekerSuccess copyWith({
     Position? userPosition,
@@ -72,6 +75,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     TimeAndDistanceValuesEntity? timeAndDistanceValues,
     ClientRequestEntity? createdClientRequest,
     bool? clientRequestSended,
+    bool? isEstimated,
   }) {
     return ClientMapSeekerSuccess(
       userPosition: userPosition ?? this.userPosition,
@@ -92,6 +96,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
           timeAndDistanceValues ?? this.timeAndDistanceValues,
       createdClientRequest: createdClientRequest ?? this.createdClientRequest,
       clientRequestSended: clientRequestSended ?? this.clientRequestSended,
+      isEstimated: isEstimated ?? this.isEstimated,
     );
   }
 
@@ -113,5 +118,6 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
     timeAndDistanceValues,
     createdClientRequest,
     clientRequestSended,
+    isEstimated,
   ];
 }

@@ -16,17 +16,44 @@ class UserDTO extends UserEntity {
   const UserDTO.empty() : super.empty();
 
   factory UserDTO.fromJson(Map<String, dynamic> json) {
-    return UserDTO(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      lastname: json['lastname'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String,
-      image: json['image'] as String?,
-      notificationToken: json['notificationToken'] as String?,
+    int tryInt(dynamic v) {
+      if (v == null) return 0;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
 
-      roles: (json['roles'] as List<dynamic>)
-          .map((e) => UserRoleDTO.fromJson(e as Map<String, dynamic>))
+    String tryString(dynamic v) {
+      if (v == null) return '';
+      return v.toString();
+    }
+
+    final rolesJson = json['roles'];
+    final roles = <dynamic>[];
+    if (rolesJson != null && rolesJson is List) {
+      roles.addAll(rolesJson);
+    }
+
+    return UserDTO(
+      id: tryInt(json['id']),
+      name: tryString(json['name']),
+      lastname: tryString(json['lastname']),
+      email: tryString(json['email']),
+      phone: tryString(json['phone']),
+      image: tryString(json['image']),
+      notificationToken: (json['notificationToken'] != null)
+          ? tryString(json['notificationToken'])
+          : '',
+      roles: roles
+          .map((e) {
+            try {
+              return UserRoleDTO.fromJson(e as Map<String, dynamic>);
+            } catch (_) {
+              return null;
+            }
+          })
+          .whereType<UserRoleDTO>()
           .toList(),
     );
   }

@@ -72,11 +72,52 @@ final class SocketClientRequestReceived extends SocketEvent {
   List<Object?> get props => [idClientRequest];
 }
 
-// socket_event.dart
 final class SendNewClientRequestRequested extends SocketEvent {
   const SendNewClientRequestRequested({required this.idClientRequest});
   final String idClientRequest;
 
   @override
   List<Object?> get props => [idClientRequest];
+}
+
+class ListenClientRequestChannel extends SocketEvent {
+  const ListenClientRequestChannel(this.idClientRequest);
+  final String idClientRequest;
+  @override
+  List<Object?> get props => [idClientRequest];
+}
+
+class StopListeningClientRequestChannel extends SocketEvent {
+  const StopListeningClientRequestChannel(this.idClientRequest);
+  final String idClientRequest;
+  @override
+  List<Object?> get props => [idClientRequest];
+}
+
+class SocketDriverOfferReceived extends SocketEvent {
+  const SocketDriverOfferReceived({
+    required this.idClientRequest,
+    required this.payload,
+  });
+  final String idClientRequest;
+  final Map<String, dynamic> payload;
+  @override
+  List<Object?> get props => [idClientRequest, payload];
+}
+
+class SendDriverOfferRequested extends SocketEvent {
+  const SendDriverOfferRequested({
+    required this.idClientRequest,
+    required this.idDriver,
+    required this.fare,
+    required this.time,
+    required this.distance,
+  });
+  final int idClientRequest;
+  final int idDriver;
+  final double fare;
+  final double time;
+  final double distance;
+  @override
+  List<Object?> get props => [idClientRequest, idDriver, fare, time, distance];
 }

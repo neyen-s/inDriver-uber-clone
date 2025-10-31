@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
 
 class AuthBackground extends StatelessWidget {
   const AuthBackground({
@@ -47,7 +46,6 @@ class AuthBackground extends StatelessWidget {
           ),
         ),
 
-        // content container centered horizontally; vertical positioning lo controla la pantalla (SingleChildScrollView)
         Center(
           child: Container(
             width: cardWidth ?? screenWidth,

@@ -44,6 +44,7 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     final response = await apiClient.get(
       path:
           '/client-requests/$originLat/$originLng/$destinationLat/$destinationLng',
+      timeout: const Duration(seconds: 7),
     );
     debugPrint('**getTimeAndDistanceClientRequest RESPONSE: $response');
 

@@ -22,6 +22,12 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
 
     on<SendDriverPositionRequested>(_onSendDriverPositionRequested);
     on<SocketDriverRemovalTimeout>(_onDriverRemovalTimeout);
+
+    //Client driver offers
+    on<ListenClientRequestChannel>(_onListenClientRequestChannel);
+    on<StopListeningClientRequestChannel>(_onStopListeningClientRequestChannel);
+    on<SendDriverOfferRequested>(_onSendDriverOfferRequested);
+    on<SocketDriverOfferReceived>(_onSocketDriverOfferReceived);
   }
 
   final SocketUseCases _socketUseCases;
@@ -30,6 +36,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
 
   final Map<String, Timer> _pendingRemovals = {};
   final Duration _clientRemovalDelay = const Duration(seconds: 6);
+
+  final Map<String, StreamSubscription> _channelSubscriptions = {};
 
   bool _isConnecting = false;
   bool _isConnected = false;
@@ -256,7 +264,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
             try {
               if (data == null) return;
               if (data is Map) {
-                // Puede venir como {'id_client_request': 123} u otros nombres -> robusto
                 final rawId =
                     data['id_client_request'] ??
                     data['id'] ??
@@ -274,7 +281,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
                 }
               } else {
                 debugPrint(
-                  'created_client_request: unexpected payload type: ${data.runtimeType}',
+                  'created_client_request:'
+                  ' unexpected payload type: ${data.runtimeType}',
                 );
               }
             } catch (e, st) {
@@ -380,10 +388,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       debugPrint(
         'SocketBloc: _onSocketClientRequestReceived id=${event.idClientRequest}',
       );
-      // Emitimos un estado transitorio para que listeners externos reaccionen
+      //Emitting ttransitory state to let external listeners react
       emit(SocketClientRequestCreated(event.idClientRequest));
-      // Nota: No hacemos fetch aquí; dejamos que el bloc de driver haga el fetch
-      // para mantener la separación de responsabilidades (y usar usecases repos).
     } catch (e) {
       emit(SocketError('Error processing new client request: $e'));
     }
@@ -397,26 +403,127 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       debugPrint(
         'SocketBloc: sending new_client_request id=${event.idClientRequest}',
       );
-      // payload robusto que el backend espera; ajusta nombres si tu backend usa otros campos
-      final payload = {
-        'id_client_request': event.idClientRequest,
-        // opcional: añade otros campos si necesitas (e.g. id_client, lat, lng)
-      };
+      final payload = {'id_client_request': event.idClientRequest};
 
       await _socketUseCases.sendSocketMessageUseCase(
         'new_client_request',
         payload,
       );
       debugPrint(
-        'SocketBloc: sendSocketMessageUseCase completed for id=${event.idClientRequest}',
+        'SocketBloc: sendSocketMessageUseCase'
+        ' completed for id=${event.idClientRequest}',
       );
-
-      // No emitimos un estado nuevo aquí necesariamente; es solo un "fire and forget".
     } catch (e, st) {
       debugPrint('SocketBloc: error sending new_client_request: $e\n$st');
       emit(SocketError('Error sending new client request via socket: $e'));
     }
   }
+
+  /// ------ Client DRIVER OFFERS ------
+  Future<void> _onListenClientRequestChannel(
+    ListenClientRequestChannel event,
+    Emitter<SocketState> emit,
+  ) async {
+    final channel = '/${event.idClientRequest}';
+    if (_channelSubscriptions.containsKey(channel)) {
+      debugPrint('SocketBloc: already listening to $channel');
+      return;
+    }
+
+    final res = await _socketUseCases.onSocketMessageUseCase(channel);
+    res.fold(
+      (failure) {
+        addError(
+          Exception('Socket listen error ($channel): ${failure.message}'),
+        );
+      },
+      (stream) {
+        final sub = stream.listen(
+          (data) {
+            try {
+              if (data == null) return;
+              if (data is Map) {
+                add(
+                  SocketDriverOfferReceived(
+                    idClientRequest: event.idClientRequest,
+                    payload: Map<String, dynamic>.from(data),
+                  ),
+                );
+              } else {
+                debugPrint(
+                  'Socket $channel: unexpected payload type ${data.runtimeType}',
+                );
+              }
+            } catch (e, st) {
+              debugPrint('Error parsing $channel message: $e\n$st');
+            }
+          },
+          onError: (e, st) {
+            debugPrint('Stream error on $channel: $e');
+          },
+        );
+
+        _channelSubscriptions[channel] = sub;
+        _socketSubscriptions.add(sub); // si quieres mantener la lista también
+        debugPrint('SocketBloc: started listening to $channel');
+      },
+    );
+  }
+
+  Future<void> _onStopListeningClientRequestChannel(
+    StopListeningClientRequestChannel event,
+    Emitter<SocketState> emit,
+  ) async {
+    final channel = '/${event.idClientRequest}';
+    final sub = _channelSubscriptions.remove(channel);
+    if (sub != null) {
+      await sub.cancel();
+      debugPrint('SocketBloc: stopped listening to $channel');
+    }
+  }
+
+  Future<void> _onSendDriverOfferRequested(
+    SendDriverOfferRequested event,
+    Emitter<SocketState> emit,
+  ) async {
+    try {
+      final payload = {
+        'id_client_request': event.idClientRequest,
+        'id_driver': event.idDriver,
+        'fare_offered': event.fare,
+        'time': event.time,
+        'distance': event.distance,
+      };
+      await _socketUseCases.sendSocketMessageUseCase(
+        'new_driver_offer',
+        payload,
+      );
+      debugPrint(
+        'SocketBloc: sent new_driver_offer payload'
+        ' for clientRequest ${event.idClientRequest}',
+      );
+    } catch (e, st) {
+      debugPrint('SocketBloc: error sending new_driver_offer: $e\n$st');
+    }
+  }
+
+  void _onSocketDriverOfferReceived(
+    SocketDriverOfferReceived event,
+    Emitter<SocketState> emit,
+  ) {
+    try {
+      emit(
+        SocketDriverOfferArrived(
+          idClientRequest: event.idClientRequest,
+          payload: event.payload,
+        ),
+      );
+    } catch (e) {
+      emit(SocketError('Error handling driver offer: $e'));
+    }
+  }
+
+  /// ------ UTILS ------
 
   static double? _parseToDouble(dynamic value) {
     if (value == null) return null;

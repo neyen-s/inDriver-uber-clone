@@ -37,3 +37,16 @@ class SocketClientRequestCreated extends SocketState {
   @override
   List<Object?> get props => [idClientRequest];
 }
+
+class SocketDriverOfferArrived extends SocketState {
+  const SocketDriverOfferArrived({
+    required this.idClientRequest,
+    required this.payload,
+  });
+
+  final String idClientRequest;
+  final Map<String, dynamic> payload;
+
+  @override
+  List<Object?> get props => [idClientRequest, payload];
+}

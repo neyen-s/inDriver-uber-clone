@@ -17,11 +17,11 @@ import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/harvesine_distance.dart';
 import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
-import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
 part 'client_map_seeker_event.dart';
 part 'client_map_seeker_state.dart';
@@ -45,7 +45,6 @@ class ClientMapSeekerBloc
     on<DrawRouteRequested>(_onDrawRouteRequested);
     on<ClientMapCameraCentered>(_onClientMapCameraCentered);
     on<ResetCameraRequested>(_onResetCameraRequested);
-    // on<GetTimeAndDistanceValuesRequested>(_onGetTimeAndDistanceValues);
     on<CreateClientRequest>(_onCreateClientRequest);
 
     //socket related events
@@ -199,7 +198,6 @@ class ClientMapSeekerBloc
           ? state as ClientMapSeekerSuccess
           : const ClientMapSeekerSuccess();
 
-      // Guardamos origin/destination e indicamos loading
       emit(
         current.copyWith(
           origin: event.origin,
@@ -208,7 +206,6 @@ class ClientMapSeekerBloc
         ),
       );
 
-      // Llamada al service que calcula time & distance (sin encolar)
       print('orign: ${event.origin}, destination: ${event.destination}');
       final timeResult = await clientRequestsUsecases
           .getTimeAndDistanceValuesUsecase(
@@ -220,7 +217,6 @@ class ClientMapSeekerBloc
             ),
           );
 
-      // Calculamos la polyline (pues esta llamada también puede tardar)
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
       final request = RoutesApiRequest(
         origin: PointLatLng(event.origin.latitude, event.origin.longitude),
@@ -258,7 +254,6 @@ class ClientMapSeekerBloc
         polyline.polylineId: polyline,
       };
 
-      // Extraer valores del timeResult (si success)
       TimeAndDistanceValuesEntity? timeAndDistanceValues;
       double distanceKmFromApi = 0;
       var durationMinutesFromApi = 0;
@@ -275,24 +270,53 @@ class ClientMapSeekerBloc
         },
       );
 
-      // Preferir valores del API de time/distance si existen, sino usar los derivados de la route
-      final distanceKm = distanceKmFromApi != 0
+      //Use the distance and time from the API if they exist, otherwise
+      // use the distance and time from the route
+      var distanceKm = distanceKmFromApi != 0
           ? distanceKmFromApi
           : (route.distanceMeters ?? 0) / 1000;
-      final durationMinutes = durationMinutesFromApi != 0
+
+      var durationMinutes = durationMinutesFromApi != 0
           ? durationMinutesFromApi
           : ((route.duration ?? 0) / 60).round();
 
-      // Emitimos un único estado final completo (incluye quitar loader)
+      //In case distanceKm is still 0, fallback to Haversine
+      var usedEstimation = false;
+      if (distanceKm == 0 || durationMinutes == 0) {
+        debugPrint(
+          '****ATTENTION: Google distance and time failed,'
+          ' fallback to Using haversine****',
+        );
+        final firstPoint = latLngPoints.isNotEmpty
+            ? latLngPoints.first
+            : event.origin;
+        final lastPoint = latLngPoints.isNotEmpty
+            ? latLngPoints.last
+            : event.destination;
+
+        final estKm = haversineKm(
+          firstPoint.latitude,
+          firstPoint.longitude,
+          lastPoint.latitude,
+          lastPoint.longitude,
+        );
+        final estMin = estimateMinutesFromKm(estKm);
+
+        distanceKm = estKm;
+        durationMinutes = estMin;
+        usedEstimation = true;
+      }
+
       emit(
         current.copyWith(
           mapPolylines: updatedPolylines,
-          distanceKm: distanceKm,
+          distanceKm: double.parse(distanceKm.toStringAsFixed(3)),
           durationMinutes: durationMinutes,
           timeAndDistanceValues: timeAndDistanceValues,
           origin: event.origin,
           destination: event.destination,
           isLoading: false,
+          isEstimated: usedEstimation,
         ),
       );
     } catch (e) {
@@ -441,57 +465,6 @@ class ClientMapSeekerBloc
     }
   }
 
-  /*   Future<void> _onGetTimeAndDistanceValues(
-    GetTimeAndDistanceValuesRequested event,
-    Emitter<ClientMapSeekerState> emit,
-  ) async {
-    print('**BLOC _onGetTimeAndDistanceValues ');
-
-    final current = state is ClientMapSeekerSuccess
-        ? state as ClientMapSeekerSuccess
-        : const ClientMapSeekerSuccess();
-
-    // Usamos los datos que vienen en el evento, no los del state.
-    final originLat = event.originLat;
-    final originLng = event.originLng;
-    final destinationLat = event.destinationLat;
-    final destinationLng = event.destinationLng;
-
-    // Seguridad: si por alguna razón faltan coords en el event, fallback al state
-    if (originLat == null ||
-        originLng == null ||
-        destinationLat == null ||
-        destinationLng == null) {
-      final origin = current.origin;
-      final destination = current.destination;
-      if (origin == null || destination == null) {
-        emit(const ClientMapSeekerError('Origin or destination is null'));
-        return;
-      }
-    }
-
-    try {
-      final result = await clientRequestsUsecases
-          .getTimeAndDistanceValuesUsecase(
-            TimeAndDistanceParams(
-              originLat: originLat ?? current.origin!.latitude,
-              originLng: originLng ?? current.origin!.longitude,
-              destinationLat: destinationLat ?? current.destination!.latitude,
-              destinationLng: destinationLng ?? current.destination!.longitude,
-            ),
-          );
-
-      result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
-        timeAndDistanceValues,
-      ) {
-        // combinamos con el estado actual (no perder polylines, etc.)
-        emit(current.copyWith(timeAndDistanceValues: timeAndDistanceValues));
-      });
-    } catch (e) {
-      emit(ClientMapSeekerError('Error getting time/distance values: $e'));
-    }
-  } */
-
   Future<void> _onCreateClientRequest(
     CreateClientRequest event,
     Emitter<ClientMapSeekerState> emit,
@@ -508,23 +481,24 @@ class ClientMapSeekerBloc
       },
       (authResponse) async {
         try {
+          final clientRequestToCreate = ClientRequestEntity(
+            idClient: authResponse.user.id,
+            fareOffered: event.fareOffered,
+            pickupDescription:
+                current.timeAndDistanceValues?.originAddresses ?? '',
+            destinationDescription:
+                current.timeAndDistanceValues?.destinationAddresses ?? '',
+            pickupLat: current.origin?.latitude ?? 0.0,
+            pickupLng: current.origin?.longitude ?? 0.0,
+            destinationLat: current.destination?.latitude ?? 0.0,
+            destinationLng: current.destination?.longitude ?? 0.0,
+          );
+
           debugPrint('**BLOC: creating Client request...');
           final response = await clientRequestsUsecases
               .createClientRequestUseCase(
                 CreateClientRequestParams(
-                  clientRequestEntity: ClientRequestEntity(
-                    idClient: authResponse.user.id,
-                    fareOffered: event.fareOffered,
-                    pickupDescription:
-                        current.timeAndDistanceValues?.originAddresses ?? '',
-                    destinationDescription:
-                        current.timeAndDistanceValues?.destinationAddresses ??
-                        '',
-                    pickupLat: current.origin?.latitude ?? 0.0,
-                    pickupLng: current.origin?.longitude ?? 0.0,
-                    destinationLat: current.destination?.latitude ?? 0.0,
-                    destinationLng: current.destination?.longitude ?? 0.0,
-                  ),
+                  clientRequestEntity: clientRequestToCreate,
                 ),
               );
 
@@ -537,10 +511,23 @@ class ClientMapSeekerBloc
                 '**BLOC: Client request created createdID: $createdID',
               );
 
-              // 1) Emitir estado local como tienes (para UI)
+              final createdEntity = ClientRequestEntity(
+                id: createdID,
+                idClient: clientRequestToCreate.idClient,
+                fareOffered: clientRequestToCreate.fareOffered,
+                pickupDescription: clientRequestToCreate.pickupDescription,
+                destinationDescription:
+                    clientRequestToCreate.destinationDescription,
+                pickupLat: clientRequestToCreate.pickupLat,
+                pickupLng: clientRequestToCreate.pickupLng,
+                destinationLat: clientRequestToCreate.destinationLat,
+                destinationLng: clientRequestToCreate.destinationLng,
+              );
+
               emit(
                 current.copyWith(
                   clientRequestSended: true,
+                  createdClientRequest: createdEntity,
                   polylines: {},
                   mapPolylines: {},
                 ),
@@ -548,7 +535,6 @@ class ClientMapSeekerBloc
 
               //Notifies socket about new client request
               try {
-                // suponemos que tienes acceso a socketBloc en este Bloc (lo tienes en ctor)
                 socketBloc.add(
                   SendNewClientRequestRequested(
                     idClientRequest: createdID.toString(),
@@ -563,6 +549,7 @@ class ClientMapSeekerBloc
 
               emit(
                 current.copyWith(
+                  createdClientRequest: createdEntity,
                   clientRequestSended: false,
                   polylines: {},
                   mapPolylines: {},

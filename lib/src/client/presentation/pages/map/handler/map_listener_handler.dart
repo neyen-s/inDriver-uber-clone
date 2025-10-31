@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
+import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/animate_route_with_padding.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/get_adress_from_latlng.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
@@ -29,11 +30,15 @@ Future<void> handleMapStateChange({
         context,
       ).showSnackBar(const SnackBar(content: Text('Request sent')));
       debugPrint('Navigating to ${ClientDriverOffersPage.routeName}');
-
-      /*   await Navigator.pushReplacementNamed( //TODO : NAVIGATE TO DRIVER OFFER
-        context,
-        ClientDriverOffersPage.routeName,
-      ); */
+      if (state.createdClientRequest?.id != null) {
+        await Navigator.pushNamed(
+          context,
+          ClientDriverOffersPage.routeName,
+          arguments: state.createdClientRequest!.id,
+        );
+      } else {
+        CoreUtils.showSnackBar(context, 'Couldnt create request');
+      }
     }
 
     final s = state;

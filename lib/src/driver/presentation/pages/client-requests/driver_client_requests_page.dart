@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:indriver_uber_clone/core/common/widgets/dynamic_lottie_error.dart';
+import 'package:indriver_uber_clone/core/common/widgets/dynamic_lottie_and_msg.dart';
 import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/core/utils/core_utils.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';
@@ -73,7 +73,7 @@ class _ClientRequestsPageState extends State<DriverClientRequestsPage> {
                     final msg =
                         state.errorMessage ??
                         'Error: Something went wrong, try again later';
-                    return DynamicLottieError(errorMewsage: msg);
+                    return DynamicLottieAndMsg(message: msg);
                   }
                 },
               ),

@@ -119,19 +119,28 @@ class DriverClientRequestsBloc
     Emitter<DriverClientRequestsState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, hasError: false));
-
     final response = await driverTripOffersUseCases
         .createDriverTripOfferUseCase(event.driverTripRequestEntity);
 
-    response.fold(
-      (l) => emit(
-        state.copyWith(
-          isLoading: false,
-          hasError: true,
-          errorMessage: l.message,
-        ),
-      ),
-      (r) => emit(state.copyWith(isLoading: false, hasError: false)),
-    );
+    response.fold((l) => emit(state.copyWith(isLoading: false, hasError: true)), (
+      r,
+    ) {
+      emit(state.copyWith(isLoading: false, hasError: false));
+      // NOTIFY SOCKET: enviar nueva oferta para que backend la reemita al cliente
+      try {
+        socketBloc.add(
+          SendDriverOfferRequested(
+            idClientRequest: event.driverTripRequestEntity.idClientRequest,
+            idDriver: event.driverTripRequestEntity.idDriver,
+            fare: event.driverTripRequestEntity.fareOffered,
+            time: event.driverTripRequestEntity.time,
+            distance: event.driverTripRequestEntity.distance,
+          ),
+        );
+        debugPrint('DriverClientRequestsBloc: notified socket about new offer');
+      } catch (e) {
+        debugPrint('DriverClientRequestsBloc: error notifying socket: $e');
+      }
+    });
   }
 }

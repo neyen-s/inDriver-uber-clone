@@ -261,14 +261,6 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
                             destinationText: _destinationController.text,
                           ),
                         );
-                        /*    context.read<ClientMapSeekerBloc>().add(
-                          GetTimeAndDistanceValuesRequested(
-                            originLat: originLatLng!.latitude,
-                            originLng: originLatLng!.longitude,
-                            destinationLat: destinationLatLng!.latitude,
-                            destinationLng: destinationLatLng!.longitude,
-                          ),
-                        ); */
                       }
                     },
                   ),
@@ -303,17 +295,26 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
             );
           }
           if (state is ClientMapSeekerSuccess &&
-              state.distanceKm != null &&
-              state.durationMinutes != null &&
               state.polylines.isNotEmpty &&
-              state.timeAndDistanceValues != null) {
+              (state.timeAndDistanceValues != null ||
+                  (state.distanceKm != null &&
+                      state.durationMinutes != null))) {
             return TripSummaryCard(
               context: context,
-              originAddress: state.timeAndDistanceValues?.originAddresses ?? '',
+              originAddress:
+                  state.timeAndDistanceValues?.originAddresses ??
+                  state.originAddress ??
+                  '',
               destinationAddress:
-                  state.timeAndDistanceValues?.destinationAddresses ?? '',
-              distanceInKm: state.distanceKm ?? 0.0,
-              duration: state.timeAndDistanceValues?.duration.text ?? '',
+                  state.timeAndDistanceValues?.destinationAddresses ??
+                  state.destinationAddress ??
+                  '',
+              distanceInKm:
+                  state.distanceKm ??
+                  (state.timeAndDistanceValues?.distance.value ?? 0.0),
+              duration:
+                  state.timeAndDistanceValues?.duration.text ??
+                  '${state.durationMinutes ?? 0}',
               price:
                   state.timeAndDistanceValues?.recommendedValue ??
                   calculateTripPrice(

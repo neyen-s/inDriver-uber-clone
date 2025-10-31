@@ -84,11 +84,21 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
 
     UserDTO? driverDto;
     try {
-      if (json['driver'] != null && json['driver'] is Map<String, dynamic>) {
-        driverDto = UserDTO.fromJson(json['driver'] as Map<String, dynamic>);
+      final rawDriver = json['driver'];
+      debugPrint(
+        'Driver field runtimeType: ${rawDriver?.runtimeType} value: $rawDriver',
+      );
+
+      if (rawDriver != null && rawDriver is Map) {
+        final driverMap = Map<String, dynamic>.from(rawDriver);
+        driverDto = UserDTO.fromJson(driverMap);
+      } else {
+        driverDto = null;
       }
-    } catch (e) {
-      debugPrint('Warning parsing driver field: $e — value: ${json['driver']}');
+    } catch (e, st) {
+      debugPrint(
+        'Warning parsing driver field: $e — value: ${json['driver']} \n$st',
+      );
       driverDto = null;
     }
 

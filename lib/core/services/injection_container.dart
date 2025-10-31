@@ -193,7 +193,7 @@ Future<void> _initAuth() async {
 
 Future<void> _initClient() async {
   sl
-    ..registerFactory(() => ClientDriverOffersBloc(sl()))
+    ..registerFactory(() => ClientDriverOffersBloc(sl(), sl()))
     ..registerFactory(() => ClientHomeBloc(sl()));
 }
 
