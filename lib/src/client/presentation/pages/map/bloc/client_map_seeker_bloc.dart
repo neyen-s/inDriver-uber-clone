@@ -96,7 +96,9 @@ class ClientMapSeekerBloc
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
     emit(current.copyWith(isLoading: true));
-
+    debugPrint(
+      'Bloc: GET CURRENT POS handler start — state=${state.runtimeType}',
+    );
     final result = await _geolocatorUseCases.findPositionUseCase().timeout(
       const Duration(seconds: 10),
       onTimeout: () => const Left(
@@ -104,11 +106,52 @@ class ClientMapSeekerBloc
       ),
     );
 
-    result.fold((failure) => emit(ClientMapSeekerError(failure.message)), (
-      position,
-    ) {
-      emit(current.copyWith(userPosition: position, isLoading: false));
-    });
+    // --- Manejo sin callbacks `async` dentro de fold ---
+    // Si falla -> emit Error y return rápido
+    if (result.isLeft()) {
+      final failure = (result as Left).value; // tipo Failure
+      emit(ClientMapSeekerError(failure.message.toString()));
+      return;
+    }
+
+    // Si aquí, es Right -> extraemos la posición de forma sincrónica
+    final Position position = (result as Right).value as Position;
+
+    debugPrint(
+      'Bloc: GET CURRENT POS handler end — got position=$position, will reverse-geocode and emit enriched state',
+    );
+
+    // Reverse-geocode (await aquí dentro del handler async)
+    String? originAddr;
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        originAddr = '${p.street}, ${p.locality}, ${p.administrativeArea}';
+      }
+    } catch (e, st) {
+      debugPrint('Bloc: reverse geocode failed: $e\n$st');
+      originAddr = null;
+    }
+
+    // Emitimos estando todavía dentro del handler (no habrá error)
+    emit(
+      current.copyWith(
+        userPosition: position,
+        isLoading: false,
+        // permitimos recentrar (como propusiste antes)
+        hasCenteredCameraOnce: false,
+        origin: LatLng(position.latitude, position.longitude),
+        originAddress: originAddr,
+      ),
+    );
+
+    debugPrint(
+      'Bloc: GET CURRENT POS after emit — emitted userPosition + originAddress: $originAddr',
+    );
   }
 
   Future<void> _onResetCameraRequested(
@@ -396,7 +439,9 @@ class ClientMapSeekerBloc
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
-
+    debugPrint(
+      'Socket snapshot received: drivers count=${event.drivers.length}',
+    );
     //if recently had non-empty, ignore empty,
     //For when it desconects and reconect from the socket quickly
     if (event.drivers.isEmpty) {
@@ -450,6 +495,7 @@ class ClientMapSeekerBloc
         newMarkers[driverId] = marker;
       }
     }
+    debugPrint('Emitting newMarkers count=${newMarkers.length}');
 
     emit(current.copyWith(driverMarkers: newMarkers));
   }

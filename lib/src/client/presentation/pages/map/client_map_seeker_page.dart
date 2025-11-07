@@ -9,7 +9,6 @@ import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
 import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/calculate_trip_price.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
-import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/client_driver_offers_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/handler/map_listener_handler.dart';
@@ -56,23 +55,30 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
   @override
   void initState() {
     super.initState();
+    debugPrint(
+      'CALLING ensurePermissionAndInit from CLIENT UI (source: init/didPopNext/didResume)',
+    );
     WidgetsBinding.instance.addObserver(this);
     _mapController = Completer();
     clientBloc = context.read<ClientMapSeekerBloc>();
 
     //Loads the custom icons and then initializes camera + location permissions
     _loadCustomIcons().then((_) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         //Calls the helper; we pass the callback to
         // be executed when there is permission.
-        LocationPermissionHelper.ensurePermissionAndInit(
+        print('pre OK ');
+
+        final ok = await LocationPermissionHelper.ensurePermissionAndInit(
           context: context,
-          onGranted: () {
-            context.read<ClientMapSeekerBloc>().add(
-              GetCurrentPositionRequested(),
-            );
-          },
         );
+        print('OK -----> $ok');
+        if (ok && context.mounted) {
+          print('GET CURRENT POSITION FROM INIT STATE');
+          context.read<ClientMapSeekerBloc>().add(
+            GetCurrentPositionRequested(),
+          );
+        }
       });
     });
 
@@ -118,6 +124,7 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
       LocationPermissionHelper.onAppResumed(
         context: context,
         onGranted: () {
+          print('----------------GET CURRENT POSITION FROM RESUME');
           context.read<ClientMapSeekerBloc>().add(
             GetCurrentPositionRequested(),
           );
@@ -348,10 +355,8 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
     final origin = await iconService.getOriginIcon();
     final destination = await iconService.getDestinationIcon();
 
-    if (mounted) {
-      _originIcon = origin;
-      _destinationIcon = destination;
-    }
+    _originIcon = origin;
+    _destinationIcon = destination;
   }
 
   Future<void> _handleLocationSelected({

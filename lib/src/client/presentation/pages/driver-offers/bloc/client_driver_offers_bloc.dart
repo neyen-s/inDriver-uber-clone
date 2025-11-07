@@ -14,7 +14,10 @@ class ClientDriverOffersBloc
     extends Bloc<ClientDriverOffersEvent, ClientDriverOffersState> {
   ClientDriverOffersBloc(this.clientRequestsUsecases, this.socketBloc)
     : super(const ClientDriverOffersState()) {
-    on<GetDriverTripOffersByClientReques>(_onGetDriverTripOffersByClientReques);
+    on<GetDriverTripOffersByClientRequest>(
+      _onGetDriverTripOffersByClientRequest,
+    );
+    on<AsignDriver>(_onAsignDriver);
 
     _socketSub = socketBloc.stream.listen(_handleSocketState);
   }
@@ -33,7 +36,7 @@ class ClientDriverOffersBloc
       }
 
       if (socketId == currentId.toString()) {
-        add(GetDriverTripOffersByClientReques(currentId));
+        add(GetDriverTripOffersByClientRequest(currentId));
       }
     }
   }
@@ -44,8 +47,8 @@ class ClientDriverOffersBloc
     return super.close();
   }
 
-  Future<void> _onGetDriverTripOffersByClientReques(
-    GetDriverTripOffersByClientReques event,
+  Future<void> _onGetDriverTripOffersByClientRequest(
+    GetDriverTripOffersByClientRequest event,
     Emitter<ClientDriverOffersState> emit,
   ) async {
     emit(state.copyWith(isLoading: true));
@@ -55,7 +58,7 @@ class ClientDriverOffersBloc
 
     return response.fold(
       (failure) {
-        debugPrint('failure ---> $failure');
+        debugPrint('bloc failure ---> $failure');
         emit(state.copyWith(isLoading: false, hasError: true));
       },
       (request) {
@@ -65,6 +68,36 @@ class ClientDriverOffersBloc
             hasError: false,
             driverTripRequestEntity: request,
             idClientRequest: event.idClientRequest,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onAsignDriver(
+    AsignDriver event,
+    Emitter<ClientDriverOffersState> emit,
+  ) async {
+    emit(state.copyWith(isLoading: true));
+
+    final response = await clientRequestsUsecases.updateDriverAssignedUseCase(
+      event.idClientRequest,
+      event.idDriver,
+      event.fareAssigned,
+    );
+
+    return response.fold(
+      (failure) {
+        debugPrint('bloc failure ---> $failure');
+        emit(state.copyWith(isLoading: false, hasError: true));
+      },
+      (request) {
+        debugPrint('bloc success request ---> $request');
+        emit(
+          state.copyWith(
+            driverAssigned: request,
+            isLoading: false,
+            hasError: false,
           ),
         );
       },

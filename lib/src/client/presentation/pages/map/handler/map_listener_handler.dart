@@ -25,6 +25,9 @@ Future<void> handleMapStateChange({
   required void Function(bool) onSetShowMapPadding,
 }) async {
   if (state is ClientMapSeekerSuccess) {
+    debugPrint(
+      'handleMapStateChange — userPosition: ${state.userPosition}, hasCenteredCameraOnce: ${state.hasCenteredCameraOnce}, originAddress: ${state.originAddress}, driverMarkersCount: ${state.driverMarkers.length}',
+    );
     if (state.clientRequestSended ?? false) {
       ScaffoldMessenger.of(
         context,
@@ -41,21 +44,24 @@ Future<void> handleMapStateChange({
       }
     }
 
-    final s = state;
-
-    onUpdateSelectedField(s.selectedField);
-
+    onUpdateSelectedField(state.selectedField);
+    print(
+      ' state.userPosition != null && !state.hasCenteredCameraOnce: ${state.userPosition != null && !state.hasCenteredCameraOnce}',
+    );
     // Updates the camera if theres is a userPosition
-    if (s.userPosition != null && !s.hasCenteredCameraOnce) {
+    if (state.userPosition != null && !state.hasCenteredCameraOnce) {
       final latLng = LatLng(
-        s.userPosition!.latitude,
-        s.userPosition!.longitude,
+        state.userPosition!.latitude,
+        state.userPosition!.longitude,
       );
 
       // prevents the camera to do too many updates
       if (!(latLng.latitude.abs() < 0.000001 &&
           latLng.longitude.abs() < 0.000001)) {
         try {
+          print(
+            '------------------------------------MOVING CAMERA TO USER POSITION FROM LISTENER latLng $latLng',
+          );
           await moveCameraTo(
             controller: mapController,
             target: latLng,
@@ -70,11 +76,11 @@ Future<void> handleMapStateChange({
       onUpdateOriginLatLng(latLng);
 
       //Uses the adrres if we have one else get it once
-      if (s.originAddress != null && s.originAddress!.isNotEmpty) {
+      if (state.originAddress != null && state.originAddress!.isNotEmpty) {
         pickUpController
-          ..text = s.originAddress!
+          ..text = state.originAddress!
           ..selection = TextSelection.fromPosition(
-            TextPosition(offset: s.originAddress!.length),
+            TextPosition(offset: state.originAddress!.length),
           );
       } else {
         try {
@@ -91,32 +97,33 @@ Future<void> handleMapStateChange({
     }
 
     //Updates the origin and destination fields
-    if (s.originAddress != null && s.originAddress!.isNotEmpty) {
+    if (state.originAddress != null && state.originAddress!.isNotEmpty) {
       pickUpController
-        ..text = s.originAddress!
+        ..text = state.originAddress!
         ..selection = TextSelection.fromPosition(
-          TextPosition(offset: s.originAddress!.length),
+          TextPosition(offset: state.originAddress!.length),
         );
-      onUpdateOriginLatLng(s.origin);
+      onUpdateOriginLatLng(state.origin);
     }
 
-    if (s.destinationAddress != null && s.destinationAddress!.isNotEmpty) {
+    if (state.destinationAddress != null &&
+        state.destinationAddress!.isNotEmpty) {
       destinationController
-        ..text = s.destinationAddress!
+        ..text = state.destinationAddress!
         ..selection = TextSelection.fromPosition(
-          TextPosition(offset: s.destinationAddress!.length),
+          TextPosition(offset: state.destinationAddress!.length),
         );
-      onUpdateDestinationLatLng(s.destination);
+      onUpdateDestinationLatLng(state.destination);
     }
 
     //  IF we have polylines drawn -> animate the route with padding
-    if (s.polylines.isNotEmpty) {
+    if (state.polylines.isNotEmpty) {
       try {
         final controller = await mapController.future;
 
         //Extracts the points from the first polyline
         //(or generates a complete list if you have multiple)
-        final firstPolyline = s.polylines.values.first;
+        final firstPolyline = state.polylines.values.first;
         final latLngPoints = firstPolyline.points;
         if (!context.mounted) return;
 

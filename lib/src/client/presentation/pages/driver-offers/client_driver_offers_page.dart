@@ -6,6 +6,7 @@ import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/client_driver_offers_item.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map-trip/client_map_trip_page.dart';
 
 class ClientDriverOffersPage extends StatefulWidget {
   const ClientDriverOffersPage({super.key});
@@ -50,7 +51,7 @@ class _ClientDriverOffersPageState extends State<ClientDriverOffersPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClientDriverOffersBloc>().add(
-        GetDriverTripOffersByClientReques(id),
+        GetDriverTripOffersByClientRequest(id),
       );
       context.read<SocketBloc>().add(ListenClientRequestChannel(id.toString()));
     });
@@ -76,6 +77,13 @@ class _ClientDriverOffersPageState extends State<ClientDriverOffersPage> {
               LoadingService.show(context);
             } else {
               LoadingService.hide(context);
+            }
+            if (state.driverAssigned) {
+              Navigator.pushNamed(
+                context,
+                ClientMapTripPage.routeName,
+                arguments: state.driverTripRequestEntity,
+              );
             }
           },
           builder: (context, state) {

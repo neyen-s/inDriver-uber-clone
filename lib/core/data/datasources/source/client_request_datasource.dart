@@ -27,6 +27,11 @@ sealed class ClientRequestDataSource {
   Future<List<DriverTripRequestDTO>> getDriverTripOffersByClientRequest(
     int idClientRequest,
   );
+  Future<bool> updateDriverAssigned(
+    int idClientRequest,
+    int idDriver,
+    double fareAssigned,
+  );
 }
 
 class ClientRequestDataSourceImpl implements ClientRequestDataSource {
@@ -121,5 +126,32 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     );
 
     return driverTripRequestsResponseDtos;
+  }
+
+  @override
+  Future<bool> updateDriverAssigned(
+    Object idClientRequest,
+    int idDriver,
+    double fareAssigned,
+  ) async {
+    debugPrint('**updateDriverAssigned');
+    final response = await apiClient.put(
+      path: '/client-requests/updateDriverAssigned',
+      body: {
+        'id': idClientRequest,
+        'id_driver_assigned': idDriver,
+        'fare_assigned': fareAssigned,
+      },
+    );
+
+    debugPrint('**updateDriverAssigned RESPONSE: $response');
+    if (response['success'] == true) {
+      return true;
+    }
+    if (response.containsKey('message')) {
+      throw Exception(response['message']?.toString() ?? 'Server error');
+    }
+
+    return false;
   }
 }

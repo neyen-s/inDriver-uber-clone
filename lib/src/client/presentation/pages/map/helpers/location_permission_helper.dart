@@ -5,54 +5,50 @@ import 'package:geolocator/geolocator.dart';
 typedef OnPermissionGranted = FutureOr<void> Function();
 
 class LocationPermissionHelper {
-  static Future<void> ensurePermissionAndInit({
+  /// Intenta asegurar permiso y devuelve true si ya está concedido (o se acaba de conceder).
+  /// No lanza; gestiona internamente diálogos, pero deja al caller decidir qué hacer.
+  static Future<bool> ensurePermissionAndInit({
     required BuildContext context,
-    required OnPermissionGranted onGranted,
     Duration requestTimeout = const Duration(seconds: 20),
     bool showRationaleIfDenied = true,
   }) async {
-    if (!context.mounted) return;
+    if (!context.mounted) return false;
     debugPrint('[LPH] ensurePermissionAndInit START');
 
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       debugPrint('[LPH] serviceEnabled: $serviceEnabled');
       if (!serviceEnabled) {
-        if (!context.mounted) return;
-
+        if (!context.mounted) return false;
         final open = await _showEnableLocationServiceDialog(context);
         if (open ?? false) {
           await Geolocator.openLocationSettings();
         }
-        debugPrint('[LPH] location service disabled -> returning');
-        return;
+        debugPrint('[LPH] location service disabled -> returning false');
+        return false;
       }
 
       var permission = await Geolocator.checkPermission();
       debugPrint('[LPH] checkPermission -> $permission');
 
-      // Permanently denied -> open settings flow
       if (permission == LocationPermission.deniedForever) {
-        if (!context.mounted) return;
-
+        if (!context.mounted) return false;
         await _showOpenSettingsDialog(context);
-        return;
+        return false;
       }
 
-      // If denied -> show rationale optionally then request
       if (permission == LocationPermission.denied) {
+        // opcional: mostrar rationale y pedir permiso
         if (showRationaleIfDenied) {
-          if (!context.mounted) return;
-
+          if (!context.mounted) return false;
           final ok = await _showPermissionRationaleDialog(context);
           if (!ok) {
-            if (!context.mounted) return;
-
+            if (!context.mounted) return false;
             _showSimpleMessage(
               context,
               'The app needs location permission to function properly.',
             );
-            return;
+            return false;
           }
         }
 
@@ -73,57 +69,59 @@ class LocationPermissionHelper {
         debugPrint('[LPH] requestPermission result -> $result');
 
         if (result == LocationPermission.denied) {
-          if (!context.mounted) return;
-
+          if (!context.mounted) return false;
           _showPermissionDeniedSnackBar(context);
-          return;
+          return false;
         } else if (result == LocationPermission.deniedForever) {
-          if (!context.mounted) return;
-
+          if (!context.mounted) return false;
           await _showOpenSettingsDialog(context);
-          return;
+          return false;
         }
-        // else: granted or while-in-use -> continue
+        // otherwise fallthrough to final check
       }
 
-      // At this point permission is either 'whileInUse' or 'always' (granted)
+      // final check
       permission = await Geolocator.checkPermission();
       debugPrint('[LPH] final permission check -> $permission');
 
-      if (permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse) {
-        // call the provided callback
-        // (typically dispatch GetCurrentPositionRequested)
-        await onGranted();
-      } else {
-        debugPrint('[LPH] permission still not granted -> showing message');
-        if (!context.mounted) return;
+      final granted =
+          permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
 
+      if (!granted) {
+        if (!context.mounted) return false;
         _showSimpleMessage(
           context,
           'Location permission not granted. Enable it in Settings.',
         );
+        return false;
       }
-    } catch (e, st) {
-      if (!context.mounted) return;
 
+      // OK: permission granted
+      return true;
+    } catch (e, st) {
+      if (!context.mounted) return false;
       debugPrint('[LPH] Error checking permission: $e\n$st');
       _showSimpleMessage(context, 'Error checking permissions: $e');
+      return false;
     } finally {
       debugPrint('[LPH] ensurePermissionAndInit END');
     }
   }
 
-  // Call this from didChangeAppLifecycleState when state == resumed
+  // Helper que llama desde didChangeAppLifecycleState
   static Future<void> onAppResumed({
     required BuildContext context,
     required OnPermissionGranted onGranted,
-  }) {
+  }) async {
     debugPrint('[LPH] onAppResumed invoked');
-    return ensurePermissionAndInit(context: context, onGranted: onGranted);
+    final ok = await ensurePermissionAndInit(context: context);
+    if (ok) {
+      await onGranted();
+    }
   }
 
-  // ----------------- Dialogs & helpers -----------------
+  // ----------------- Dialogs & helpers (sin cambios) -----------------
   static Future<bool?> _showEnableLocationServiceDialog(BuildContext context) {
     return showDialog<bool>(
       context: context,

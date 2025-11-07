@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/default_button.dart';
 import 'package:indriver_uber_clone/core/common/widgets/user_profile_img.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 
 class ClientDriverOffersItem extends StatelessWidget {
@@ -72,7 +74,15 @@ class ClientDriverOffersItem extends StatelessWidget {
                 ),
                 margin: EdgeInsets.only(right: 15.w, bottom: 12.h),
                 color: Colors.blueAccent,
-                onPressed: () {},
+                onPressed: () {
+                  context.read<ClientDriverOffersBloc>().add(
+                    AsignDriver(
+                      idClientRequest: driverTripRequest!.idClientRequest,
+                      idDriver: driverTripRequest!.idDriver,
+                      fareAssigned: driverTripRequest!.fareOffered,
+                    ),
+                  );
+                },
                 width: 120.w,
                 height: 35.h,
               ), //TODO vcheck style and overflow

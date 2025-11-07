@@ -7,6 +7,7 @@ class ClientDriverOffersState extends Equatable {
     this.idClientRequest,
     this.isLoading = false,
     this.hasError = false,
+    this.driverAssigned = false,
   });
 
   final List<DriverTripRequestEntity>? driverTripRequestEntity;
@@ -14,12 +15,14 @@ class ClientDriverOffersState extends Equatable {
   final int? idClientRequest;
   final bool isLoading;
   final bool hasError;
+  final bool driverAssigned;
   ClientDriverOffersState copyWith({
     List<DriverTripRequestEntity>? driverTripRequestEntity,
     int? idDriver,
     int? idClientRequest,
     bool? isLoading,
     bool? hasError,
+    bool? driverAssigned,
   }) {
     return ClientDriverOffersState(
       driverTripRequestEntity:
@@ -28,6 +31,7 @@ class ClientDriverOffersState extends Equatable {
       idClientRequest: idClientRequest ?? this.idClientRequest,
       isLoading: isLoading ?? this.isLoading,
       hasError: hasError ?? this.hasError,
+      driverAssigned: driverAssigned ?? this.driverAssigned,
     );
   }
 
@@ -37,5 +41,6 @@ class ClientDriverOffersState extends Equatable {
     idDriver,
     isLoading,
     hasError,
+    driverAssigned,
   ];
 }

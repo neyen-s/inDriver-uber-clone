@@ -7,6 +7,7 @@ import 'package:indriver_uber_clone/core/bloc/session-bloc/session_bloc.dart';
 import 'package:indriver_uber_clone/core/injection/bloc_providers.dart';
 import 'package:indriver_uber_clone/core/services/app_navigator_service.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
+import 'package:indriver_uber_clone/core/services/route_observer.dart';
 import 'package:indriver_uber_clone/core/services/routes.dart';
 import 'package:indriver_uber_clone/core/services/secure_storage_adapter.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/splash/splash_page.dart';
@@ -59,6 +60,7 @@ class MyApp extends StatelessWidget {
       },
       child: MaterialApp(
         navigatorKey: sl<AppNavigatorService>().navigatorKey,
+        // navigatorObservers: [routeObserver],
         builder: DevicePreview.appBuilder,
 
         locale: DevicePreview.locale(context),

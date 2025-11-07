@@ -4,6 +4,7 @@ import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_
 import 'package:indriver_uber_clone/core/data/datasources/source/client_request_datasource.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/client_request_repository.dart';
 import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
+import 'package:indriver_uber_clone/core/errors/faliures.dart';
 
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
@@ -108,6 +109,29 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
           .getDriverTripOffersByClientRequest(idClientRequest);
 
       return Right(driverTripOffers);
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
+    }
+  }
+
+  @override
+  ResultFuture<bool> updateDriverAssigned(
+    int idClientRequest,
+    int idDriver,
+    double fareAssigned,
+  ) async {
+    try {
+      final success = await clientRequestDataSource.updateDriverAssigned(
+        idClientRequest,
+        idDriver,
+        fareAssigned,
+      );
+
+      if (success) return const Right(true);
+      // in case the call fails without an exception
+      return const Left(
+        ServerFailure(message: 'Could not assign driver', statusCode: 500),
+      );
     } catch (e) {
       return Left(mapExceptionToFailure(e));
     }

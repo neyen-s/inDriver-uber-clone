@@ -23,4 +23,10 @@ abstract class ClientRequestRepository {
 
   ResultFuture<List<DriverTripRequestEntity>>
   getDriverTripOffersByClientRequest(int idClientRequest);
+
+  ResultFuture<bool> updateDriverAssigned(
+    int idClientRequest,
+    int idDriver,
+    double fareAssigned,
+  );
 }

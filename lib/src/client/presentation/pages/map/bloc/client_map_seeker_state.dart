@@ -104,7 +104,7 @@ class ClientMapSeekerSuccess extends ClientMapSeekerState {
   List<Object?> get props => [
     userPosition,
     selectedField,
-    driverMarkers,
+    driverMarkers.values.toList(),
     isSocketConnected,
     hasCenteredCameraOnce,
     isLoading,

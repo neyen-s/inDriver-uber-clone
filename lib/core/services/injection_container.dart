@@ -42,6 +42,7 @@ import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sig
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/get_driver_trip_offers_by_client_request_use_case.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/update_driver_assigned_use_case.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
@@ -114,12 +115,14 @@ Future<void> _initCore() async {
     ..registerLazySingleton(
       () => GetDriverTripOffersByClientRequestUseCase(sl()),
     )
+    ..registerLazySingleton(() => UpdateDriverAssignedUseCase(sl()))
     ..registerLazySingleton(
       () => ClientRequestsUsecases(
         getTimeAndDistanceValuesUsecase: sl(),
         createClientRequestUseCase: sl(),
         getNearbyTripRequestUseCase: sl(),
         getDriverTripOffersByClientRequestUseCase: sl(),
+        updateDriverAssignedUseCase: sl(),
       ),
     )
     //Socket
