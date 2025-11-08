@@ -53,8 +53,14 @@ class ClientMapSeekerBloc
     on<ClearDriverMarkers>(_onClearDriverMarkers);
     on<DriversSnapshotReceived>(_onDriversSnapshotReceived);
 
+    // manejador del evento privado que actualiza el estado del socket
+    on<_SocketStatusChanged>(_onSocketStatusChanged);
+
     // Socket Subscriptions events
     _listenToSocket();
+    // Intentamos asegurar la conexión de socket desde el BLoC (idempotente)
+    // No await aquí: simplemente pedimos que el socket se conecte si no lo está.
+    _ensureSocketConnectedIfNeeded();
   }
 
   final DebouncerLocation _debouncer;
@@ -72,11 +78,91 @@ class ClientMapSeekerBloc
   final Duration _emptySnapshotGrace = const Duration(seconds: 2);
 
   void _listenToSocket() {
+    // escucha continua del socketBloc
     _socketSub = socketBloc.stream.listen((socketState) {
       if (socketState is SocketDriverPositionsUpdated) {
         add(DriversSnapshotReceived(Map.from(socketState.drivers)));
+      } else if (socketState is SocketConnected) {
+        // fuerza re-request si quieres (opcional)
+        add(const ClearDriverMarkers());
+        socketBloc.add(RequestInitialDrivers());
+      } else if (socketState is SocketDisconnected ||
+          socketState is SocketError) {
+        // notifica que hay desconexión (ya hacías algo parecido)
+        debugPrint('ClientMapSeekerBloc: detected SocketDisconnected/Error');
+        // puedes emitir un state local si hace falta
+      }
+      final cur = socketBloc.state;
+      if (cur is SocketDriverPositionsUpdated) {
+        add(DriversSnapshotReceived(Map.from(cur.drivers)));
       }
     });
+
+    // crucial: cuando arrancas la escucha, chequear el estado actual del socketBloc
+    final current = socketBloc.state;
+    if (current is SocketDriverPositionsUpdated) {
+      // hay un snapshot ya disponible -> úsalo ahora mismo
+      add(DriversSnapshotReceived(Map.from(current.drivers)));
+    }
+  }
+
+  void _ensureSocketConnectedIfNeeded() {
+    try {
+      final currentSocketState = socketBloc.state;
+      if (currentSocketState is! SocketConnected) {
+        debugPrint(
+          'ClientMapSeekerBloc: requesting ConnectSocket from socketBloc',
+        );
+        socketBloc.add(ConnectSocket());
+      } else {
+        debugPrint('ClientMapSeekerBloc: socket already connected');
+        // opcional: si ya está conectado, forzamos un _SocketStatusChanged para sincronizar el UI state
+        add(const _SocketStatusChanged(true));
+      }
+    } catch (e) {
+      debugPrint(
+        'ClientMapSeekerBloc: error in _ensureSocketConnectedIfNeeded -> $e',
+      );
+    }
+  }
+
+  // handler que actualiza estado interno del ClientMapSeeker
+  Future<void> _onSocketStatusChanged(
+    _SocketStatusChanged event,
+    Emitter<ClientMapSeekerState> emit,
+  ) async {
+    final current = state is ClientMapSeekerSuccess
+        ? state as ClientMapSeekerSuccess
+        : const ClientMapSeekerSuccess();
+    debugPrint(
+      'ClientMapSeekerBloc: socket status changed -> ${event.isConnected}',
+    );
+    emit(current.copyWith(isSocketConnected: event.isConnected));
+
+    if (event.isConnected) {
+      try {
+        // pequeña espera para dar tiempo a que el socket re-attach de listeners
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+
+        // Pedimos al SocketBloc que nos vuelva a enviar el snapshot inicial si procede.
+        // Reutiliza el event que ya uses en SocketBloc para solicitar snapshot.
+        // En tus logs sale "SocketBloc: requesting initial drivers snapshot", así que llamamos al event que haga eso.
+        socketBloc.add(
+          RequestInitialDrivers(),
+        ); // <-- usa el event real de tu SocketBloc
+
+        // También forzamos un clear + re-request por si la UI quedó con markers vacíos:
+        // (esto hace que la UI quede preparada para recibir el nuevo snapshot)
+        add(const ClearDriverMarkers());
+      } catch (e) {
+        debugPrint(
+          'ClientMapSeekerBloc: error when handling socket connected -> $e',
+        );
+      }
+    } else {
+      // opcional: cuando desconecta, limpiamos markers rápido (ya lo haces en roles)
+      // add(const ClearDriverMarkers());
+    }
   }
 
   @override

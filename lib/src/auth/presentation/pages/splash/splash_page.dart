@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -62,18 +64,54 @@ class _SplashPageState extends State<SplashPage> {
     final roles = state.authResponse.user.roles;
     final socketBloc = context.read<SocketBloc>();
     debugPrint('roles: $roles');
-    //Clean markers and reconnect
+
+    // Limpia markers (si aplica)
     try {
       context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
     } catch (_) {}
-    debugPrint('sockect discconnect');
-    // Connects on background
-    socketBloc.add(DisconnectSocket());
 
-    debugPrint('sockect connect');
+    // No forces disconnect salvo que realmente lo necesites:
+    // socketBloc.add(DisconnectSocket());
+
+    // Intenta conectar (no bloqueante)
     socketBloc.add(ConnectSocket());
 
-    debugPrint('redirect user ');
+    // Espera un momento a que el socket pase a SocketConnected
+    final connected = await _waitForSocketConnected(socketBloc);
+    debugPrint('Splash page: socket connected? $connected');
+
+    // Redirige (si no está conectado, la pantalla destino deberá pedir RequestInitialDrivers)
     RoleRouter.redirectUser(context, roles);
+  }
+
+  // helper en el mismo archivo SplashPage (o util)
+  Future<bool> _waitForSocketConnected(
+    SocketBloc socketBloc, {
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
+    // si ya está conectado, return true
+    if (socketBloc.state is SocketConnected) return true;
+
+    final completer = Completer<bool>();
+    StreamSubscription? sub;
+    sub = socketBloc.stream.listen((state) {
+      if (state is SocketConnected) {
+        if (!completer.isCompleted) completer.complete(true);
+        sub?.cancel();
+      } else if (state is SocketError) {
+        // no cancelamos aquí: un error no implica que no vaya a reconectar,
+        // solo lo ignoramos y seguimos esperando hasta timeout
+      }
+    });
+
+    // timeout fallback
+    await Future.delayed(timeout).then((_) {
+      if (!completer.isCompleted) {
+        completer.complete(false);
+        sub?.cancel();
+      }
+    });
+
+    return completer.future;
   }
 }

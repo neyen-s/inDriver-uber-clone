@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_role_entity.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
+import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/delete_driver_position_usecase.dart';
@@ -40,19 +41,24 @@ class _RolesItemState extends State<RolesItem> {
 
     return GestureDetector(
       onTap: () async {
+        LoadingService.show(context, message: 'Loading User...');
+        // CAPTURAR referencias ANTES de cualquier await
         final socketBloc = context.read<SocketBloc>();
         final rolesBloc = context.read<RolesBloc>();
+        final clientMapSeekerBloc = context.read<ClientMapSeekerBloc>();
         final authUseCases = sl<AuthUseCases>();
+        final deleteUsecase = sl<DeleteDriverPositionUsecase>();
+
+        // Obtener sesión
         final sessionRes = await authUseCases.getUserSessionUseCase();
         final session = sessionRes.fold((f) => null, (s) => s);
 
         if (session?.user.id != null) {
           final idDriver = session!.user.id;
 
+          // Borrar backend driver position (esperar resultado)
           try {
-            final deleteUsecase = sl<DeleteDriverPositionUsecase>();
             final result = await deleteUsecase(idDriver: idDriver);
-
             result.fold(
               (failure) => debugPrint('Delete failed: ${failure.message}'),
               (msg) => debugPrint('Delete success: $msg'),
@@ -61,26 +67,43 @@ class _RolesItemState extends State<RolesItem> {
             debugPrint('Error deleting driver position: $e');
           }
 
-          //TODO: NO NEED TO DISCONNECT THE USER, JUST DELETE THE DRIVER MARKERS/DRIVER
+          // Pedimos desconexión si está conectado; al desconectar se limpian subs internamente
           socketBloc.add(DisconnectSocket());
 
-          // Wait for SocketDisconnected or SocketError
+          // esperar a que el bloc emita SocketDisconnected o SocketError (timeout corto)
           try {
             await socketBloc.stream
                 .firstWhere((s) => s is SocketDisconnected || s is SocketError)
-                .timeout(const Duration(seconds: 2));
+                .timeout(const Duration(seconds: 3));
           } catch (_) {
             debugPrint(
               'RolesItem: timeout waiting for SocketDisconnected (continuing)',
             );
           }
-          //Clean markers and reconnect
-          context.read<ClientMapSeekerBloc>().add(const ClearDriverMarkers());
+          //TODO DELETE THIS LINE
+          await Future.delayed(const Duration(milliseconds: 180));
 
+          // Limpiar markers localmente (usa la referencia capturada)
+          clientMapSeekerBloc.add(const ClearDriverMarkers());
+
+          // Reconectar y ESPERAR a que emita SocketConnected (o SocketError)
           socketBloc.add(ConnectSocket());
+          try {
+            await socketBloc.stream
+                .firstWhere((s) => s is SocketConnected || s is SocketError)
+                .timeout(const Duration(seconds: 3));
+          } catch (_) {
+            debugPrint(
+              'RolesItem: timeout waiting for SocketConnected (continuing)',
+            );
+          }
         }
-        //Role selection and navigation
+
+        // Selección de rol y navegación (usar rolesBloc referencia capturada)
         rolesBloc.add(SelectRole(widget.role));
+        LoadingService.hide(context);
+
+        // Navegación: aquí sí usamos context porque estamos a punto de salir
         await Navigator.pushReplacementNamed(context, widget.role.route);
       },
       child: Column(

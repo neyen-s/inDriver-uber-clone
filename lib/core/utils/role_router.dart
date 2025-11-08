@@ -14,7 +14,7 @@ class RoleRouter {
       Navigator.pushReplacementNamed(context, ClientHomePage.routeName);
     } else {
       debugPrint(
-        '---ERRO WHILE REDIRECTING USER, REDIRECTING TO SIGN IN PAGE---',
+        '---ERROR WHILE REDIRECTING USER, REDIRECTING TO SIGN IN PAGE---',
       );
       Navigator.pushReplacementNamed(context, SignInPage.routeName);
     }

@@ -121,3 +121,5 @@ class SendDriverOfferRequested extends SocketEvent {
   @override
   List<Object?> get props => [idClientRequest, idDriver, fare, time, distance];
 }
+
+class RequestInitialDrivers extends SocketEvent {}

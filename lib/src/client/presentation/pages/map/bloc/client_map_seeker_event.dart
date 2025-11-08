@@ -117,3 +117,11 @@ class CreateClientRequest extends ClientMapSeekerEvent {
   @override
   List<Object?> get props => [fareOffered];
 }
+
+final class _SocketStatusChanged extends ClientMapSeekerEvent {
+  const _SocketStatusChanged(this.isConnected);
+  final bool isConnected;
+
+  @override
+  List<Object?> get props => [isConnected];
+}

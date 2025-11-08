@@ -23,6 +23,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     on<SendDriverPositionRequested>(_onSendDriverPositionRequested);
     on<SocketDriverRemovalTimeout>(_onDriverRemovalTimeout);
 
+    on<RequestInitialDrivers>(_onRequestInitialDrivers);
+
     //Client driver offers
     on<ListenClientRequestChannel>(_onListenClientRequestChannel);
     on<StopListeningClientRequestChannel>(_onStopListeningClientRequestChannel);
@@ -42,6 +44,14 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
   bool _isConnecting = false;
   bool _isConnected = false;
 
+  // evita adjuntar múltiples listeners para initial_drivers
+  bool _initialDriversAttached = false;
+
+  // retry control para initial_drivers
+  int _initialDriversAttempts = 0;
+  final int _initialDriversMaxAttempts = 4;
+  Timer? _initialDriversRetryTimer;
+
   Future<void> _onConnectSocket(
     ConnectSocket event,
     Emitter<SocketState> emit,
@@ -56,18 +66,19 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     try {
       debugPrint('SocketBloc: trying to connect (awaiting repo)...');
 
-      //Creates the socket and starts connecting, but does NOT wait for
-      // connection. This allows registering listeners immediately.
+      // 1) start the connect future
       final connectFuture = _socketUseCases.connectSocketUseCase();
 
-      //Listeners
+      // 2) wait for the connection to finish BEFORE attaching listeners
+      await connectFuture;
+
+      // 3) Now attach listeners (no race)
       unawaited(_handleInitialDrivers());
       unawaited(_listenDriverPositions());
       unawaited(_listenNewClientRequests());
 
-      // Now we wait for the conecction to finish
-      await connectFuture;
-      try {
+      // request initial snapshot (optional, keep as you had)
+      /*       try {
         await _socketUseCases.sendSocketMessageUseCase(
           'request_initial_drivers',
           {},
@@ -75,7 +86,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
         debugPrint('SocketBloc: requested initial drivers snapshot');
       } catch (e) {
         debugPrint('SocketBloc: error requesting initial drivers -> $e');
-      }
+      } */
+
       emit(SocketConnected());
       _isConnected = true;
     } catch (e) {
@@ -95,6 +107,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
         await sub.cancel();
       }
       _socketSubscriptions.clear();
+      _initialDriversAttached = false; // permite re-attach en el futuro
       await _socketUseCases.disconnectSocketUseCase();
       _drivers.clear();
       _isConnected = false;
@@ -105,6 +118,11 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
   }
 
   Future<void> _handleInitialDrivers() async {
+    if (_initialDriversAttached) {
+      debugPrint('SocketBloc: initial_drivers already attached -> skipping');
+      return;
+    }
+
     debugPrint(' SocketBloc: requesting initial drivers snapshot');
     final res = await _socketUseCases.onSocketMessageUseCase('initial_drivers');
     res.fold(
@@ -130,7 +148,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
           onError: (Object e, StackTrace st) =>
               debugPrint('initial_drivers stream error: $e'),
         );
+        debugPrint('attached initial_drivers listener at ${DateTime.now()}');
         _socketSubscriptions.add(sub);
+        _initialDriversAttached = true; // marca como adjuntado
       },
     );
   }
@@ -169,7 +189,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
                 }
 
                 debugPrint(
-                  '--- new_driver_position: id=$driverId lat=$lat lng=$lng'
+                  '_listenDriverPositions: --- new_driver_position: '
+                  ' id=$driverId lat=$lat lng=$lng'
                   ' emitting now SocketDriverPositionReceived',
                 );
                 add(
@@ -193,7 +214,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
             debugPrint('Stream error on new_driver_position: $e\n$st');
           },
         );
-
+        debugPrint(
+          'attached new_driver_position listener at ${DateTime.now()}',
+        );
         _socketSubscriptions.add(sub);
       },
     );
@@ -307,14 +330,71 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       ' keys=${event.drivers.keys.toList()}',
     );
 
+    // Si llega snapshot vacío y ya tenemos drivers cacheados, IGNORAR (no borrar)
+    if (event.drivers.isEmpty && _drivers.isNotEmpty) {
+      debugPrint(
+        'SocketBloc: Ignored empty initial snapshot because cached drivers exist '
+        '(cachedCount=${_drivers.length})',
+      );
+      return;
+    }
+
+    // Si llega snapshot vacío y no teníamos nada: intentos retriable
+    if (event.drivers.isEmpty && _drivers.isEmpty) {
+      // intenta pedir snapshot otra vez si aún no hemos agotado reintentos
+      _ensureInitialDriversRetry();
+      return;
+    }
+
+    // Si llegamos aquí, aceptamos el snapshot (vacio o con datos) y actualizamos cache
     _drivers
       ..clear()
       ..addAll(event.drivers);
+
     debugPrint(
       '-- _onDriversSnapshotReceived : SocketBloc EMIT drivers count:'
       ' ${_drivers.length}, keys: ${_drivers.keys.toList()}',
     );
     emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
+  }
+
+  void _ensureInitialDriversRetry() {
+    // ya hay un retry programado
+    if (_initialDriversRetryTimer != null &&
+        _initialDriversRetryTimer!.isActive) {
+      return;
+    }
+
+    if (_initialDriversAttempts >= _initialDriversMaxAttempts) {
+      debugPrint(
+        '_ensureInitialDriversRetry: exhausted attempts, will emit empty snapshot',
+      );
+      // si queremos emitir vacío tras agotar intentos (opcional), lo haríamos aquí;
+      // por ahora preferimos NO emitir vacío y esperar actualizaciones 'new_driver_position'
+      _initialDriversAttempts = 0;
+      return;
+    }
+
+    _initialDriversAttempts++;
+    final delayMs =
+        300 *
+        _initialDriversAttempts; // backoff pequeño: 300ms, 600ms, 900ms...
+    debugPrint(
+      '_ensureInitialDriversRetry: scheduling attempt $_initialDriversAttempts in ${delayMs}ms',
+    );
+    _initialDriversRetryTimer = Timer(Duration(milliseconds: delayMs), () async {
+      try {
+        await _socketUseCases.sendSocketMessageUseCase(
+          'request_initial_drivers',
+          {},
+        );
+        debugPrint(
+          'Request_initial_drivers (retry) attempt=$_initialDriversAttempts sent',
+        );
+      } catch (e) {
+        debugPrint('Error re-requesting initial drivers: $e');
+      }
+    });
   }
 
   void _onDriverPositionReceived(
@@ -523,6 +603,40 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     }
   }
 
+  Future<void> _onRequestInitialDrivers(
+    RequestInitialDrivers event,
+    Emitter<SocketState> emit,
+  ) async {
+    // If we already have drivers, emit them immediately (fast path)
+    if (_drivers.isNotEmpty) {
+      debugPrint('SocketBloc: returning cached initial drivers snapshot');
+      emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
+      // still try to request fresh snapshot from server
+      try {
+        await _socketUseCases.sendSocketMessageUseCase(
+          'request_initial_drivers',
+          {},
+        );
+        debugPrint('SocketBloc: requested initial drivers snapshot (refresh)');
+      } catch (e) {
+        debugPrint('SocketBloc: error requesting initial drivers -> $e');
+      }
+      return;
+    }
+
+    // otherwise attach / request as usual
+    await _handleInitialDrivers();
+    try {
+      await _socketUseCases.sendSocketMessageUseCase(
+        'request_initial_drivers',
+        {},
+      );
+      debugPrint('SocketBloc: requested initial drivers snapshot');
+    } catch (e) {
+      debugPrint('SocketBloc: error requesting initial drivers -> $e');
+    }
+  }
+
   /// ------ UTILS ------
 
   static double? _parseToDouble(dynamic value) {
@@ -546,6 +660,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     for (final sub in _socketSubscriptions) {
       await sub.cancel();
     }
+    _initialDriversAttached = false;
     _socketSubscriptions.clear();
     return super.close();
   }
