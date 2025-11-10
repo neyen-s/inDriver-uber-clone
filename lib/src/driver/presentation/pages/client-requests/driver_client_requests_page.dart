@@ -57,7 +57,12 @@ class _ClientRequestsPageState extends State<DriverClientRequestsPage> {
 
                   if (!state.hasError) {
                     if (requestList == null || requestList.isEmpty) {
-                      return const Center(child: Text('No requests available'));
+                      return const Center(
+                        child: DynamicLottieAndMsg(
+                          lottiePath: 'assets/lottie/map_search.json',
+                          message: 'No requests available yet..',
+                        ),
+                      );
                     } else {
                       return ListView.builder(
                         itemCount: requestList.length,

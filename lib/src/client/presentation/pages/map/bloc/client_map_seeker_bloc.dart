@@ -58,7 +58,7 @@ class ClientMapSeekerBloc
 
     // Socket Subscriptions events
     _listenToSocket();
-    // Intentamos asegurar la conexión de socket desde el BLoC (idempotente)
+    // Intentamos asegurar la conexión de socket desde el BLoC
     // No await aquí: simplemente pedimos que el socket se conecte si no lo está.
     _ensureSocketConnectedIfNeeded();
   }

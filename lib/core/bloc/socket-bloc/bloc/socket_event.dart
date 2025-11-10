@@ -123,3 +123,30 @@ class SendDriverOfferRequested extends SocketEvent {
 }
 
 class RequestInitialDrivers extends SocketEvent {}
+
+final class SocketRequestRemovedReceived extends SocketEvent {
+  const SocketRequestRemovedReceived({required this.idClientRequest});
+  final String idClientRequest;
+
+  @override
+  List<Object?> get props => [idClientRequest];
+}
+
+class SendDriverAssignedRequested extends SocketEvent {
+  const SendDriverAssignedRequested({
+    required this.idDriver,
+    required this.idClientRequest,
+  });
+  final int idDriver;
+  final String idClientRequest;
+
+  @override
+  List<Object?> get props => [idDriver, idClientRequest];
+}
+
+class ListenDriverAssignedChannel extends SocketEvent {
+  const ListenDriverAssignedChannel(this.idDriver);
+  final String idDriver;
+  @override
+  List<Object?> get props => [idDriver];
+}

@@ -26,6 +26,7 @@ class DriverClientRequestsBloc
   ) : super(const DriverClientRequestsState()) {
     on<GetNearbyTripRequestEvent>(_onGetNearbyTripRequestEvent);
     on<CreateDriverTripRequestEvent>(_onCreateDriverTripRequestEvent);
+    on<RemoveClientRequestLocally>(_onRemoveClientRequestLocally);
 
     // Start listening to socket events from the provided SocketBloc
     listenToSocket();
@@ -46,17 +47,47 @@ class DriverClientRequestsBloc
   }
 
   void listenToSocket() {
-    //subscribe to socketBloc stream and refresh when
-    // a new client request arrives
-    _socketBlocSub = socketBloc.stream.listen((socketState) {
-      if (socketState is SocketClientRequestCreated) {
+    _socketBlocSub = socketBloc.stream.listen(
+      (socketState) {
+        debugPrint('DriverClientRequestsBloc: socketState -> $socketState');
+
+        if (socketState is SocketClientRequestCreated) {
+          final id = socketState.idClientRequest;
+          debugPrint(
+            'DriverClientRequestsBloc: SOCKET created_client_request $id — trying local removal',
+          );
+          final currentList = state.clientRequestResponseEntity;
+          if (currentList != null && currentList.isNotEmpty) {
+            final found = currentList.any((r) => (r.id.toString()) == id);
+            if (found) {
+              add(RemoveClientRequestLocally(idClientRequest: id));
+              return;
+            }
+          }
+          add(const GetNearbyTripRequestEvent());
+        }
+
+        // NUEVA RAMA: cuando el servidor notifica explícitamente que el request fue removido / asignado
+        if (socketState is SocketRequestRemoved) {
+          final id = socketState.idClientRequest;
+          debugPrint(
+            'DriverClientRequestsBloc: SOCKET request_removed $id — removing locally',
+          );
+          add(RemoveClientRequestLocally(idClientRequest: id));
+        }
+
+        // también podrías soportar SocketDriverOfferArrived aquí si quieres reaccionar
+        if (socketState is SocketDriverOfferArrived) {
+          // opcional: refrescar lista o actualizar un item concreto
+          // add(const GetNearbyTripRequestEvent());
+        }
+      },
+      onError: (e, st) {
         debugPrint(
-          'DriverClientRequestsBloc: detected new client'
-          ' request via SocketBloc -> refreshing list',
+          'DriverClientRequestsBloc: error in socket subscription: $e\n$st',
         );
-        add(const GetNearbyTripRequestEvent());
-      }
-    });
+      },
+    );
   }
 
   Future<void> _onGetNearbyTripRequestEvent(
@@ -80,6 +111,7 @@ class DriverClientRequestsBloc
       if (auth == null) return;
       driverId = auth.user.id;
       emit(state.copyWith(idDriver: driverId));
+      socketBloc.add(ListenDriverAssignedChannel(driverId.toString()));
     }
 
     //gets driver position
@@ -144,5 +176,31 @@ class DriverClientRequestsBloc
         }
       },
     );
+  }
+
+  Future<void> _onRemoveClientRequestLocally(
+    RemoveClientRequestLocally event,
+    Emitter<DriverClientRequestsState> emit,
+  ) async {
+    try {
+      final currentList = state.clientRequestResponseEntity ?? [];
+      final filtered = currentList
+          .where((r) => (r.id.toString()) != event.idClientRequest)
+          .toList();
+
+      // Sólo emitir si realmente hubo cambio (evitamos re-renders inútiles)
+      if (filtered.length != currentList.length) {
+        emit(state.copyWith(clientRequestResponseEntity: filtered));
+        debugPrint(
+          'DriverClientRequestsBloc: removed request ${event.idClientRequest} locally',
+        );
+      } else {
+        debugPrint(
+          'DriverClientRequestsBloc: request ${event.idClientRequest} not found locally',
+        );
+      }
+    } catch (e, st) {
+      debugPrint('Error in _onRemoveClientRequestLocally: $e\n$st');
+    }
   }
 }

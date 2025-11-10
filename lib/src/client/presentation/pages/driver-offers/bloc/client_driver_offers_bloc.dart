@@ -18,6 +18,7 @@ class ClientDriverOffersBloc
       _onGetDriverTripOffersByClientRequest,
     );
     on<AsignDriver>(_onAsignDriver);
+    on<EmitNewClientRequestSocketIO>(_onEmitNewClientRequestSocketIO);
 
     _socketSub = socketBloc.stream.listen(_handleSocketState);
   }
@@ -93,6 +94,9 @@ class ClientDriverOffersBloc
       },
       (request) {
         debugPrint('bloc success request ---> $request');
+        add(
+          EmitNewClientRequestSocketIO(event.idClientRequest, event.idDriver),
+        );
         emit(
           state.copyWith(
             driverAssigned: request,
@@ -102,5 +106,24 @@ class ClientDriverOffersBloc
         );
       },
     );
+  }
+
+  void _onEmitNewClientRequestSocketIO(
+    EmitNewClientRequestSocketIO event,
+    Emitter<ClientDriverOffersState> emit,
+  ) {
+    try {
+      socketBloc.add(
+        SendDriverAssignedRequested(
+          idDriver: event.idDriver,
+          idClientRequest: event.idClientRequest.toString(),
+        ),
+      );
+      debugPrint(
+        '*******************************************ClientDriverOffersBloc: notified socket about driver assigned',
+      );
+    } catch (e) {
+      debugPrint('ClientDriverOffersBloc: error notifying socket: $e');
+    }
   }
 }

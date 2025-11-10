@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
 
@@ -25,6 +26,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
 
     // request / attach initial drivers
     on<RequestInitialDrivers>(_onRequestInitialDrivers);
+    on<SocketRequestRemovedReceived>(_onSocketRequestRemovedReceived);
+    on<SendDriverAssignedRequested>(_onSendDriverAssignedRequested);
+    on<ListenDriverAssignedChannel>(_onListenDriverAssignedChannel);
 
     // client-driver offers
     on<ListenClientRequestChannel>(_onListenClientRequestChannel);
@@ -76,6 +80,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       unawaited(_attachInitialDriversListener());
       unawaited(_attachNewDriverPositionListener());
       unawaited(_attachCreatedClientRequestListener());
+      unawaited(_attachRequestRemovedListener());
 
       emit(SocketConnected());
       _isConnected = true;
@@ -225,6 +230,30 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     );
   }
 
+  Future<void> _attachRequestRemovedListener() async {
+    final res = await _socketUseCases.onSocketMessageUseCase('request_removed');
+    res.fold(
+      (failure) => addError(
+        Exception('Socket request_removed error: ${failure.message}'),
+      ),
+      (stream) {
+        final sub = stream.listen(
+          (data) {
+            if (data is Map) {
+              final id = (data['id_client_request'] ?? data['id'])?.toString();
+              if (id != null) {
+                add(SocketRequestRemovedReceived(idClientRequest: id));
+              }
+            }
+          },
+          onError: (e, st) =>
+              addError(Exception('Stream error on request_removed: $e')),
+        );
+        _socketSubscriptions.add(sub);
+      },
+    );
+  }
+
   // -------------------- EVENTS HANDLERS --------------------
 
   void _onDriversSnapshotReceived(
@@ -298,6 +327,10 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     SocketClientRequestReceived event,
     Emitter<SocketState> emit,
   ) async {
+    debugPrint(
+      'SocketBloc: created_client_request received -> ${event.idClientRequest}',
+    );
+
     emit(SocketClientRequestCreated(event.idClientRequest));
   }
 
@@ -421,6 +454,70 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
         {},
       );
     } catch (_) {}
+  }
+
+  Future<void> _onSocketRequestRemovedReceived(
+    //TODO REVISAR Y BORRAR
+    SocketRequestRemovedReceived event,
+    Emitter<SocketState> emit,
+  ) async {
+    emit(SocketRequestRemoved(event.idClientRequest));
+  }
+
+  Future<void> _onSendDriverAssignedRequested(
+    SendDriverAssignedRequested event,
+    Emitter<SocketState> emit,
+  ) async {
+    try {
+      final payload = {
+        'id_driver': event.idDriver,
+        'id_client_request': event.idClientRequest,
+      };
+      await _socketUseCases.sendSocketMessageUseCase(
+        'new_driver_assigned',
+        payload,
+      );
+      debugPrint('SocketBloc: sent new_driver_assigned -> $payload');
+    } catch (e) {
+      emit(SocketError('Error sending new_driver_assigned: $e'));
+    }
+  }
+
+  Future<void> _onListenDriverAssignedChannel(
+    ListenDriverAssignedChannel event,
+    Emitter<SocketState> emit,
+  ) async {
+    final channel = 'driver_assigned/${event.idDriver}';
+    if (_channelSubscriptions.containsKey(channel)) return;
+
+    final res = await _socketUseCases.onSocketMessageUseCase(channel);
+    res.fold(
+      (failure) => addError(
+        Exception('Socket listen error ($channel): ${failure.message}'),
+      ),
+      (stream) {
+        final sub = stream.listen(
+          (data) {
+            if (data is Map) {
+              final idClientRequest = (data['id_client_request'] ?? data['id'])
+                  ?.toString();
+              if (idClientRequest != null) {
+                // Reuse existing event for removed requests
+                add(
+                  SocketRequestRemovedReceived(
+                    idClientRequest: idClientRequest,
+                  ),
+                );
+              }
+            }
+          },
+          onError: (e, st) {
+            addError(Exception('Stream error on $channel: $e'));
+          },
+        );
+        _channelSubscriptions[channel] = sub;
+      },
+    );
   }
 
   // -------------------- HELPERS --------------------

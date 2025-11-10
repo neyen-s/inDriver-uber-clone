@@ -31,3 +31,11 @@ class FareOfferedChangeEvent extends DriverClientRequestsEvent {
   @override
   List<Object> get props => [fareOffered];
 }
+
+class RemoveClientRequestLocally extends DriverClientRequestsEvent {
+  const RemoveClientRequestLocally({required this.idClientRequest});
+  final String idClientRequest;
+
+  @override
+  List<Object> get props => [idClientRequest];
+}
