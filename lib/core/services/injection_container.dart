@@ -176,7 +176,7 @@ Future<void> _initAuth() async {
       () => SaveUserSessionUseCase(authRepository: sl()),
     )
     ..registerLazySingleton<SignOutUseCase>(
-      () => SignOutUseCase(authRepository: sl()),
+      () => SignOutUseCase(authRepository: sl(), socketUseCases: sl()),
     )
     ..registerLazySingleton<AuthUseCases>(
       () => AuthUseCases(
