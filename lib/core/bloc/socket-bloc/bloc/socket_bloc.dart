@@ -26,7 +26,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
 
     // request / attach initial drivers
     on<RequestInitialDrivers>(_onRequestInitialDrivers);
-    on<SocketRequestRemovedReceived>(_onSocketRequestRemovedReceived);
+    on<SocketRequestRemovedReceivedEvent>(_onSocketRequestRemovedReceived);
     on<SendDriverAssignedRequested>(_onSendDriverAssignedRequested);
     on<ListenDriverAssignedChannel>(_onListenDriverAssignedChannel);
 
@@ -80,7 +80,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       unawaited(_attachInitialDriversListener());
       unawaited(_attachNewDriverPositionListener());
       unawaited(_attachCreatedClientRequestListener());
-      unawaited(_attachRequestRemovedListener());
 
       emit(SocketConnected());
       _isConnected = true;
@@ -117,6 +116,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       await _socketUseCases.disconnectSocketUseCase();
       _drivers.clear();
       _isConnected = false;
+      _initialDriversRetryTimer?.cancel();
       emit(SocketDisconnected());
     } catch (e) {
       emit(SocketError('Error disconnecting socket: $e'));
@@ -224,30 +224,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
           },
           onError: (e, st) =>
               addError(Exception('Stream error on created_client_request: $e')),
-        );
-        _socketSubscriptions.add(sub);
-      },
-    );
-  }
-
-  Future<void> _attachRequestRemovedListener() async {
-    final res = await _socketUseCases.onSocketMessageUseCase('request_removed');
-    res.fold(
-      (failure) => addError(
-        Exception('Socket request_removed error: ${failure.message}'),
-      ),
-      (stream) {
-        final sub = stream.listen(
-          (data) {
-            if (data is Map) {
-              final id = (data['id_client_request'] ?? data['id'])?.toString();
-              if (id != null) {
-                add(SocketRequestRemovedReceived(idClientRequest: id));
-              }
-            }
-          },
-          onError: (e, st) =>
-              addError(Exception('Stream error on request_removed: $e')),
         );
         _socketSubscriptions.add(sub);
       },
@@ -457,11 +433,10 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
   }
 
   Future<void> _onSocketRequestRemovedReceived(
-    //TODO REVISAR Y BORRAR
-    SocketRequestRemovedReceived event,
+    SocketRequestRemovedReceivedEvent event,
     Emitter<SocketState> emit,
   ) async {
-    emit(SocketRequestRemoved(event.idClientRequest));
+    emit(SocketRequestRemovedState(event.idClientRequest));
   }
 
   Future<void> _onSendDriverAssignedRequested(
@@ -504,7 +479,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
               if (idClientRequest != null) {
                 // Reuse existing event for removed requests
                 add(
-                  SocketRequestRemovedReceived(
+                  SocketRequestRemovedReceivedEvent(
                     idClientRequest: idClientRequest,
                   ),
                 );
@@ -617,6 +592,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     }
     _channelSubscriptions.clear();
     _initialDriversAttached = false;
+    _initialDriversRetryTimer?.cancel();
     return super.close();
   }
 }

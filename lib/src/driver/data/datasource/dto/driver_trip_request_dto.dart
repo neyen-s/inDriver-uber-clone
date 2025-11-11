@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_car_info_dto.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 
 class DriverTripRequestDTO extends DriverTripRequestEntity {
@@ -15,6 +16,7 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
     super.createdAt,
     super.updatedAt,
     UserDTO? super.driver,
+    DriverCarInfoDto? super.carInfo,
   });
 
   factory DriverTripRequestDTO.fromEntity(DriverTripRequestEntity entity) {
@@ -102,6 +104,28 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
       driverDto = null;
     }
 
+    DriverCarInfoDto? driverCarInfoDto;
+    try {
+      final rawCarInfo = json['car'];
+      debugPrint(
+        'Driver car info field runtimeType:'
+        ' ${rawCarInfo?.runtimeType} value: $rawCarInfo',
+      );
+
+      if (rawCarInfo != null && rawCarInfo is Map) {
+        final carInfoMap = Map<String, dynamic>.from(rawCarInfo);
+        driverCarInfoDto = DriverCarInfoDto.fromJson(carInfoMap);
+      } else {
+        driverCarInfoDto = null;
+      }
+    } catch (e, st) {
+      debugPrint(
+        'Warning parsing Driver car info'
+        '  field: $e — value: ${json['car']} \n$st',
+      );
+      driverCarInfoDto = null;
+    }
+
     return DriverTripRequestDTO(
       id: id,
       idClientRequest: idClientRequest,
@@ -112,6 +136,7 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
       createdAt: created,
       updatedAt: updated,
       driver: driverDto,
+      carInfo: driverCarInfoDto,
     );
   }
 
@@ -134,6 +159,8 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
       'fare_offered': fareOffered,
       'time': time,
       'distance': distance,
+      'driver': driver,
+      'car': carInfo,
     };
     return map;
   }

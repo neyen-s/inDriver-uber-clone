@@ -51,8 +51,8 @@ class SocketDriverOfferArrived extends SocketState {
   List<Object?> get props => [idClientRequest, payload];
 }
 
-class SocketRequestRemoved extends SocketState {
-  const SocketRequestRemoved(this.idClientRequest);
+class SocketRequestRemovedState extends SocketState {
+  const SocketRequestRemovedState(this.idClientRequest);
   final String idClientRequest;
 
   @override

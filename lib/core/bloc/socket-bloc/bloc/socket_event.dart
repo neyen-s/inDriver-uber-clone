@@ -124,8 +124,8 @@ class SendDriverOfferRequested extends SocketEvent {
 
 class RequestInitialDrivers extends SocketEvent {}
 
-final class SocketRequestRemovedReceived extends SocketEvent {
-  const SocketRequestRemovedReceived({required this.idClientRequest});
+final class SocketRequestRemovedReceivedEvent extends SocketEvent {
+  const SocketRequestRemovedReceivedEvent({required this.idClientRequest});
   final String idClientRequest;
 
   @override

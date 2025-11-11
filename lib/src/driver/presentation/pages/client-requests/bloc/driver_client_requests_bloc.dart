@@ -68,7 +68,7 @@ class DriverClientRequestsBloc
         }
 
         // NUEVA RAMA: cuando el servidor notifica explícitamente que el request fue removido / asignado
-        if (socketState is SocketRequestRemoved) {
+        if (socketState is SocketRequestRemovedState) {
           final id = socketState.idClientRequest;
           debugPrint(
             'DriverClientRequestsBloc: SOCKET request_removed $id — removing locally',
@@ -111,7 +111,9 @@ class DriverClientRequestsBloc
       if (auth == null) return;
       driverId = auth.user.id;
       emit(state.copyWith(idDriver: driverId));
-      socketBloc.add(ListenDriverAssignedChannel(driverId.toString()));
+      socketBloc.add(
+        ListenDriverAssignedChannel(driverId.toString()),
+      ); // esta bien aca??????
     }
 
     //gets driver position

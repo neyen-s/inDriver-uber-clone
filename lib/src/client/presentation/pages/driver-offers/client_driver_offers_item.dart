@@ -39,7 +39,10 @@ class ClientDriverOffersItem extends StatelessWidget {
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [Text('"5.0 **"'), Text('"Mazda 3, blue **"')],
+              children: [
+                Text('"5.0 **"'),
+                Text(driverTripRequest?.carInfo?.brand ?? ''),
+              ],
             ),
             trailing: Column(
               children: [
