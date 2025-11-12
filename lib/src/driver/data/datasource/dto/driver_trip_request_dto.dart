@@ -16,7 +16,7 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
     super.createdAt,
     super.updatedAt,
     UserDTO? super.driver,
-    DriverCarInfoDto? super.carInfo,
+    DriverCarInfoDTO? super.carInfo,
   });
 
   factory DriverTripRequestDTO.fromEntity(DriverTripRequestEntity entity) {
@@ -49,9 +49,6 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
       if (v is String) return double.tryParse(v) ?? 0.0;
       return 0;
     }
-
-    // Debug: imprime el json que se está parseando (quita en producción)
-    // debugPrint('DriverTripRequestDTO.fromJson json: $json');
 
     final id = tryInt(json['id']);
     final idClientRequest = tryInt(json['id_client_request']);
@@ -104,7 +101,7 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
       driverDto = null;
     }
 
-    DriverCarInfoDto? driverCarInfoDto;
+    DriverCarInfoDTO? driverCarInfoDto;
     try {
       final rawCarInfo = json['car'];
       debugPrint(
@@ -114,7 +111,7 @@ class DriverTripRequestDTO extends DriverTripRequestEntity {
 
       if (rawCarInfo != null && rawCarInfo is Map) {
         final carInfoMap = Map<String, dynamic>.from(rawCarInfo);
-        driverCarInfoDto = DriverCarInfoDto.fromJson(carInfoMap);
+        driverCarInfoDto = DriverCarInfoDTO.fromJson(carInfoMap);
       } else {
         driverCarInfoDto = null;
       }

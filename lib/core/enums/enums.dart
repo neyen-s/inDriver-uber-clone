@@ -1,3 +1,9 @@
-enum GenericHomeScaffoldSection { map, profile, roles, clientRequests }
+enum GenericHomeScaffoldSection {
+  map,
+  profile,
+  driverCarInfo,
+  roles,
+  clientRequests,
+}
 
 enum SelectedField { origin, destination }

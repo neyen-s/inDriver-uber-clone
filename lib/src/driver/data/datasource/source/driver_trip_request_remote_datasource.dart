@@ -9,8 +9,9 @@ abstract class DriverTripRequestDatasource {
   Future<List<DriverTripRequestDTO>> getDriverTripRequests(int idDriver);
 }
 
-class DriverTripRequestDatasourceImpl implements DriverTripRequestDatasource {
-  const DriverTripRequestDatasourceImpl({required this.apiClient});
+class DriverTripRequestRemoteDatasourceImpl
+    implements DriverTripRequestDatasource {
+  const DriverTripRequestRemoteDatasourceImpl({required this.apiClient});
 
   final ApiClient apiClient;
 
@@ -25,7 +26,6 @@ class DriverTripRequestDatasourceImpl implements DriverTripRequestDatasource {
       body: driverTripRequest.toJson(),
     );
     debugPrint('**createDriverTripRequests RESPONSE: $response');
-    // return null;
   }
 
   @override

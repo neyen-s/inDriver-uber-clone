@@ -38,7 +38,4 @@ class ProfileImageChanged extends ProfileUpdateEvent {
 
 final class SubmitProfileChanges extends ProfileUpdateEvent {
   const SubmitProfileChanges();
-
-  @override
-  List<Object?> get props => [];
 }

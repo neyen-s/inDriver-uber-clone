@@ -2,14 +2,14 @@ import 'package:dartz/dartz.dart';
 import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_position_dto.dart';
-import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_datasource.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_position_entity.dart';
 import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_position_repository.dart';
 
 class DriverPositionRepositoryImpl implements DriverPositionRepository {
   const DriverPositionRepositoryImpl({required this.driverPositionDatasource});
 
-  final DriverPositionDatasource driverPositionDatasource;
+  final DriverPositionRemoteDatasource driverPositionDatasource;
 
   @override
   ResultFuture<bool> create({

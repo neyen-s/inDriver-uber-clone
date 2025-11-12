@@ -7,6 +7,7 @@ import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/car-info/driver_car_info_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/driver_client_requests_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/driver_map_page_wrapper.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
@@ -50,6 +51,10 @@ class DriverHomePage extends StatelessWidget {
                   section: GenericHomeScaffoldSection.profile,
                 ),
                 DrawerItem(
+                  label: 'Car information',
+                  section: GenericHomeScaffoldSection.driverCarInfo,
+                ),
+                DrawerItem(
                   label: 'User Roles',
                   section: GenericHomeScaffoldSection.roles,
                 ),
@@ -63,6 +68,8 @@ class DriverHomePage extends StatelessWidget {
                     return const DriverClientRequestsPage();
                   case GenericHomeScaffoldSection.profile:
                     return const ProfileInfoPage();
+                  case GenericHomeScaffoldSection.driverCarInfo:
+                    return const DriverCarInfoPage();
                   case GenericHomeScaffoldSection.roles:
                     return const RolesPage();
                 }

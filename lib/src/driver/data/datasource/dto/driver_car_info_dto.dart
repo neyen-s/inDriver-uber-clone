@@ -1,15 +1,15 @@
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_car_info_entity.dart';
 
-class DriverCarInfoDto extends DriverCarInfoEntity {
-  DriverCarInfoDto({
+class DriverCarInfoDTO extends DriverCarInfoEntity {
+  DriverCarInfoDTO({
     required super.brand,
     required super.color,
     required super.plate,
     super.idDriver,
   });
 
-  factory DriverCarInfoDto.fromEntity(DriverCarInfoEntity entity) {
-    return DriverCarInfoDto(
+  factory DriverCarInfoDTO.fromEntity(DriverCarInfoEntity entity) {
+    return DriverCarInfoDTO(
       idDriver: entity.idDriver,
       brand: entity.brand,
       color: entity.color,
@@ -17,9 +17,11 @@ class DriverCarInfoDto extends DriverCarInfoEntity {
     );
   }
 
-  factory DriverCarInfoDto.fromJson(Map<String, dynamic> json) {
-    return DriverCarInfoDto(
-      //: json['id_driver'] as int,
+  factory DriverCarInfoDTO.fromJson(Map<String, dynamic> json) {
+    return DriverCarInfoDTO(
+      idDriver: json['id_driver'] != null
+          ? (json['id_driver'] as num).toInt()
+          : null,
       brand: json['brand'] as String,
       color: json['color'] as String,
       plate: json['plate'] as String,
@@ -28,7 +30,7 @@ class DriverCarInfoDto extends DriverCarInfoEntity {
 
   Map<String, dynamic> toJson() {
     return {
-      'id_driver': idDriver,
+      if (idDriver != null) 'id_driver': idDriver,
       'brand': brand,
       'color': color,
       'plate': plate,
@@ -37,7 +39,7 @@ class DriverCarInfoDto extends DriverCarInfoEntity {
 
   @override
   String toString() {
-    return 'DriverCarInfoDto(idDriver: $idDriver, brand: $brand,'
-        ' color: $color, plate: $plate)';
+    return 'DriverCarInfoDto(idDriver: $idDriver, brand: $brand, '
+        'color: $color, plate: $plate)';
   }
 }

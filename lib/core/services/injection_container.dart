@@ -47,13 +47,19 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bl
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
-import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_datasource.dart';
-import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_trip_request_data_source.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_car_info_remote_datasource.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_position_remote_datasource.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_trip_request_remote_datasource.dart';
+import 'package:indriver_uber_clone/src/driver/data/repositories/driver_car_info_repository_impl.dart';
 import 'package:indriver_uber_clone/src/driver/data/repositories/driver_position_repository_impl.dart';
 import 'package:indriver_uber_clone/src/driver/data/repositories/driver_trip_request_repository_impl.dart';
+import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_car_info_repository.dart';
 import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_position_repository.dart';
 import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_trip_request_repository.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/client-requests/get_nearby_trip_request_use_case.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-car-info/create_driver_car_info_use_case.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-car-info/driver_car_info_use_cases.dart';
+import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-car-info/get_driver_car_info_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/create_driver_trip_request_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/driver_trip_offers_use_cases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/driver-trip-offers/get_driver_trip_request_use_case.dart';
@@ -62,6 +68,7 @@ import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/driver_position_usecases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/get_driver_position_use_case.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/car-info/bloc/driver_car_info_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
@@ -202,7 +209,30 @@ Future<void> _initClient() async {
 
 // DRIVER
 Future<void> _initDriver() async {
-  sl.registerFactory(() => DriverHomeBloc(sl(), sl()));
+  //data source
+  sl
+    ..registerLazySingleton<DriverCarInfoRemoteDataSource>(
+      () => DriverCarInfoRemoteDatasourceImpl(apiClient: sl()),
+    )
+    //repository
+    ..registerLazySingleton<DriverCarInfoRepository>(
+      () => DriverCarInfoRepositoryImpl(remoteDataSource: sl()),
+    )
+    //usecases
+    ..registerLazySingleton<CreateDriverCarInfoUseCase>(
+      () => CreateDriverCarInfoUseCase(sl()),
+    )
+    ..registerLazySingleton<GetDriverCarInfoUseCase>(
+      () => GetDriverCarInfoUseCase(sl()),
+    )
+    ..registerLazySingleton<DriverCarInfoUseCases>(
+      () => DriverCarInfoUseCases(
+        createDriverCarInfoUseCase: sl(),
+        getDriverCarInfoUseCase: sl(),
+      ),
+    )
+    ..registerFactory(() => DriverCarInfoBloc(sl(), sl()))
+    ..registerFactory(() => DriverHomeBloc(sl(), sl()));
 }
 
 // PROFILE
@@ -235,11 +265,11 @@ Future<void> _initClientMap() async {
 
 Future<void> _initDriverMap() async {
   sl
-    ..registerLazySingleton<DriverPositionDatasource>(
-      () => DriverPositionDatasourceImpl(apiClient: sl()),
+    ..registerLazySingleton<DriverPositionRemoteDatasource>(
+      () => DriverPositionRemoteDatasourceImpl(apiClient: sl()),
     )
     ..registerLazySingleton<DriverTripRequestDatasource>(
-      () => DriverTripRequestDatasourceImpl(apiClient: sl()),
+      () => DriverTripRequestRemoteDatasourceImpl(apiClient: sl()),
     )
     //repository
     ..registerLazySingleton<DriverPositionRepository>(

@@ -12,7 +12,6 @@ environment:
 
 dependencies:
   bloc: ^9.0.0
-  bloc_test: ^10.0.0
   cupertino_icons: ^1.0.8
   dartz: ^0.10.1
   device_preview: ^1.2.0
@@ -32,7 +31,6 @@ dependencies:
   http: ^1.4.0
   image_picker: ^1.1.2
   lottie: ^3.3.1
-  mocktail: ^1.0.4
   shared_preferences: ^2.5.3
   socket_io_client: ^3.1.2
 
@@ -40,9 +38,11 @@ dependencies:
 
 
 dev_dependencies:
+  bloc_test: ^10.0.0
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+  mocktail: ^1.0.4
   very_good_analysis: ^8.0.0
 
 

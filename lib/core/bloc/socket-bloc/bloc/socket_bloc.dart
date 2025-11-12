@@ -236,7 +236,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     SocketDriversSnapshotReceived event,
     Emitter<SocketState> emit,
   ) {
-    // if snapshot empty but we already had cached drivers -> ignore (avoid wiping existing)
+    // if snapshot empty but we already had cached drivers
+    // -> ignore (avoid wiping existing)
     if (event.drivers.isEmpty && _drivers.isNotEmpty) return;
 
     // if snapshot empty and cache empty -> schedule retry
@@ -403,7 +404,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     );
   }
 
-  // -------------------- REQUEST INITIAL DRIVERS (public event) --------------------
+  // -------------------- REQUEST INITIAL DRIVERS (public event) ---------------
 
   Future<void> _onRequestInitialDrivers(
     RequestInitialDrivers event,

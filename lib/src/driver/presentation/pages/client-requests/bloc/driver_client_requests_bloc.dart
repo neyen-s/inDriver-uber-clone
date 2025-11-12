@@ -111,9 +111,7 @@ class DriverClientRequestsBloc
       if (auth == null) return;
       driverId = auth.user.id;
       emit(state.copyWith(idDriver: driverId));
-      socketBloc.add(
-        ListenDriverAssignedChannel(driverId.toString()),
-      ); // esta bien aca??????
+      socketBloc.add(ListenDriverAssignedChannel(driverId.toString()));
     }
 
     //gets driver position

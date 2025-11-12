@@ -80,8 +80,6 @@ class _RolesItemState extends State<RolesItem> {
               'RolesItem: timeout waiting for SocketDisconnected (continuing)',
             );
           }
-          //TODO DELETE THIS LINE
-          await Future.delayed(const Duration(milliseconds: 180));
 
           // Limpiar markers localmente (usa la referencia capturada)
           clientMapSeekerBloc.add(const ClearDriverMarkers());

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_position_dto.dart';
 
-abstract class DriverPositionDatasource {
+abstract class DriverPositionRemoteDatasource {
   Future<bool> create({required DriverPositionDTO driverPosition});
 
   Future<String> delete({required String idDriver});
@@ -10,8 +10,9 @@ abstract class DriverPositionDatasource {
   Future<DriverPositionDTO> getDriverPosition({required String idDriver});
 }
 
-class DriverPositionDatasourceImpl implements DriverPositionDatasource {
-  DriverPositionDatasourceImpl({required this.apiClient});
+class DriverPositionRemoteDatasourceImpl
+    implements DriverPositionRemoteDatasource {
+  DriverPositionRemoteDatasourceImpl({required this.apiClient});
   final ApiClient apiClient;
 
   @override
@@ -26,7 +27,7 @@ class DriverPositionDatasourceImpl implements DriverPositionDatasource {
 
   @override
   Future<String> delete({required String idDriver}) async {
-    print('**DELETE: $idDriver');
+    debugPrint('**DELETE: $idDriver');
     final data = await apiClient.delete(
       path: '/drivers-position/delete/$idDriver',
     );

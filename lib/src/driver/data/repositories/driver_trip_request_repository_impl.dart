@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_trip_request_dto.dart';
-import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_trip_request_data_source.dart';
+import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_trip_request_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 import 'package:indriver_uber_clone/src/driver/domain/repositories/driver_trip_request_repository.dart';
 
