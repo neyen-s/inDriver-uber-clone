@@ -62,18 +62,27 @@ class DriverCarInfoBloc extends Bloc<DriverCarInfoEvent, DriverCarInfoState> {
         color: color.value,
         plate: plate.value,
       );
-      await driverCarInfoUseCases.createDriverCarInfoUseCase(
+      final result = await driverCarInfoUseCases.createDriverCarInfoUseCase(
         CreateDriverCarInfoParams(driverCarInfoEntity: carInfo),
       );
 
-      emit(
-        state.copyWith(
-          isLoading: false,
-          brand: BrandInput.dirty(carInfo.brand),
-          color: ColorInput.dirty(carInfo.color),
-          plate: PlateInput.dirty(carInfo.plate),
-          carInfoUpdated: true,
-        ),
+      result.fold(
+        (failure) {
+          emit(
+            state.copyWith(isLoading: false, errorMessage: failure.toString()),
+          );
+        },
+        (_) {
+          emit(
+            state.copyWith(
+              isLoading: false,
+              brand: BrandInput.dirty(carInfo.brand),
+              color: ColorInput.dirty(carInfo.color),
+              plate: PlateInput.dirty(carInfo.plate),
+              carInfoUpdated: true,
+            ),
+          );
+        },
       );
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));

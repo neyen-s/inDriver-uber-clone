@@ -44,3 +44,7 @@ Full-stack project (Flutter frontend + custom backend). Built to demonstrate exp
 ```bash
 git clone https://github.com/neyen-s/inDriver-uber-clone.git
 cd inDriver-uber-clone
+
+## Platform support
+This project has been fully tested on Android (emulator & physical devices). iOS builds have not been tested locally due to lack of a macOS environment — some iOS-specific adjustments may be required. CI/CD and iOS testing are planned next steps.
+
