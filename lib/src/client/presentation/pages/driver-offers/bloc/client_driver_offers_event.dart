@@ -37,3 +37,12 @@ class EmitNewClientRequestSocketIO extends ClientDriverOffersEvent {
   @override
   List<Object> get props => [idClientRequest, idDriver];
 }
+
+class EmitNewDriverAssignedSocketIO extends ClientDriverOffersEvent {
+  const EmitNewDriverAssignedSocketIO(this.idClientRequest, this.idDriver);
+  final int idClientRequest;
+  final int idDriver;
+
+  @override
+  List<Object> get props => [idClientRequest, idDriver];
+}

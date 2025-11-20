@@ -6,6 +6,7 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/cl
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/client_driver_offers_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map-trip/client_map_trip_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/driver_home_page.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/driver_map_trip_page.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/driver_map_page_wrapper.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/profile_update_page.dart';
@@ -60,11 +61,14 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       return _pageBuilder((_) => const ClientMapTripPage(), settings: settings);
 
     case DriverMapPageWrapper.routeName:
-      debugPrint('RolesPage.routeName');
+      debugPrint('DriverMapPageWrapper.routeName');
       return _pageBuilder(
         (_) => const DriverMapPageWrapper(),
         settings: settings,
       );
+    case DriverMapTripPage.routeName:
+      debugPrint('DriverMapTripPage.routeName');
+      return _pageBuilder((_) => const DriverMapTripPage(), settings: settings);
 
     default:
       debugPrint('RUTA DEFAULT');

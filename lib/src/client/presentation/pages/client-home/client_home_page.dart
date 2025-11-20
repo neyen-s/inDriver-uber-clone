@@ -7,7 +7,6 @@ import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/sign_in_page.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/client_map_seeker_page.dart';
-import 'package:indriver_uber_clone/src/driver/presentation/pages/car-info/driver_car_info_page.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/pages/roles_page.dart';
 

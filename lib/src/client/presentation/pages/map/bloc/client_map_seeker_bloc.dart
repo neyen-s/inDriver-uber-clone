@@ -36,8 +36,8 @@ class ClientMapSeekerBloc
     DebouncerLocation? debouncer,
   }) : _debouncer =
            debouncer ?? DebouncerLocation(const Duration(milliseconds: 500)),
-
        super(ClientMapSeekerInitial()) {
+    // --- Event handlers (keep original mapping) ---
     on<GetCurrentPositionRequested>(_onGetCurrentPositionRequested);
     on<GetAddressFromLatLng>(_onGetAddressFromLatLng);
     on<CancelTripConfirmation>(_onCancelTripConfirmation);
@@ -47,61 +47,68 @@ class ClientMapSeekerBloc
     on<ResetCameraRequested>(_onResetCameraRequested);
     on<CreateClientRequest>(_onCreateClientRequest);
 
-    //socket related events
+    // socket-related events
     on<AddDriverPositionMarker>(_onAddDriverPositionMarker);
     on<RemoveDriverPositionMarker>(_onRemoveDriverPositionMarker);
     on<ClearDriverMarkers>(_onClearDriverMarkers);
     on<DriversSnapshotReceived>(_onDriversSnapshotReceived);
 
-    // manejador del evento privado que actualiza el estado del socket
+    // private helper event to sync socket status with UI state
     on<_SocketStatusChanged>(_onSocketStatusChanged);
 
-    // Socket Subscriptions events
+    // start listening to socketBloc streams and ensure connection
     _listenToSocket();
-    // Intentamos asegurar la conexión de socket desde el BLoC
-    // No await aquí: simplemente pedimos que el socket se conecte si no lo está.
     _ensureSocketConnectedIfNeeded();
   }
 
+  // ---------------------- Dependencies & helpers ----------------------
   final DebouncerLocation _debouncer;
   final GeolocatorUseCases _geolocatorUseCases;
   final SocketBloc socketBloc;
   final ClientRequestsUsecases clientRequestsUsecases;
   final AuthUseCases authUseCases;
 
+  // Subscriptions we keep track of so we can cancel them on close
   StreamSubscription? _socketSub;
-  StreamSubscription<dynamic>? _socketStreamSub;
-  StreamSubscription<Position>? _positionStreamSub;
-  LatLng? lastLatLng;
+  StreamSubscription<dynamic>?
+  _socketStreamSub; // reserved (kept from original)
+  StreamSubscription<Position>?
+  _positionStreamSub; // reserved (kept from original)
+  LatLng? lastLatLng; // kept from original
 
+  // Small grace window preventing flicker when
+  // socket briefly sends empty snapshots
   DateTime? _lastNonEmptySnapshotAt;
   final Duration _emptySnapshotGrace = const Duration(seconds: 2);
 
+  // ---------------------- Socket wiring / synchronization ----------------------
   void _listenToSocket() {
-    // escucha continua del socketBloc
+    // continuous listen to socketBloc state changes
     _socketSub = socketBloc.stream.listen((socketState) {
       if (socketState is SocketDriverPositionsUpdated) {
+        // forward the fresh snapshot to this bloc as an event
         add(DriversSnapshotReceived(Map.from(socketState.drivers)));
       } else if (socketState is SocketConnected) {
-        // fuerza re-request si quieres (opcional)
+        // when socket connects we clear markers and request initial drivers
         add(const ClearDriverMarkers());
         socketBloc.add(RequestInitialDrivers());
       } else if (socketState is SocketDisconnected ||
           socketState is SocketError) {
-        // notifica que hay desconexión (ya hacías algo parecido)
         debugPrint('ClientMapSeekerBloc: detected SocketDisconnected/Error');
-        // puedes emitir un state local si hace falta
+        // optional: emit local state or notify UI if needed
       }
+
+      // Defensive: if socketBloc currently holds an initial snapshot, use it
       final cur = socketBloc.state;
       if (cur is SocketDriverPositionsUpdated) {
         add(DriversSnapshotReceived(Map.from(cur.drivers)));
       }
     });
 
-    // crucial: cuando arrancas la escucha, chequear el estado actual del socketBloc
+    // also check current state at startup
+    // (in case socket has already produced a snapshot)
     final current = socketBloc.state;
     if (current is SocketDriverPositionsUpdated) {
-      // hay un snapshot ya disponible -> úsalo ahora mismo
       add(DriversSnapshotReceived(Map.from(current.drivers)));
     }
   }
@@ -116,7 +123,7 @@ class ClientMapSeekerBloc
         socketBloc.add(ConnectSocket());
       } else {
         debugPrint('ClientMapSeekerBloc: socket already connected');
-        // opcional: si ya está conectado, forzamos un _SocketStatusChanged para sincronizar el UI state
+        // force local sync event so UI state knows socket is up
         add(const _SocketStatusChanged(true));
       }
     } catch (e) {
@@ -126,7 +133,7 @@ class ClientMapSeekerBloc
     }
   }
 
-  // handler que actualiza estado interno del ClientMapSeeker
+  // private handler that updates local state when socket connectivity changes
   Future<void> _onSocketStatusChanged(
     _SocketStatusChanged event,
     Emitter<ClientMapSeekerState> emit,
@@ -134,6 +141,7 @@ class ClientMapSeekerBloc
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
+
     debugPrint(
       'ClientMapSeekerBloc: socket status changed -> ${event.isConnected}',
     );
@@ -141,18 +149,11 @@ class ClientMapSeekerBloc
 
     if (event.isConnected) {
       try {
-        // pequeña espera para dar tiempo a que el socket re-attach de listeners
+        // small delay to give socket time to re-attach listeners
         await Future<void>.delayed(const Duration(milliseconds: 200));
 
-        // Pedimos al SocketBloc que nos vuelva a enviar el snapshot inicial si procede.
-        // Reutiliza el event que ya uses en SocketBloc para solicitar snapshot.
-        // En tus logs sale "SocketBloc: requesting initial drivers snapshot", así que llamamos al event que haga eso.
-        socketBloc.add(
-          RequestInitialDrivers(),
-        ); // <-- usa el event real de tu SocketBloc
-
-        // También forzamos un clear + re-request por si la UI quedó con markers vacíos:
-        // (esto hace que la UI quede preparada para recibir el nuevo snapshot)
+        // request initial snapshot again and clear markers to prepare UI
+        socketBloc.add(RequestInitialDrivers());
         add(const ClearDriverMarkers());
       } catch (e) {
         debugPrint(
@@ -160,11 +161,11 @@ class ClientMapSeekerBloc
         );
       }
     } else {
-      // opcional: cuando desconecta, limpiamos markers rápido (ya lo haces en roles)
-      // add(const ClearDriverMarkers());
+      // optional: when disconnected we could clear markers here
     }
   }
 
+  // ---------------------- Lifecycle ----------------------
   @override
   Future<void> close() {
     _debouncer.dispose();
@@ -174,6 +175,7 @@ class ClientMapSeekerBloc
     return super.close();
   }
 
+  // ---------------------- Position / geocoding handlers ----------------------
   Future<void> _onGetCurrentPositionRequested(
     GetCurrentPositionRequested event,
     Emitter<ClientMapSeekerState> emit,
@@ -181,10 +183,12 @@ class ClientMapSeekerBloc
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
+
     emit(current.copyWith(isLoading: true));
     debugPrint(
       'Bloc: GET CURRENT POS handler start — state=${state.runtimeType}',
     );
+
     final result = await _geolocatorUseCases.findPositionUseCase().timeout(
       const Duration(seconds: 10),
       onTimeout: () => const Left(
@@ -192,22 +196,17 @@ class ClientMapSeekerBloc
       ),
     );
 
-    // --- Manejo sin callbacks `async` dentro de fold ---
-    // Si falla -> emit Error y return rápido
     if (result.isLeft()) {
-      final failure = (result as Left).value; // tipo Failure
+      final failure = (result as Left).value; // Failure
       emit(ClientMapSeekerError(failure.message.toString()));
       return;
     }
 
-    // Si aquí, es Right -> extraemos la posición de forma sincrónica
-    final Position position = (result as Right).value as Position;
+    final position = (result as Right).value as Position;
 
-    debugPrint(
-      'Bloc: GET CURRENT POS handler end — got position=$position, will reverse-geocode and emit enriched state',
-    );
+    debugPrint('Bloc: GET CURRENT POS handler end — got position=$position');
 
-    // Reverse-geocode (await aquí dentro del handler async)
+    // reverse-geocode preferred (best-effort)
     String? originAddr;
     try {
       final placemarks = await placemarkFromCoordinates(
@@ -223,21 +222,17 @@ class ClientMapSeekerBloc
       originAddr = null;
     }
 
-    // Emitimos estando todavía dentro del handler (no habrá error)
     emit(
       current.copyWith(
         userPosition: position,
         isLoading: false,
-        // permitimos recentrar (como propusiste antes)
         hasCenteredCameraOnce: false,
         origin: LatLng(position.latitude, position.longitude),
         originAddress: originAddr,
       ),
     );
 
-    debugPrint(
-      'Bloc: GET CURRENT POS after emit — emitted userPosition + originAddress: $originAddr',
-    );
+    debugPrint('Bloc: GET CURRENT POS after emit — originAddress: $originAddr');
   }
 
   Future<void> _onResetCameraRequested(
@@ -267,7 +262,7 @@ class ClientMapSeekerBloc
 
       final placemark = placemarks.first;
       final address =
-          '${placemark.street}, ${placemark.locality}, '
+          '${placemark.street}, ${placemark.locality},'
           ' ${placemark.administrativeArea}';
 
       final current = state is ClientMapSeekerSuccess
@@ -318,6 +313,7 @@ class ClientMapSeekerBloc
     emit(current.copyWith(selectedField: event.selectedField));
   }
 
+  // ---------------------- Route / distance calculation ----------------------
   Future<void> _onDrawRouteRequested(
     DrawRouteRequested event,
     Emitter<ClientMapSeekerState> emit,
@@ -335,7 +331,6 @@ class ClientMapSeekerBloc
         ),
       );
 
-      print('orign: ${event.origin}, destination: ${event.destination}');
       final timeResult = await clientRequestsUsecases
           .getTimeAndDistanceValuesUsecase(
             TimeAndDistanceParams(
@@ -399,17 +394,14 @@ class ClientMapSeekerBloc
         },
       );
 
-      //Use the distance and time from the API if they exist, otherwise
-      // use the distance and time from the route
       var distanceKm = distanceKmFromApi != 0
-          ? distanceKmFromApi
+          ? distanceKgOrDouble(distanceKmFromApi)
           : (route.distanceMeters ?? 0) / 1000;
 
       var durationMinutes = durationMinutesFromApi != 0
           ? durationMinutesFromApi
           : ((route.duration ?? 0) / 60).round();
 
-      //In case distanceKm is still 0, fallback to Haversine
       var usedEstimation = false;
       if (distanceKm == 0 || durationMinutes == 0) {
         debugPrint(
@@ -453,6 +445,10 @@ class ClientMapSeekerBloc
     }
   }
 
+  // small helper to ensure double value (keeps semantics clear)
+  double distanceKgOrDouble(double v) => v;
+
+  // ---------------------- Marker management / socket-driven markers ----------------------
   Future<void> _onAddDriverPositionMarker(
     AddDriverPositionMarker event,
     Emitter<ClientMapSeekerState> emit,
@@ -525,11 +521,15 @@ class ClientMapSeekerBloc
     final current = state is ClientMapSeekerSuccess
         ? state as ClientMapSeekerSuccess
         : const ClientMapSeekerSuccess();
+
     debugPrint(
       'Socket snapshot received: drivers count=${event.drivers.length}',
     );
-    //if recently had non-empty, ignore empty,
-    //For when it desconects and reconect from the socket quickly
+
+    // If snapshot is empty but we recently had a non-empty one,
+    // ignore the empty
+    // This avoids flicker when socket reconnects
+    // and briefly sends empty payloads
     if (event.drivers.isEmpty) {
       final last = _lastNonEmptySnapshotAt;
       if (last != null &&
@@ -544,7 +544,7 @@ class ClientMapSeekerBloc
       return;
     }
 
-    //shanpshot not empty -> update timestamp and build markers
+    // non-empty snapshot -> update timestamp and produce markers
     _lastNonEmptySnapshotAt = DateTime.now();
 
     final iconResult = await _geolocatorUseCases.createMarkerUseCase(
@@ -577,10 +577,9 @@ class ClientMapSeekerBloc
         ClientMapSeekerError.new,
       );
 
-      if (marker != null) {
-        newMarkers[driverId] = marker;
-      }
+      if (marker != null) newMarkers[driverId] = marker;
     }
+
     debugPrint('Emitting newMarkers count=${newMarkers.length}');
 
     emit(current.copyWith(driverMarkers: newMarkers));
@@ -597,6 +596,7 @@ class ClientMapSeekerBloc
     }
   }
 
+  // ---------------------- Create client request (unchanged) ------------------
   Future<void> _onCreateClientRequest(
     CreateClientRequest event,
     Emitter<ClientMapSeekerState> emit,
@@ -665,7 +665,7 @@ class ClientMapSeekerBloc
                 ),
               );
 
-              //Notifies socket about new client request
+              // Notify socket about new client request
               try {
                 socketBloc.add(
                   SendNewClientRequestRequested(
@@ -677,6 +677,7 @@ class ClientMapSeekerBloc
                   'Error notifying socket about new client request: $e',
                 );
               }
+
               await Future<void>.delayed(const Duration(milliseconds: 100));
 
               emit(

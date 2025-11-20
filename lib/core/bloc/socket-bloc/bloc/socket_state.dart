@@ -58,3 +58,15 @@ class SocketRequestRemovedState extends SocketState {
   @override
   List<Object?> get props => [idClientRequest];
 }
+
+class SocketDriverAssignedState extends SocketState {
+  const SocketDriverAssignedState({
+    required this.idClientRequest,
+    required this.idDriver,
+  });
+  final String idClientRequest;
+  final String idDriver;
+
+  @override
+  List<Object?> get props => [idClientRequest, idDriver];
+}
