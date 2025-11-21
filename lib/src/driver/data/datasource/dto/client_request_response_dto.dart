@@ -12,46 +12,115 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
     required super.updatedAt,
     required super.pickupPosition,
     required super.destinationPosition,
-    required super.distance,
-    required super.timeDifference,
     required super.client,
-    required super.googleDistanceMatrix,
+    super.timeDifference,
+    super.distance,
+    super.driver,
+    super.googleDistanceMatrix,
+    super.idDriver,
+    super.fareAssigned,
   });
 
   factory ClientRequestResponseDto.fromJson(Map<String, dynamic> json) {
-    final fareOfferedNum = json['fare_offered'];
-    final distanceNum = json['distance'];
-    final timeDiffNum = json['time_difference'];
+    // helpers to safely parse numeric fields
+    double? _toDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is double) return v;
+      if (v is num) return v.toDouble();
+      final s = v.toString();
+      return double.tryParse(s);
+    }
+
+    int? _toInt(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      final s = v.toString();
+      return int.tryParse(s);
+    }
+
+    // required fields (throw early if absolutely missing)
+    final id = _toInt(json['id']);
+    final idClient = _toInt(json['id_client']);
+    final fareOffered = _toDouble(json['fare_offered']);
+
+    if (id == null || idClient == null || fareOffered == null) {
+      throw Exception(
+        'ClientRequestResponseDto.fromJson: missing required fields id/id_client/fare_offered',
+      );
+    }
+
+    // parse updated_at (be defensive)
+    DateTime updatedAt;
+    final rawUpdated = json['updated_at'];
+    if (rawUpdated is String) {
+      updatedAt = DateTime.parse(rawUpdated);
+    } else if (rawUpdated is DateTime) {
+      updatedAt = rawUpdated;
+    } else {
+      // fallback to now or throw depending how strict you want to be
+      updatedAt = DateTime.now();
+    }
+
+    // positions
+    PositionDto parsePos(dynamic posRaw) {
+      if (posRaw is Map<String, dynamic>) {
+        return PositionDto.fromJson(posRaw);
+      }
+      throw Exception('pickup/destination position invalid: $posRaw');
+    }
+
+    // client (required)
+    final clientMap = json['client'] as Map<String, dynamic>?;
+    final client = clientMap != null
+        ? ClientDto.fromJson(clientMap)
+        : ClientDto(name: '', image: '', phone: '', lastname: '');
+
+    // optional fields
+    final distance = _toDouble(json['distance']);
+    final timeDifference = _toInt(json['time_difference']);
+
+    final driverMap = json['driver'] as Map<String, dynamic>?;
+    final driver = driverMap != null ? ClientDto.fromJson(driverMap) : null;
+
+    GoogleDistanceMatrixDto? googleDistance;
+    final gdmRaw = json['google_distance_matrix'];
+    if (gdmRaw is Map<String, dynamic>) {
+      try {
+        // Google API element sometimes provides distance/duration with text & value
+        googleDistance = GoogleDistanceMatrixDto.fromJson(gdmRaw);
+      } catch (_) {
+        // try to adapt common element structures (like a single element from matrix)
+        // if gdmRaw already matches expected shape this will succeed above
+        googleDistance = null;
+      }
+    }
+
+    final fareAssigned = _toDouble(json['fare_assigned']);
+    final idDriver = _toInt(json['id_driver']);
 
     return ClientRequestResponseDto(
-      id: (json['id'] as num).toInt(),
-      idClient: (json['id_client'] as num).toInt(),
-      fareOffered: (fareOfferedNum is num)
-          ? fareOfferedNum.toDouble()
-          : double.parse('$fareOfferedNum'),
-      pickupDescription: json['pickup_description'] as String? ?? '',
-      destinationDescription: json['destination_description'] as String? ?? '',
-      status: json['status'] as String? ?? '',
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      pickupPosition: PositionDto.fromJson(
-        json['pickup_position'] as Map<String, dynamic>,
-      ),
-      destinationPosition: PositionDto.fromJson(
+      id: id,
+      idClient: idClient,
+      fareOffered: fareOffered,
+      pickupDescription: (json['pickup_description'] as String?) ?? '',
+      destinationDescription:
+          (json['destination_description'] as String?) ?? '',
+      status: (json['status'] as String?) ?? '',
+      updatedAt: updatedAt,
+      pickupPosition: parsePos(json['pickup_position'] as Map<String, dynamic>),
+      destinationPosition: parsePos(
         json['destination_position'] as Map<String, dynamic>,
       ),
-      distance: (distanceNum is num)
-          ? distanceNum.toDouble()
-          : double.parse('$distanceNum'),
-      timeDifference: (timeDiffNum is num)
-          ? timeDiffNum.toInt()
-          : int.parse('$timeDiffNum'),
-      client: ClientDto.fromJson(json['client'] as Map<String, dynamic>),
-      googleDistanceMatrix: GoogleDistanceMatrixDto.fromJson(
-        json['google_distance_matrix'] as Map<String, dynamic>,
-      ),
+      client: client,
+      timeDifference: timeDifference,
+      distance: distance,
+      driver: driver,
+      googleDistanceMatrix: googleDistance,
+      idDriver: idDriver,
+      fareAssigned: fareAssigned,
     );
   }
-
   factory ClientRequestResponseDto.fromEntity(
     ClientRequestResponseEntity entity,
   ) {
@@ -99,18 +168,20 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
             'lastname': client.lastname,
           },
     'google_distance_matrix': (googleDistanceMatrix is GoogleDistanceMatrixDto)
-        ? (googleDistanceMatrix as GoogleDistanceMatrixDto).toJson()
+        ? (googleDistanceMatrix! as GoogleDistanceMatrixDto).toJson()
         : {
             'distance': {
-              'text': googleDistanceMatrix.distance.text,
-              'value': googleDistanceMatrix.distance.value,
+              'text': googleDistanceMatrix?.distance.text,
+              'value': googleDistanceMatrix?.distance.value,
             },
             'duration': {
-              'text': googleDistanceMatrix.duration.text,
-              'value': googleDistanceMatrix.duration.value,
+              'text': googleDistanceMatrix?.duration.text,
+              'value': googleDistanceMatrix?.duration.value,
             },
-            'status': googleDistanceMatrix.status,
+            'status': googleDistanceMatrix?.status,
           },
+    'fare_assissigned': fareAssigned,
+    'id_driver': idDriver,
   };
 }
 

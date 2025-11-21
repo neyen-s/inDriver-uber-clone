@@ -258,7 +258,8 @@ class DriverClientRequestsItem extends StatelessWidget {
       final fare = double.tryParse(controller.text) ?? 0.0;
       debugPrint('Counteroffer sent with fare: $fare');
       debugPrint(
-        'clientRequestResponse.googleDistanceMatrix.duration.value ${clientRequestResponse?.googleDistanceMatrix.duration.value}',
+        'clientRequestResponse.googleDistanceMatrix.duration.value'
+        ' ${clientRequestResponse?.googleDistanceMatrix!.duration.value}',
       );
 
       if (clientRequestResponse != null && state.idDriver != null) {
@@ -269,12 +270,12 @@ class DriverClientRequestsItem extends StatelessWidget {
               idDriver: state.idDriver ?? 0,
               fareOffered: fare,
               time:
-                  clientRequestResponse.googleDistanceMatrix.duration.value
+                  clientRequestResponse.googleDistanceMatrix!.duration.value
                       .toDouble() /
                   60,
 
               distance:
-                  clientRequestResponse.googleDistanceMatrix.distance.value
+                  clientRequestResponse.googleDistanceMatrix!.distance.value
                       .toDouble() /
                   1000,
             ),

@@ -32,6 +32,8 @@ sealed class ClientRequestDataSource {
     int idDriver,
     double fareAssigned,
   );
+
+  Future<ClientRequestResponseDto> getClientRequestById(int idClientRequest);
 }
 
 class ClientRequestDataSourceImpl implements ClientRequestDataSource {
@@ -52,12 +54,15 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
       timeout: const Duration(seconds: 7),
     );
     debugPrint('**getTimeAndDistanceClientRequest RESPONSE: $response');
+    try {
+      final dto = TimeAndDistanceValuesDto.fromJson(response);
 
-    final dto = TimeAndDistanceValuesDto.fromJson(response);
+      debugPrint('**getTimeAndDistanceClientRequest DTO: $dto');
 
-    debugPrint('**getTimeAndDistanceClientRequest DTO: $dto');
-
-    return dto;
+      return dto;
+    } catch (e) {
+      throw Exception('Error parsing TimeAndDistanceValuesDto: $e');
+    }
   }
 
   @override
@@ -83,49 +88,96 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     final response = await apiClient.get(
       path: '/client-requests/$driverLat/$driverLng',
     );
-    final clientRequestResponseDtos = <ClientRequestResponseDto>[];
 
-    debugPrint(
-      '**getNearbyTripRequest DTO: ${clientRequestResponseDtos.length}',
-    );
-    debugPrint('--RESPONSE: ${response['data']}');
-
-    response['data'].forEach((element) {
-      clientRequestResponseDtos.add(
-        ClientRequestResponseDto.fromJson(element as Map<String, dynamic>),
+    final rawList = response['data'] ?? response;
+    if (rawList == null) {
+      throw Exception('getNearbyTripRequest: response.data is null');
+    }
+    if (rawList is! List) {
+      throw Exception(
+        'getNearbyTripRequest: unexpected response format, expected List',
       );
-    });
+    }
+    final clientRequestResponseDtos = <ClientRequestResponseDto>[];
+    for (var i = 0; i < rawList.length; i++) {
+      final element = rawList[i];
+      try {
+        if (element is! Map<String, dynamic>) {
+          debugPrint(
+            'getNearbyTripRequest: skipping non-map element at index $i',
+          );
+          continue;
+        }
+        clientRequestResponseDtos.add(
+          ClientRequestResponseDto.fromJson(element),
+        );
+      } catch (e, st) {
+        debugPrint('getNearbyTripRequest: parse error at index $i -> $e\n$st');
+        // continue trying other elements
+      }
+    }
+
+    // if there were items in the raw response but none parsed -> treat as error
+    if (rawList.isNotEmpty && clientRequestResponseDtos.isEmpty) {
+      throw Exception('getNearbyTripRequest: all items failed to parse');
+    }
 
     debugPrint(
-      '**getNearbyTripRequest DTO: ${clientRequestResponseDtos.length}',
+      '**getNearbyTripRequest parsed: ${clientRequestResponseDtos.length}',
     );
-
     return clientRequestResponseDtos;
   }
 
   @override
   Future<List<DriverTripRequestDTO>> getDriverTripOffersByClientRequest(
-    int idDriver,
+    int idClientRequest,
   ) async {
-    debugPrint('**getDriverTripOffersByClientRequest');
+    debugPrint('**getDriverTripOffersByClientRequest id: $idClientRequest');
     final response = await apiClient.get(
-      path: '/driver-trip-offers/findByClientRequest/$idDriver',
+      path: '/driver-trip-offers/findByClientRequest/$idClientRequest',
     );
 
-    debugPrint('**getDriverTripOffersByClientRequest RESPONSE: $response');
-
-    final driverTripRequestsResponseDtos = <DriverTripRequestDTO>[];
-
-    response['data'].forEach((element) {
-      driverTripRequestsResponseDtos.add(
-        DriverTripRequestDTO.fromJson(element as Map<String, dynamic>),
+    final rawList = response['data'] ?? response;
+    if (rawList == null) {
+      throw Exception(
+        'getDriverTripOffersByClientRequest: response.data is null',
       );
-    });
-    debugPrint(
-      '**getDriverTripOffersByClient LIST: $driverTripRequestsResponseDtos',
-    );
+    }
+    if (rawList is! List) {
+      throw Exception(
+        'getDriverTripOffersByClientRequest:'
+        ' unexpected response format, expected List',
+      );
+    }
 
-    return driverTripRequestsResponseDtos;
+    final out = <DriverTripRequestDTO>[];
+    for (var i = 0; i < rawList.length; i++) {
+      final el = rawList[i];
+      try {
+        if (el is! Map<String, dynamic>) {
+          debugPrint(
+            'getDriverTripOffersByClientRequest:'
+            ' skipping non-map element at index $i',
+          );
+          continue;
+        }
+        out.add(DriverTripRequestDTO.fromJson(el));
+      } catch (e, st) {
+        debugPrint(
+          'getDriverTripOffersByClientRequest: '
+          'parse error at index $i -> $e\n$st',
+        );
+      }
+    }
+
+    if (rawList.isNotEmpty && out.isEmpty) {
+      throw Exception(
+        'getDriverTripOffersByClientRequest: all items failed to parse',
+      );
+    }
+
+    debugPrint('**getDriverTripOffersByClient LIST parsed: ${out.length}');
+    return out;
   }
 
   @override
@@ -153,5 +205,24 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     }
 
     return false;
+  }
+
+  @override
+  Future<ClientRequestResponseDto> getClientRequestById(
+    int idClientRequest,
+  ) async {
+    debugPrint('**getClientRequestById');
+    final response = await apiClient.get(
+      path: '/client-requests/$idClientRequest',
+    );
+    debugPrint('**getClientRequestById RESPONSE: $response');
+    try {
+      final dto = ClientRequestResponseDto.fromJson(response);
+      debugPrint('**getClientRequestById DTO: $dto');
+
+      return dto;
+    } catch (e) {
+      throw Exception('Error parsing ClientRequestResponseDto: $e');
+    }
   }
 }

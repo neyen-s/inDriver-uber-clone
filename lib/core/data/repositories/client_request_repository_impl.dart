@@ -136,4 +136,19 @@ class ClientRequestRepositoryImpl implements ClientRequestRepository {
       return Left(mapExceptionToFailure(e));
     }
   }
+
+  @override
+  ResultFuture<ClientRequestResponseDto> getClientRequestById(
+    int idClientRequest,
+  ) async {
+    try {
+      final response = await clientRequestDataSource.getClientRequestById(
+        idClientRequest,
+      );
+
+      return Right(response);
+    } catch (e) {
+      return Left(mapExceptionToFailure(e));
+    }
+  }
 }

@@ -9,10 +9,13 @@ class ClientRequestResponseEntity {
     required this.updatedAt,
     required this.pickupPosition,
     required this.destinationPosition,
-    required this.distance,
-    required this.timeDifference,
     required this.client,
-    required this.googleDistanceMatrix,
+    this.timeDifference,
+    this.distance,
+    this.driver,
+    this.googleDistanceMatrix,
+    this.idDriver,
+    this.fareAssigned,
   });
   final int id;
   final int idClient;
@@ -23,10 +26,13 @@ class ClientRequestResponseEntity {
   final DateTime updatedAt;
   final PositionEntity pickupPosition;
   final PositionEntity destinationPosition;
-  final double distance;
-  final int timeDifference;
+  final double? distance;
+  final int? timeDifference;
   final ClientEntity client;
-  final GoogleDistanceMatrixEntity googleDistanceMatrix;
+  final ClientEntity? driver;
+  final GoogleDistanceMatrixEntity? googleDistanceMatrix;
+  final int? idDriver;
+  final double? fareAssigned;
 
   ClientRequestResponseEntity copyWith({
     int? id,
@@ -41,7 +47,10 @@ class ClientRequestResponseEntity {
     double? distance,
     int? timeDifference,
     ClientEntity? client,
+    ClientEntity? driver,
     GoogleDistanceMatrixEntity? googleDistanceMatrix,
+    int? idDriver,
+    double? fareAssigned,
   }) {
     return ClientRequestResponseEntity(
       id: id ?? this.id,
@@ -57,7 +66,10 @@ class ClientRequestResponseEntity {
       distance: distance ?? this.distance,
       timeDifference: timeDifference ?? this.timeDifference,
       client: client ?? this.client,
+      driver: driver ?? this.driver,
       googleDistanceMatrix: googleDistanceMatrix ?? this.googleDistanceMatrix,
+      idDriver: idDriver ?? this.idDriver,
+      fareAssigned: fareAssigned ?? this.fareAssigned,
     );
   }
 
@@ -68,8 +80,9 @@ class ClientRequestResponseEntity {
         'destinationDescription: $destinationDescription, status: $status, '
         'updatedAt: $updatedAt, pickupPosition: $pickupPosition, '
         'destinationPosition: $destinationPosition, distance: $distance, '
-        'timeDifference: $timeDifference, client: $client,'
-        ' googleDistanceMatrix: $googleDistanceMatrix)';
+        'timeDifference: $timeDifference, client: $client, driver: $driver,'
+        ' googleDistanceMatrix: $googleDistanceMatrix, idDriver: $idDriver,'
+        ' fareAssigned: $fareAssigned)';
   }
 }
 

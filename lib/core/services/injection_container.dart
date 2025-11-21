@@ -41,10 +41,12 @@ import 'package:indriver_uber_clone/src/auth/domain/usecase/sign_up_use_case.dar
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-in/bloc/sign_in_bloc.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/pages/sign-up/bloc/sign_up_bloc.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
+import 'package:indriver_uber_clone/src/client/domain/usecases/get_client_request_by_id_use_case.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/get_driver_trip_offers_by_client_request_use_case.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/update_driver_assigned_use_case.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/client-home/bloc/client_home_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/driver-offers/bloc/client_driver_offers_bloc.dart';
+import 'package:indriver_uber_clone/src/client/presentation/pages/map-trip/bloc/client_map_trip_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/bloc/client_map_seeker_bloc.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_lyfe_cycle_cubit.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/source/driver_car_info_remote_datasource.dart';
@@ -123,6 +125,7 @@ Future<void> _initCore() async {
       () => GetDriverTripOffersByClientRequestUseCase(sl()),
     )
     ..registerLazySingleton(() => UpdateDriverAssignedUseCase(sl()))
+    ..registerLazySingleton(() => GetClientRequestByIdUseCase(sl()))
     ..registerLazySingleton(
       () => ClientRequestsUsecases(
         getTimeAndDistanceValuesUsecase: sl(),
@@ -130,6 +133,7 @@ Future<void> _initCore() async {
         getNearbyTripRequestUseCase: sl(),
         getDriverTripOffersByClientRequestUseCase: sl(),
         updateDriverAssignedUseCase: sl(),
+        getClientRequestByIdUseCase: sl(),
       ),
     )
     //Socket
@@ -204,7 +208,8 @@ Future<void> _initAuth() async {
 Future<void> _initClient() async {
   sl
     ..registerFactory(() => ClientDriverOffersBloc(sl(), sl()))
-    ..registerFactory(() => ClientHomeBloc(sl()));
+    ..registerFactory(() => ClientHomeBloc(sl()))
+    ..registerFactory(() => ClientMapTripBloc(sl()));
 }
 
 // DRIVER

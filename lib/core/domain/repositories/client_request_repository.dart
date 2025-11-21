@@ -29,4 +29,8 @@ abstract class ClientRequestRepository {
     int idDriver,
     double fareAssigned,
   );
+
+  ResultFuture<ClientRequestResponseEntity> getClientRequestById(
+    int idClientRequest,
+  );
 }
