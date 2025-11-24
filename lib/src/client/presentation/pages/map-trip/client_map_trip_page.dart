@@ -4,24 +4,24 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map-trip/bloc/
 import 'package:indriver_uber_clone/src/client/presentation/pages/map-trip/client_map_trip_content.dart';
 
 class ClientMapTripPage extends StatefulWidget {
-  const ClientMapTripPage({super.key});
+  const ClientMapTripPage({required this.idClientRequest, super.key});
 
   static const routeName = '/client-map-trip-page';
+
+  final int idClientRequest;
 
   @override
   State<ClientMapTripPage> createState() => _ClientMapTripPageState();
 }
 
 class _ClientMapTripPageState extends State<ClientMapTripPage> {
-  int? idClientRequest = 2;
-
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClientMapTripBloc>().add(
-        GetClientRequestById(idClientRequest!),
+        GetClientRequestById(widget.idClientRequest),
       );
     });
   }

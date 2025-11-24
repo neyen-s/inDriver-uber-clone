@@ -19,17 +19,34 @@ class ClientHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => sl<ClientHomeBloc>(),
-      child: BlocListener<ClientHomeBloc, ClientHomeState>(
-        listenWhen: (previous, current) => current is SignOutSuccess,
-        listener: (context, state) {
-          if (state is SignOutSuccess) {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              SignInPage.routeName,
-              (_) => false,
-            );
-          }
-        },
+      child: MultiBlocListener(
+        //TODO CHECK if needed when user is comming from a different state of the app
+        listeners: [
+          BlocListener<ClientHomeBloc, ClientHomeState>(
+            listenWhen: (previous, current) => current is SignOutSuccess,
+            listener: (context, state) {
+              if (state is SignOutSuccess) {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  SignInPage.routeName,
+                  (_) => false,
+                );
+              }
+            },
+          ),
+          /*           BlocListener<SocketBloc, SocketState>(
+              listenWhen: (previous, current) =>
+                  current is SocketDriverAssignedState && previous != current,
+              listener: (context, socketState) {
+                if (socketState is SocketDriverAssignedState) {
+                  sl<AppNavigatorService>().pushNamed(
+                    DriverMapTripPage.routeName,
+                    arguments: socketState.idClientRequest,
+                  );
+                }
+              },
+            ), */
+        ],
         child: BlocBuilder<ClientHomeBloc, ClientHomeState>(
           builder: (context, state) {
             return GenericHomeScaffold<GenericHomeScaffoldSection>(

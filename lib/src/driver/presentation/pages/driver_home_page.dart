@@ -44,8 +44,18 @@ class DriverHomePage extends StatelessWidget {
                 current is SocketDriverAssignedState && previous != current,
             listener: (context, socketState) {
               if (socketState is SocketDriverAssignedState) {
+                final rawId = socketState.idClientRequest;
+                final id = int.tryParse(rawId);
+                if (id == null) {
+                  debugPrint(
+                    'DriverHomePage: invalid clientRequestId from socket: $rawId',
+                  );
+                  return;
+                }
+
                 sl<AppNavigatorService>().pushNamed(
                   DriverMapTripPage.routeName,
+                  arguments: id,
                 );
               }
             },

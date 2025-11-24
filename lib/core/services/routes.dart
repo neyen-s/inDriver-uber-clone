@@ -58,7 +58,12 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       );
     case ClientMapTripPage.routeName:
       debugPrint('ClientMapTripPage.routeName');
-      return _pageBuilder((_) => const ClientMapTripPage(), settings: settings);
+      final id = settings.arguments! as int;
+
+      return _pageBuilder(
+        (_) => ClientMapTripPage(idClientRequest: id),
+        settings: settings,
+      );
 
     case DriverMapPageWrapper.routeName:
       debugPrint('DriverMapPageWrapper.routeName');
@@ -68,7 +73,11 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       );
     case DriverMapTripPage.routeName:
       debugPrint('DriverMapTripPage.routeName');
-      return _pageBuilder((_) => const DriverMapTripPage(), settings: settings);
+      final id = settings.arguments! as int;
+      return _pageBuilder(
+        (_) => DriverMapTripPage(idClientRequest: id),
+        settings: settings,
+      );
 
     default:
       debugPrint('RUTA DEFAULT');

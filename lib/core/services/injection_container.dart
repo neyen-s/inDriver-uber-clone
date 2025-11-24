@@ -72,6 +72,7 @@ import 'package:indriver_uber_clone/src/driver/domain/usecases/drivers-position/
 import 'package:indriver_uber_clone/src/driver/presentation/pages/bloc/bloc/driver_home_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/car-info/bloc/driver_car_info_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/bloc/driver_map_trip_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/data/datasource/source/profile_remote_datasource.dart';
 import 'package:indriver_uber_clone/src/profile/data/repositories/profile_repository_impl.dart';
@@ -303,6 +304,7 @@ Future<void> _initDriverMap() async {
       ),
     )
     ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()))
+    ..registerFactory(() => DriverMapTripBloc(sl()))
     ..registerFactory(
       () => DriverClientRequestsBloc(sl(), sl(), sl(), sl(), sl()),
     );

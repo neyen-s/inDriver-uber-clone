@@ -82,7 +82,7 @@ class _ClientDriverOffersPageState extends State<ClientDriverOffersPage> {
               Navigator.pushNamed(
                 context,
                 ClientMapTripPage.routeName,
-                arguments: state.driverTripRequestEntity,
+                arguments: state.idClientRequest,
               );
             }
           },
