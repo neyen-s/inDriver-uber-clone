@@ -18,6 +18,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     on<SocketDriverPositionReceived>(_onDriverPositionReceived);
     on<SocketDriverDisconnectedReceived>(_onDriverDisconnectedReceived);
     on<SocketDriverRemovalTimeout>(_onDriverRemovalTimeout);
+    on<SendTripDriverPositionRequested>(_onSendTripDriverPositionRequested);
 
     // Client request events (created, removed)
     on<SocketClientRequestReceived>(_onSocketClientRequestReceived);
@@ -36,6 +37,11 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       _onStopListeningDriverAssignedChannel,
     );
     on<SocketDriverAssignedEvent>(_onSocketDriverAssignedEvent);
+    on<ListenTripDriverPositionChannel>(_onListenTripDriverPositionChannel);
+    on<StopListeningTripDriverPositionChannel>(
+      _onStopListeningTripDriverPositionChannel,
+    );
+    on<SocketTripDriverPositionReceived>(_onSocketTripDriverPositionReceived);
 
     // Actions: sending messages
     on<SendNewClientRequestRequested>(_onSendNewClientRequestRequested);
@@ -332,6 +338,64 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     );
   }
 
+  Future<void> _onListenTripDriverPositionChannel(
+    ListenTripDriverPositionChannel event,
+    Emitter<SocketState> emit,
+  ) async {
+    final channel = 'trip_new_driver_position/${event.idClient}';
+    if (_channelSubscriptions.containsKey(channel)) return;
+
+    final res = await _socketUseCases.onSocketMessageUseCase(channel);
+    res.fold(
+      (failure) => addError(
+        Exception('Socket listen error ($channel): ${failure.message}'),
+      ),
+      (stream) {
+        final sub = stream.listen(
+          (data) {
+            // data expected: { 'id_socket': sid, 'lat': X, 'lng': Y }
+            final parsed = _extractIdLatLng(data);
+            if (parsed != null) {
+              // emit a dedicated state so los consumers diferencien este evento
+              add(
+                SocketTripDriverPositionReceived(
+                  idSocket: parsed.id,
+                  lat: parsed.lat,
+                  lng: parsed.lng,
+                ),
+              );
+            }
+          },
+          onError: (e, st) =>
+              addError(Exception('Stream error on $channel: $e')),
+        );
+        _channelSubscriptions[channel] = sub;
+      },
+    );
+  }
+
+  Future<void> _onStopListeningTripDriverPositionChannel(
+    StopListeningTripDriverPositionChannel event,
+    Emitter<SocketState> emit,
+  ) async {
+    final channel = 'trip_new_driver_position/${event.idClient}';
+    final sub = _channelSubscriptions.remove(channel);
+    if (sub != null) await sub.cancel();
+  }
+
+  Future<void> _onSocketTripDriverPositionReceived(
+    SocketTripDriverPositionReceived event,
+    Emitter<SocketState> emit,
+  ) async {
+    emit(
+      SocketTripDriverPositionUpdated(
+        idSocket: event.idSocket,
+        lat: event.lat,
+        lng: event.lng,
+      ),
+    );
+  }
+
   Future<void> _onStopListeningDriverAssignedChannel(
     StopListeningDriverAssignedChannel event,
     Emitter<SocketState> emit,
@@ -456,6 +520,20 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     if (_drivers.containsKey(id)) {
       _drivers.remove(id);
       emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
+    }
+  }
+
+  Future<void> _onSendTripDriverPositionRequested(
+    SendTripDriverPositionRequested event,
+    Emitter<SocketState> emit,
+  ) async {
+    try {
+      await _socketUseCases.sendSocketMessageUseCase(
+        'trip_change_driver_position',
+        {'id_client': event.idClient, 'lat': event.lat, 'lng': event.lng},
+      );
+    } catch (e) {
+      emit(SocketError('Error sending trip_driver_position: $e'));
     }
   }
 

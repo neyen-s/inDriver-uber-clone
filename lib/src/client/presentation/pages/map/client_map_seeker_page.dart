@@ -67,13 +67,12 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         //Calls the helper; we pass the callback to
         // be executed when there is permission.
-        print('pre OK ');
 
-        final ok = await LocationPermissionHelper.ensurePermissionAndInit(
-          context: context,
-        );
-        print('OK -----> $ok');
-        if (ok && context.mounted) {
+        final grantedPermission =
+            await LocationPermissionHelper.ensurePermissionAndInit(
+              context: context,
+            );
+        if (grantedPermission && context.mounted) {
           print('GET CURRENT POSITION FROM INIT STATE');
           context.read<ClientMapSeekerBloc>().add(
             GetCurrentPositionRequested(),

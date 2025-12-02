@@ -18,13 +18,31 @@ class DriverCarInfoDTO extends DriverCarInfoEntity {
   }
 
   factory DriverCarInfoDTO.fromJson(Map<String, dynamic> json) {
+    int? idDriver;
+    try {
+      if (json['id_driver'] != null) {
+        final v = json['id_driver'];
+        if (v is int) {
+          idDriver = v;
+        } else if (v is num) {
+          idDriver = v.toInt();
+        } else {
+          idDriver = int.tryParse(v.toString());
+        }
+      }
+    } catch (_) {
+      idDriver = null;
+    }
+
+    final brand = (json['brand'] as String?) ?? '';
+    final color = (json['color'] as String?) ?? '';
+    final plate = (json['plate'] as String?) ?? '';
+
     return DriverCarInfoDTO(
-      idDriver: json['id_driver'] != null
-          ? (json['id_driver'] as num).toInt()
-          : null,
-      brand: json['brand'] as String,
-      color: json['color'] as String,
-      plate: json['plate'] as String,
+      idDriver: idDriver,
+      brand: brand,
+      color: color,
+      plate: plate,
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:indriver_uber_clone/src/driver/domain/entities/driver_car_info_entity.dart';
+
 class ClientRequestResponseEntity {
   ClientRequestResponseEntity({
     required this.id,
@@ -16,6 +18,7 @@ class ClientRequestResponseEntity {
     this.googleDistanceMatrix,
     this.idDriver,
     this.fareAssigned,
+    this.carInfo,
   });
   final int id;
   final int idClient;
@@ -33,6 +36,7 @@ class ClientRequestResponseEntity {
   final GoogleDistanceMatrixEntity? googleDistanceMatrix;
   final int? idDriver;
   final double? fareAssigned;
+  final DriverCarInfoEntity? carInfo;
 
   ClientRequestResponseEntity copyWith({
     int? id,
@@ -51,6 +55,7 @@ class ClientRequestResponseEntity {
     GoogleDistanceMatrixEntity? googleDistanceMatrix,
     int? idDriver,
     double? fareAssigned,
+    DriverCarInfoEntity? carInfo,
   }) {
     return ClientRequestResponseEntity(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class ClientRequestResponseEntity {
       googleDistanceMatrix: googleDistanceMatrix ?? this.googleDistanceMatrix,
       idDriver: idDriver ?? this.idDriver,
       fareAssigned: fareAssigned ?? this.fareAssigned,
+      carInfo: carInfo ?? this.carInfo,
     );
   }
 
@@ -82,7 +88,7 @@ class ClientRequestResponseEntity {
         'destinationPosition: $destinationPosition, distance: $distance, '
         'timeDifference: $timeDifference, client: $client, driver: $driver,'
         ' googleDistanceMatrix: $googleDistanceMatrix, idDriver: $idDriver,'
-        ' fareAssigned: $fareAssigned)';
+        ' fareAssigned: $fareAssigned carInfo: $carInfo)';
   }
 }
 
@@ -120,16 +126,16 @@ class ClientEntity {
 }
 
 class PositionEntity {
-  PositionEntity({required this.x, required this.y});
+  PositionEntity({required this.lng, required this.lat});
 
-  final double x;
-  final double y;
+  final double lng;
+  final double lat;
   PositionEntity copyWith({double? x, double? y}) {
-    return PositionEntity(x: x ?? this.x, y: y ?? this.y);
+    return PositionEntity(lng: x ?? this.lng, lat: y ?? this.lat);
   }
 
   @override
-  String toString() => 'PositionEntity(x: $x, y: $y)';
+  String toString() => 'PositionEntity(x: $lng, y: $lat)';
 }
 
 class GoogleDistanceMatrixEntity {

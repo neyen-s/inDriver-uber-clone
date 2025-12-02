@@ -210,7 +210,7 @@ Future<void> _initClient() async {
   sl
     ..registerFactory(() => ClientDriverOffersBloc(sl(), sl()))
     ..registerFactory(() => ClientHomeBloc(sl()))
-    ..registerFactory(() => ClientMapTripBloc(sl()));
+    ..registerFactory(() => ClientMapTripBloc(sl(), sl(), sl()));
 }
 
 // DRIVER
@@ -304,7 +304,7 @@ Future<void> _initDriverMap() async {
       ),
     )
     ..registerFactory(() => DriverMapBloc(sl(), sl(), sl(), sl()))
-    ..registerFactory(() => DriverMapTripBloc(sl()))
+    ..registerFactory(() => DriverMapTripBloc(sl(), sl(), sl()))
     ..registerFactory(
       () => DriverClientRequestsBloc(sl(), sl(), sl(), sl(), sl()),
     );

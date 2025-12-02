@@ -7,3 +7,5 @@ enum GenericHomeScaffoldSection {
 }
 
 enum SelectedField { origin, destination }
+
+enum RoutePhase { none, driverToPickup, pickupToDestination }

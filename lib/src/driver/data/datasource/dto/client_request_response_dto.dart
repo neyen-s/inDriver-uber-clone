@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:indriver_uber_clone/src/driver/data/datasource/dto/driver_car_info_dto.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
 class ClientRequestResponseDto extends ClientRequestResponseEntity {
@@ -19,27 +20,26 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
     super.googleDistanceMatrix,
     super.idDriver,
     super.fareAssigned,
+    super.carInfo,
   });
 
   factory ClientRequestResponseDto.fromJson(Map<String, dynamic> json) {
-    // helpers to safely parse numeric fields
+    // helpers
     double? _toDouble(dynamic v) {
       if (v == null) return null;
       if (v is double) return v;
       if (v is num) return v.toDouble();
-      final s = v.toString();
-      return double.tryParse(s);
+      return double.tryParse(v.toString());
     }
 
     int? _toInt(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
       if (v is num) return v.toInt();
-      final s = v.toString();
-      return int.tryParse(s);
+      return int.tryParse(v.toString());
     }
 
-    // required fields (throw early if absolutely missing)
+    // required fields (be defensive: throw only on truly missing minimal ones)
     final id = _toInt(json['id']);
     final idClient = _toInt(json['id_client']);
     final fareOffered = _toDouble(json['fare_offered']);
@@ -50,54 +50,104 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
       );
     }
 
-    // parse updated_at (be defensive)
+    // updatedAt
     DateTime updatedAt;
     final rawUpdated = json['updated_at'];
     if (rawUpdated is String) {
-      updatedAt = DateTime.parse(rawUpdated);
+      updatedAt = DateTime.tryParse(rawUpdated) ?? DateTime.now();
     } else if (rawUpdated is DateTime) {
       updatedAt = rawUpdated;
     } else {
-      // fallback to now or throw depending how strict you want to be
       updatedAt = DateTime.now();
     }
 
-    // positions
+    // Position parsing (defensive)
     PositionDto parsePos(dynamic posRaw) {
       if (posRaw is Map<String, dynamic>) {
         return PositionDto.fromJson(posRaw);
       }
+      if (posRaw is String) {
+        try {
+          final m = jsonDecode(posRaw) as Map<String, dynamic>;
+          return PositionDto.fromJson(m);
+        } catch (_) {
+          throw Exception('pickup/destination position invalid: $posRaw');
+        }
+      }
       throw Exception('pickup/destination position invalid: $posRaw');
     }
 
-    // client (required)
-    final clientMap = json['client'] as Map<String, dynamic>?;
-    final client = clientMap != null
-        ? ClientDto.fromJson(clientMap)
-        : ClientDto(name: '', image: '', phone: '', lastname: '');
+    // client
+    ClientDto client;
+    try {
+      final clientMap = json['client'];
+      if (clientMap is Map<String, dynamic>) {
+        client = ClientDto.fromJson(clientMap);
+      } else if (clientMap is String) {
+        client = ClientDto.fromJson(
+          jsonDecode(clientMap) as Map<String, dynamic>,
+        );
+      } else {
+        client = ClientDto(name: '', image: '', phone: '', lastname: '');
+      }
+    } catch (_) {
+      client = ClientDto(name: '', image: '', phone: '', lastname: '');
+    }
 
-    // optional fields
-    final distance = _toDouble(json['distance']);
-    final timeDifference = _toInt(json['time_difference']);
-
-    final driverMap = json['driver'] as Map<String, dynamic>?;
-    final driver = driverMap != null ? ClientDto.fromJson(driverMap) : null;
-
+    // optional googleDistanceMatrix
     GoogleDistanceMatrixDto? googleDistance;
     final gdmRaw = json['google_distance_matrix'];
     if (gdmRaw is Map<String, dynamic>) {
       try {
-        // Google API element sometimes provides distance/duration with text & value
         googleDistance = GoogleDistanceMatrixDto.fromJson(gdmRaw);
       } catch (_) {
-        // try to adapt common element structures (like a single element from matrix)
-        // if gdmRaw already matches expected shape this will succeed above
         googleDistance = null;
       }
     }
 
-    final fareAssigned = _toDouble(json['fare_assigned']);
-    final idDriver = _toInt(json['id_driver']);
+    // fareAssigned
+    final fareAssigned = _toDouble(
+      json['fare_assigned'] ?? json['fareAssigned'],
+    );
+
+    // ATTENTION HERE: backend uses id_driver_assigned in some endpoints
+    final idDriver = _toInt(
+      json['id_driver_assigned'] ?? json['id_driver'] ?? json['idDriver'],
+    );
+
+    // driver object (optional)
+    ClientDto? driver;
+    try {
+      final driverMap = json['driver'];
+      if (driverMap is Map<String, dynamic>) {
+        driver = ClientDto.fromJson(driverMap);
+      } else if (driverMap is String) {
+        driver = ClientDto.fromJson(
+          jsonDecode(driverMap) as Map<String, dynamic>,
+        );
+      } else {
+        driver = null;
+      }
+    } catch (_) {
+      driver = null;
+    }
+
+    // car info (defensive)
+    DriverCarInfoDTO? carInfo;
+    try {
+      final rawCar = json['car'];
+      if (rawCar is Map<String, dynamic>) {
+        carInfo = DriverCarInfoDTO.fromJson(rawCar);
+      } else if (rawCar is String) {
+        carInfo = DriverCarInfoDTO.fromJson(
+          jsonDecode(rawCar) as Map<String, dynamic>,
+        );
+      } else {
+        carInfo = null;
+      }
+    } catch (_) {
+      carInfo = null;
+    }
 
     return ClientRequestResponseDto(
       id: id,
@@ -108,19 +158,59 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
           (json['destination_description'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
       updatedAt: updatedAt,
-      pickupPosition: parsePos(json['pickup_position'] as Map<String, dynamic>),
-      destinationPosition: parsePos(
-        json['destination_position'] as Map<String, dynamic>,
-      ),
+      pickupPosition: parsePos(json['pickup_position']),
+      destinationPosition: parsePos(json['destination_position']),
       client: client,
-      timeDifference: timeDifference,
-      distance: distance,
+      timeDifference: _toInt(json['time_difference']),
+      distance: _toDouble(json['distance']),
       driver: driver,
       googleDistanceMatrix: googleDistance,
       idDriver: idDriver,
       fareAssigned: fareAssigned,
+      carInfo: carInfo,
     );
   }
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'id_client': idClient,
+    'fare_offered': fareOffered,
+    'pickup_description': pickupDescription,
+    'destination_description': destinationDescription,
+    'status': status,
+    'updated_at': updatedAt.toIso8601String(),
+    'pickup_position': (pickupPosition is PositionDto)
+        ? (pickupPosition as PositionDto).toJson()
+        : {'x': pickupPosition.lng, 'y': pickupPosition.lat},
+    'destination_position': (destinationPosition is PositionDto)
+        ? (destinationPosition as PositionDto).toJson()
+        : {'x': destinationPosition.lng, 'y': destinationPosition.lat},
+    'distance': distance,
+    'time_difference': timeDifference,
+    'client': (client is ClientDto)
+        ? (client as ClientDto).toMap()
+        : {
+            'name': client.name,
+            'image': client.image,
+            'phone': client.phone,
+            'lastname': client.lastname,
+          },
+    'google_distance_matrix': (googleDistanceMatrix is GoogleDistanceMatrixDto)
+        ? (googleDistanceMatrix! as GoogleDistanceMatrixDto).toJson()
+        : null,
+    'fare_assigned': fareAssigned,
+    // export both keys so backend/frontend puedan usar el que esperan
+    if (idDriver != null) ...{
+      'id_driver': idDriver,
+      'id_driver_assigned': idDriver,
+    },
+    'car': (carInfo is DriverCarInfoDTO)
+        ? (carInfo as DriverCarInfoDTO).toJson()
+        : null,
+    'driver': (driver is ClientDto) ? (driver as ClientDto).toMap() : null,
+  };
+
   factory ClientRequestResponseDto.fromEntity(
     ClientRequestResponseEntity entity,
   ) {
@@ -138,12 +228,16 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
       timeDifference: entity.timeDifference,
       client: entity.client,
       googleDistanceMatrix: entity.googleDistanceMatrix,
+      idDriver: entity.idDriver,
+      fareAssigned: entity.fareAssigned,
+      carInfo: entity.carInfo,
+      driver: entity.driver,
     );
   }
   static List<ClientRequestResponseDto> listFromJson(List<dynamic> json) => json
       .map((e) => ClientRequestResponseDto.fromJson(e as Map<String, dynamic>))
       .toList();
-  Map<String, dynamic> toJson() => {
+  /*   Map<String, dynamic> toJson() => {
     'id': id,
     'id_client': idClient,
     'fare_offered': fareOffered,
@@ -182,7 +276,18 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
           },
     'fare_assissigned': fareAssigned,
     'id_driver': idDriver,
-  };
+    'car': (carInfo is DriverCarInfoDTO)
+        ? (carInfo as DriverCarInfoDTO).toJson()
+        : {},
+    'driver': (driver is ClientDto)
+        ? (driver as ClientDto).toMap()
+        : {
+            'name': driver?.name,
+            'image': driver?.image,
+            'phone': driver?.phone,
+            'lastname': driver?.lastname,
+          },
+  }; */
 }
 
 class ClientDto extends ClientEntity {
@@ -224,25 +329,25 @@ class ClientDto extends ClientEntity {
 }
 
 class PositionDto extends PositionEntity {
-  PositionDto({required super.x, required super.y});
+  PositionDto({required super.lng, required super.lat});
 
   factory PositionDto.fromJson(Map<String, dynamic> json) {
     final xNum = json['x'] ?? json['lat'] ?? json['latitude'];
     final yNum = json['y'] ?? json['lng'] ?? json['longitude'];
 
     return PositionDto(
-      x: (xNum is num) ? xNum.toDouble() : double.parse('$xNum'),
-      y: (yNum is num) ? yNum.toDouble() : double.parse('$yNum'),
+      lng: (xNum is num) ? xNum.toDouble() : double.parse('$xNum'),
+      lat: (yNum is num) ? yNum.toDouble() : double.parse('$yNum'),
     );
   }
   PositionEntity toEntity() {
-    return PositionEntity(x: x, y: y);
+    return PositionEntity(lng: lng, lat: lat);
   }
 
-  Map<String, dynamic> toJson() => {'x': x, 'y': y};
+  Map<String, dynamic> toJson() => {'x': lng, 'y': lat};
 
   @override
-  String toString() => 'PositionEntity(x: $x, y: $y)';
+  String toString() => 'PositionEntity(x: $lng, y: $lat)';
 }
 
 class GoogleDistanceMatrixDto extends GoogleDistanceMatrixEntity {

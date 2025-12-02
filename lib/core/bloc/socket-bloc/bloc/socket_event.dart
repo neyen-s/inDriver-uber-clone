@@ -168,3 +168,44 @@ class ListenDriverAssignedChannel extends SocketEvent {
   @override
   List<Object?> get props => [idDriver];
 }
+
+class SendTripDriverPositionRequested extends SocketEvent {
+  const SendTripDriverPositionRequested({
+    required this.idClient,
+    required this.lat,
+    required this.lng,
+  });
+  final int idClient;
+  final double lat;
+  final double lng;
+
+  @override
+  List<Object?> get props => [idClient, lat, lng];
+}
+
+class ListenTripDriverPositionChannel extends SocketEvent {
+  const ListenTripDriverPositionChannel(this.idClient);
+  final String idClient;
+  @override
+  List<Object?> get props => [idClient];
+}
+
+class StopListeningTripDriverPositionChannel extends SocketEvent {
+  const StopListeningTripDriverPositionChannel(this.idClient);
+  final String idClient;
+  @override
+  List<Object?> get props => [idClient];
+}
+
+class SocketTripDriverPositionReceived extends SocketEvent {
+  const SocketTripDriverPositionReceived({
+    required this.idSocket,
+    required this.lat,
+    required this.lng,
+  });
+  final String idSocket;
+  final double lat;
+  final double lng;
+  @override
+  List<Object?> get props => [idSocket, lat, lng];
+}

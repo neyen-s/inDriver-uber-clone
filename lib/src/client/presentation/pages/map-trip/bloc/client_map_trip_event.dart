@@ -4,7 +4,7 @@ sealed class ClientMapTripEvent extends Equatable {
   const ClientMapTripEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class GetClientRequestById extends ClientMapTripEvent {
@@ -13,4 +13,20 @@ class GetClientRequestById extends ClientMapTripEvent {
 
   @override
   List<Object> get props => [idClientRequest];
+}
+
+class DrawRouteForTrip extends ClientMapTripEvent {
+  const DrawRouteForTrip({required this.origin, required this.destination});
+  final LatLng origin;
+  final LatLng destination;
+
+  @override
+  List<Object> get props => [origin, destination];
+}
+
+class SocketDriverPositionUpdated extends ClientMapTripEvent {
+  const SocketDriverPositionUpdated(this.idSocket, this.lat, this.lng);
+  final String idSocket;
+  final double lat;
+  final double lng;
 }
