@@ -16,8 +16,8 @@ class ClientMapTripDetails extends StatelessWidget {
     final fare = clientRequest.fareAssigned ?? clientRequest.fareOffered;
 
     return Container(
-      padding: const EdgeInsets.all(12),
-      height: 350.h,
+      padding: const EdgeInsets.only(top: 12, right: 12, left: 12),
+      height: 400.h,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -37,9 +37,11 @@ class ClientMapTripDetails extends StatelessWidget {
         children: [
           Text(
             'YOUR DRIVER',
-            style: TextStyle(fontSize: 15.h, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 13.h, fontWeight: FontWeight.bold),
           ),
           ListTile(
+            minVerticalPadding: 2,
+            minTileHeight: 65,
             title: Text(
               '${driver?.name ?? ''}'
               '${driver?.lastname ?? ''}',
@@ -51,7 +53,6 @@ class ClientMapTripDetails extends StatelessWidget {
             ),
             trailing: UserProfileImg(imageUrl: driver?.image ?? ''),
           ),
-          SizedBox(height: 4.h),
           ListTile(
             title: Text(
               '${car?.brand ?? ''} ',
@@ -69,7 +70,7 @@ class ClientMapTripDetails extends StatelessWidget {
             minVerticalPadding: 0,
             minTileHeight: 0,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 5.h),
           Padding(
             padding: EdgeInsets.only(left: 15.w),
             child: Text(
@@ -79,10 +80,10 @@ class ClientMapTripDetails extends StatelessWidget {
               style: TextStyle(fontSize: 12.h),
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 5.h),
           Text(
             'TRIP INFO',
-            style: TextStyle(fontSize: 15.h, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 13.h, fontWeight: FontWeight.bold),
           ),
           IconRowInfo(
             icon: Icons.location_on,
@@ -94,7 +95,7 @@ class ClientMapTripDetails extends StatelessWidget {
             label: 'Destination',
             firstTittle: clientRequest.destinationDescription,
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 5.h),
 
           IconRowInfo(
             icon: Icons.euro,

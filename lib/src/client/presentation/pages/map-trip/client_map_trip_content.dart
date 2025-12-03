@@ -38,6 +38,8 @@ class _ClientMapTripContentState extends State<ClientMapTripContent> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ClientMapTripBloc, ClientMapTripState>(
+      listenWhen: (prev, curr) => prev.polylines != curr.polylines,
+
       listener: (context, state) async {
         if (state.polylines.isNotEmpty) {
           try {
@@ -87,7 +89,10 @@ class _ClientMapTripContentState extends State<ClientMapTripContent> {
             GoogleMapView(
               mapController: _mapController,
               initialPosition: CameraPosition(
-                target: state.origin ?? defaultLocation,
+                target:
+                    state.driverMarker?.position ??
+                    state.origin ??
+                    defaultLocation,
                 zoom: 14,
               ),
               markers: markers,

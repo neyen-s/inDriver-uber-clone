@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/services/injection_container.dart';
 import 'package:indriver_uber_clone/core/services/map_maker_icon_service.dart';
+import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/animate_route_with_padding.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map/widgets/google_map_view.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/bloc/driver_map_trip_bloc.dart';
@@ -89,7 +90,7 @@ class _DriverMapTripContentState extends State<DriverMapTripContent> {
                 target:
                     state.driverMarker?.position ??
                     state.origin ??
-                    const LatLng(39.42, -0.48),
+                    defaultLocation,
                 zoom: 14,
               ),
               markers: markers,

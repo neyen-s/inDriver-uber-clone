@@ -15,6 +15,8 @@ class ClientMapTripState extends Equatable {
     this.durationMinutes,
     this.timeAndDistanceValues,
     this.isEstimated = false,
+    this.routeDrawn = false,
+    this.routePhase = RoutePhase.none,
   });
 
   final bool isLoading;
@@ -28,8 +30,10 @@ class ClientMapTripState extends Equatable {
   final Marker? driverMarker;
   final double? distanceKm;
   final int? durationMinutes;
-  final dynamic timeAndDistanceValues;
+  final TimeAndDistanceValuesEntity? timeAndDistanceValues;
   final bool isEstimated;
+  final bool routeDrawn;
+  final RoutePhase routePhase;
 
   ClientMapTripState copyWith({
     bool? isLoading,
@@ -44,8 +48,10 @@ class ClientMapTripState extends Equatable {
     Marker? driverMarker,
     double? distanceKm,
     int? durationMinutes,
-    dynamic timeAndDistanceValues,
+    TimeAndDistanceValuesEntity? timeAndDistanceValues,
     bool? isEstimated,
+    bool? routeDrawn,
+    RoutePhase? routePhase,
   }) {
     return ClientMapTripState(
       isLoading: isLoading ?? this.isLoading,
@@ -63,6 +69,8 @@ class ClientMapTripState extends Equatable {
       timeAndDistanceValues:
           timeAndDistanceValues ?? this.timeAndDistanceValues,
       isEstimated: isEstimated ?? this.isEstimated,
+      routeDrawn: routeDrawn ?? this.routeDrawn,
+      routePhase: routePhase ?? this.routePhase,
     );
   }
 
@@ -79,5 +87,7 @@ class ClientMapTripState extends Equatable {
     driverMarker,
     timeAndDistanceValues,
     isEstimated,
+    routeDrawn,
+    routePhase,
   ];
 }

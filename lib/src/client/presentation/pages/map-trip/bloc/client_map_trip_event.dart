@@ -30,3 +30,5 @@ class SocketDriverPositionUpdated extends ClientMapTripEvent {
   final double lat;
   final double lng;
 }
+
+//final class StartLocationTracking extends ClientMapTripEvent {}

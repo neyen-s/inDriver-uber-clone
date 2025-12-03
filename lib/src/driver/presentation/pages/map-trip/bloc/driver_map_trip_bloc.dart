@@ -1,4 +1,4 @@
-//lint:ignore-file for setting errorMSG back to null on succes
+//lint:ignore-file for setting errorMSG back to null on succes is required
 // ignore_for_file: avoid_redundant_argument_values
 
 import 'dart:async';
@@ -12,6 +12,7 @@ import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart'
 import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/geo_utils.dart';
 import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
@@ -40,17 +41,6 @@ class DriverMapTripBloc extends Bloc<DriverMapTripEvent, DriverMapTripState> {
   LatLng? _lastPositionSent;
 
   StreamSubscription<Position>? _positionSub;
-
-  /// Helper: returns true if two LatLng are within [metersThreshold] meters.
-  bool _approxSameLatLng(LatLng a, LatLng b, {double metersThreshold = 5.0}) {
-    final d = Geolocator.distanceBetween(
-      a.latitude,
-      a.longitude,
-      b.latitude,
-      b.longitude,
-    );
-    return d <= metersThreshold;
-  }
 
   /// When we ask for a client request, we keep isLoading true until the
   /// route is actually drawn (or an error occurs). We try to use known
@@ -97,7 +87,9 @@ class DriverMapTripBloc extends Bloc<DriverMapTripEvent, DriverMapTripState> {
           _socketBloc.add(
             ListenTripDriverPositionChannel(fetched.idClient.toString()),
           );
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Error requesting trip channel listen: $e');
+        }
 
         // Try to use snapshot driver position from socket (if available)
         LatLng? socketDriverPos;
@@ -124,7 +116,7 @@ class DriverMapTripBloc extends Bloc<DriverMapTripEvent, DriverMapTripState> {
         // If routeOrigin is basically the same as pickup, postpone drawing
         // until we receive a real driver location update
         // (avoid drawing pickup->pickup).
-        if (_approxSameLatLng(routeOrigin, origin)) {
+        if (approxSameLatLng(routeOrigin, origin)) {
           // do nothing here — loader stays until
           // driver position triggers drawing
         } else {
@@ -144,18 +136,14 @@ class DriverMapTripBloc extends Bloc<DriverMapTripEvent, DriverMapTripState> {
     Emitter<DriverMapTripState> emit,
   ) async {
     // skip trivial route (origin ~ destination)
-    if (_approxSameLatLng(
-      event.origin,
-      event.destination,
-      metersThreshold: 2,
-    )) {
+    if (approxSameLatLng(event.origin, event.destination, metersThreshold: 2)) {
       emit(
         state.copyWith(isLoading: false),
       ); // route not drawable => hide loader
       return;
     }
-
     emit(state.copyWith(isLoading: true));
+
     try {
       final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
       final request = RoutesApiRequest(
