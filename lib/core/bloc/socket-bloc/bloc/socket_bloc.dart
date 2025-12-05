@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
 
@@ -68,6 +69,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
 
   bool _isConnecting = false;
   bool _isConnected = false;
+
+  DateTime? _lastInitialDriversAttempt;
+  final Duration _initialDriversCooldown = const Duration(seconds: 6);
 
   // ------------------- CONNECT / DISCONNECT -------------------
   Future<void> _onConnectSocket(
@@ -480,14 +484,31 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     SocketDriversSnapshotReceived event,
     Emitter<SocketState> emit,
   ) {
+    // if incoming is empty and we already have drivers, ignore
     if (event.drivers.isEmpty && _drivers.isNotEmpty) return;
+
+    // if incoming empty and we have none, maybe schedule retry once (debounced)
     if (event.drivers.isEmpty && _drivers.isEmpty) {
-      _scheduleInitialDriversRetry();
+      final now = DateTime.now();
+      if (_lastInitialDriversAttempt == null ||
+          now.difference(_lastInitialDriversAttempt!) >=
+              _initialDriversCooldown) {
+        _lastInitialDriversAttempt = now;
+        _scheduleInitialDriversRetry();
+      }
       return;
     }
+
+    // Only update + emit if map actually changed
+    final newMap = Map<String, LatLng>.from(event.drivers);
+    if (_drivers.isNotEmpty && mapEquals(_drivers, newMap)) {
+      // no change => skip emit
+      return;
+    }
+
     _drivers
       ..clear()
-      ..addAll(event.drivers);
+      ..addAll(newMap);
     emit(SocketDriverPositionsUpdated(Map.from(_drivers)));
   }
 

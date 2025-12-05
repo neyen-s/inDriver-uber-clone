@@ -99,15 +99,17 @@ class _DriverMapTripContentState extends State<DriverMapTripContent> {
               showMapPadding: state.polylines.isNotEmpty,
               onMapTap: (_) {},
             ),
-            // bottom sheet
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: state.clientRequestResponse != null
-                  ? DriverMapTripDetails(
-                      clientRequest: state.clientRequestResponse!,
-                    )
-                  : const SizedBox.shrink(),
-            ),
+            if (state.clientRequestResponse != null)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.75,
+                  width: double.infinity,
+                  child: DriverMapTripDetails(
+                    clientRequest: state.clientRequestResponse!,
+                  ),
+                ),
+              ),
           ],
         );
       },

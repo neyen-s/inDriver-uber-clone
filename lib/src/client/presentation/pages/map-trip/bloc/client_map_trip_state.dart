@@ -12,7 +12,7 @@ class ClientMapTripState extends Equatable {
     this.polylines = const {},
     this.driverMarker, // Marker? nullable
     this.distanceKm,
-    this.durationMinutes,
+    this.estimatedTripDurationSeconds,
     this.timeAndDistanceValues,
     this.isEstimated = false,
     this.routeDrawn = false,
@@ -29,7 +29,7 @@ class ClientMapTripState extends Equatable {
   final Map<PolylineId, Polyline> polylines;
   final Marker? driverMarker;
   final double? distanceKm;
-  final int? durationMinutes;
+  final int? estimatedTripDurationSeconds;
   final TimeAndDistanceValuesEntity? timeAndDistanceValues;
   final bool isEstimated;
   final bool routeDrawn;
@@ -47,7 +47,7 @@ class ClientMapTripState extends Equatable {
     Map<PolylineId, Polyline>? polylines,
     Marker? driverMarker,
     double? distanceKm,
-    int? durationMinutes,
+    int? estimatedTripDurationSeconds,
     TimeAndDistanceValuesEntity? timeAndDistanceValues,
     bool? isEstimated,
     bool? routeDrawn,
@@ -65,7 +65,8 @@ class ClientMapTripState extends Equatable {
       polylines: polylines ?? this.polylines,
       driverMarker: driverMarker ?? this.driverMarker,
       distanceKm: distanceKm ?? this.distanceKm,
-      durationMinutes: durationMinutes ?? this.durationMinutes,
+      estimatedTripDurationSeconds:
+          estimatedTripDurationSeconds ?? this.estimatedTripDurationSeconds,
       timeAndDistanceValues:
           timeAndDistanceValues ?? this.timeAndDistanceValues,
       isEstimated: isEstimated ?? this.isEstimated,
@@ -85,6 +86,8 @@ class ClientMapTripState extends Equatable {
     destinationAddress,
     polylines,
     driverMarker,
+    distanceKm,
+    estimatedTripDurationSeconds,
     timeAndDistanceValues,
     isEstimated,
     routeDrawn,

@@ -73,7 +73,8 @@ class SocketClient {
       // Re-attach previously registered listeners on reconnect.
       _attachRegisteredListeners();
 
-      if (!(_connectCompleter?.isCompleted ?? false)) {
+      // COMPLETE connect completer SAFELY
+      if (_connectCompleter != null && !_connectCompleter!.isCompleted) {
         _connectCompleter!.complete();
       }
 
@@ -114,7 +115,7 @@ class SocketClient {
 
     _socket!.onError((err) {
       if (kDebugMode) debugPrint('⚠️ socket Error: $err');
-      if (!(_connectCompleter?.isCompleted ?? false)) {
+      if (_connectCompleter != null && !_connectCompleter!.isCompleted) {
         _connectCompleter!.completeError((err ?? 'socket error') as Object);
       }
     });

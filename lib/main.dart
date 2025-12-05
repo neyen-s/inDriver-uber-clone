@@ -24,7 +24,7 @@ void main() async {
   ]);
   runApp(
     DevicePreview(
-      enabled: false,
+      enabled: true,
       // Disable for production,
       //genertares unwanted spaces when the keyboard appears
       builder: (context) => const MyAppWrapper(),

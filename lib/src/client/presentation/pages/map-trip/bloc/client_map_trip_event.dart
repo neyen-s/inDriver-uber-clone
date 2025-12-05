@@ -31,4 +31,14 @@ class SocketDriverPositionUpdated extends ClientMapTripEvent {
   final double lng;
 }
 
-//final class StartLocationTracking extends ClientMapTripEvent {}
+class StartLocalEtaCountdown extends ClientMapTripEvent {
+  const StartLocalEtaCountdown();
+}
+
+class StopLocalEtaCountdown extends ClientMapTripEvent {
+  const StopLocalEtaCountdown();
+}
+
+class EtaTick extends ClientMapTripEvent {
+  const EtaTick();
+}

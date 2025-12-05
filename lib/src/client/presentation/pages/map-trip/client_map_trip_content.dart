@@ -102,14 +102,17 @@ class _ClientMapTripContentState extends State<ClientMapTripContent> {
               onMapTap: (_) {},
             ),
 
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: state.clientRequestResponse != null
-                  ? ClientMapTripDetails(
-                      clientRequest: state.clientRequestResponse!,
-                    )
-                  : const SizedBox.shrink(),
-            ),
+            if (state.clientRequestResponse != null)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.75,
+                  width: double.infinity,
+                  child: ClientMapTripDetails(clientMapTripState: state),
+                ),
+              )
+            else
+              const SizedBox.shrink(),
           ],
         );
       },

@@ -7,7 +7,6 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/entities/time_and_distance_values_entity.dart';
@@ -31,6 +30,10 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
     on<GetClientRequestById>(_onGetClientRequestById);
     on<DrawRouteForTrip>(_onDrawRouteForTrip);
     on<SocketDriverPositionUpdated>(_onSocketDriverPositionUpdated);
+    //Timer methods
+    on<StartLocalEtaCountdown>(_onStartLocalEtaCountdown);
+    on<StopLocalEtaCountdown>(_onStopLocalEtaCountdown);
+    on<EtaTick>(_onEtaTick);
 
     _listenToSocket();
     // Start asynchronous load of driver icon to avoid creating
@@ -50,6 +53,9 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
 
   // Cached driver icon to avoid recreating BitmapDescriptor repeatedly.
   BitmapDescriptor? _driverIcon;
+
+  Timer? _localEstimatedTimer;
+  final Duration _localTick = const Duration(seconds: 1);
 
   void _listenToSocket() {
     // Listen to socketBloc stream and convert relevant
@@ -92,7 +98,6 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
         }
       });
 
-      // En caso de que socket tenga ya snapshot
       final cur = _socketBloc.state;
       if (cur is SocketDriverPositionsUpdated) {
         final drivers = cur.drivers;
@@ -277,18 +282,22 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
           ? RoutePhase.driverToPickup
           : state.routePhase;
 
+      final seconds = durationMinutes * 60;
+
       emit(
         state.copyWith(
           isLoading: false,
           polylines: newPolys,
           timeAndDistanceValues: timeAndDistanceValues,
           distanceKm: distanceKm,
-          durationMinutes: durationMinutes,
+          estimatedTripDurationSeconds: seconds,
           routeDrawn: true,
           routePhase: phase,
           errorMessage: null,
         ),
       );
+
+      add(const StartLocalEtaCountdown());
     } catch (e) {
       emit(
         state.copyWith(
@@ -296,6 +305,8 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
           errorMessage: 'Error drawing route: $e',
         ),
       );
+    } finally {
+      _isDrawingRoute = false;
     }
   }
 
@@ -329,9 +340,56 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
     }
   }
 
+  // ETA handling strategy functionality (prototype):
+  // 1) We request a real ETA (Google / backend) once when the route is created.
+  // 2) We start a local countdown (seconds)
+  // from that ETA and show it in the UI.
+  // 3) The local countdown updates every second
+  // to give the impression  of a live ETA without calling
+  // the routing API repeatedly.
+  // --this provides a realistic UX while avoiding Google
+  // quota consumption during development. --
+  Future<void> _onStartLocalEtaCountdown(
+    StartLocalEtaCountdown event,
+    Emitter<ClientMapTripState> emit,
+  ) async {
+    if (_localEstimatedTimer != null && _localEstimatedTimer!.isActive) return;
+
+    // start periodic timer that dispatches EtaTick events to the bloc
+    _localEstimatedTimer = Timer.periodic(_localTick, (_) {
+      // dispatch event so the Bloc handles state update inside handler
+      add(const EtaTick());
+    });
+  }
+
+  Future<void> _onStopLocalEtaCountdown(
+    StopLocalEtaCountdown event,
+    Emitter<ClientMapTripState> emit,
+  ) async {
+    _localEstimatedTimer?.cancel();
+    _localEstimatedTimer = null;
+  }
+
+  Future<void> _onEtaTick(
+    EtaTick event,
+    Emitter<ClientMapTripState> emit,
+  ) async {
+    final secs = state.estimatedTripDurationSeconds ?? 0;
+    if (secs <= 0) {
+      // reached zero: stop timer and update UI message (we set 0 explicitly)
+      emit(state.copyWith(estimatedTripDurationSeconds: 0));
+      // stop timer via event (so timer is cancelled in the handler)
+      add(const StopLocalEtaCountdown());
+      return;
+    }
+    final newSecs = secs - _localTick.inSeconds;
+    emit(state.copyWith(estimatedTripDurationSeconds: newSecs));
+  }
+
   @override
   Future<void> close() {
     _socketSub?.cancel();
+    _localEstimatedTimer?.cancel();
     return super.close();
   }
 }
