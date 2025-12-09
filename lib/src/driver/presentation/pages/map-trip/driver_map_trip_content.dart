@@ -39,6 +39,7 @@ class _DriverMapTripContentState extends State<DriverMapTripContent> {
   Widget build(BuildContext context) {
     return BlocConsumer<DriverMapTripBloc, DriverMapTripState>(
       listenWhen: (prev, curr) => prev.polylines != curr.polylines,
+
       listener: (context, state) async {
         if (state.polylines.isNotEmpty) {
           try {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -38,7 +39,11 @@ class _ClientMapTripContentState extends State<ClientMapTripContent> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ClientMapTripBloc, ClientMapTripState>(
-      listenWhen: (prev, curr) => prev.polylines != curr.polylines,
+      //listenWhen: (prev, curr) => prev.polylines != curr.polylines,
+      listenWhen: (prev, curr) =>
+          prev.polylines != curr.polylines ||
+          prev.routePhases != curr.routePhases ||
+          prev.driverMarker?.position != curr.driverMarker?.position,
 
       listener: (context, state) async {
         if (state.polylines.isNotEmpty) {
@@ -46,6 +51,9 @@ class _ClientMapTripContentState extends State<ClientMapTripContent> {
             final controller = await _mapController.future;
             final firstPolyline = state.polylines.values.first;
             final latLngPoints = firstPolyline.points;
+            debugPrint(
+              '[UI] animating route with ${latLngPoints.length} points',
+            );
             await animateRouteWithPadding(
               controller: controller,
               context: context,

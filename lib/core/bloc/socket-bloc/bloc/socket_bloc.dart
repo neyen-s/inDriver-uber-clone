@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart' show mapEquals;
+import 'package:flutter/foundation.dart' show debugPrint, mapEquals;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/socket/socket_use_cases.dart';
 
@@ -39,10 +39,13 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     );
     on<SocketDriverAssignedEvent>(_onSocketDriverAssignedEvent);
     on<ListenTripDriverPositionChannel>(_onListenTripDriverPositionChannel);
+    on<ListenTripStatusChannel>(_onListenTripStatusChannel);
     on<StopListeningTripDriverPositionChannel>(
       _onStopListeningTripDriverPositionChannel,
     );
     on<SocketTripDriverPositionReceived>(_onSocketTripDriverPositionReceived);
+    on<SendTripStatusRequested>(_onSendTripStatusRequested);
+    on<SocketTripStatusReceived>(_onSocketTripStatusReceived);
 
     // Actions: sending messages
     on<SendNewClientRequestRequested>(_onSendNewClientRequestRequested);
@@ -87,7 +90,6 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       unawaited(_attachInitialDriversListener());
       unawaited(_attachNewDriverPositionListener());
       unawaited(_attachCreatedClientRequestListener());
-      // if your backend emits 'request_removed' globally, attach it too:
       unawaited(
         _attachRequestRemovedListener(),
       ); // optional: implement if needed
@@ -203,8 +205,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
         final sub = stream.listen(
           (data) {
             final parsed = _extractId(data);
-            if (parsed != null)
+            if (parsed != null) {
               add(SocketDriverDisconnectedReceived(idSocket: parsed));
+            }
           },
           onError: (e, st) =>
               addError(Exception('driver_disconnected stream error: $e')),
@@ -227,8 +230,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
           (data) {
             if (data is Map) {
               final id = (data['id_client_request'] ?? data['id'])?.toString();
-              if (id != null)
+              if (id != null) {
                 add(SocketClientRequestReceived(idClientRequest: id));
+              }
             }
           },
           onError: (e, st) =>
@@ -290,6 +294,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
           onError: (e, st) =>
               addError(Exception('Stream error on $channel: $e')),
         );
+        print('SocketBloc: subscribed to $channel');
+
         _channelSubscriptions[channel] = sub;
       },
     );
@@ -337,6 +343,8 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
           onError: (e, st) =>
               addError(Exception('Stream error on $channel: $e')),
         );
+        print('SocketBloc: subscribed to $channel');
+
         _channelSubscriptions[channel] = sub;
       },
     );
@@ -346,6 +354,7 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
     ListenTripDriverPositionChannel event,
     Emitter<SocketState> emit,
   ) async {
+    print('_onListenTripDriverPositionChannel for id ${event.idClient}');
     final channel = 'trip_new_driver_position/${event.idClient}';
     if (_channelSubscriptions.containsKey(channel)) return;
 
@@ -357,10 +366,9 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
       (stream) {
         final sub = stream.listen(
           (data) {
-            // data expected: { 'id_socket': sid, 'lat': X, 'lng': Y }
             final parsed = _extractIdLatLng(data);
             if (parsed != null) {
-              // emit a dedicated state so los consumers diferencien este evento
+              print('SocketBloc: statusChannel $channel got data: $data');
               add(
                 SocketTripDriverPositionReceived(
                   idSocket: parsed.id,
@@ -373,6 +381,50 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
           onError: (e, st) =>
               addError(Exception('Stream error on $channel: $e')),
         );
+        print('SocketBloc: subscribed to $channel');
+        _channelSubscriptions[channel] = sub;
+      },
+    );
+  }
+
+  Future<void> _onListenTripStatusChannel(
+    ListenTripStatusChannel event,
+    Emitter<SocketState> emit,
+  ) async {
+    final channel = 'new_status_trip/${event.id}';
+    if (_channelSubscriptions.containsKey(channel)) return;
+
+    final res = await _socketUseCases.onSocketMessageUseCase(channel);
+    res.fold(
+      (failure) => addError(
+        Exception('Socket listen error ($channel): ${failure.message}'),
+      ),
+      (stream) {
+        final sub = stream.listen(
+          (data) {
+            try {
+              if (data is Map) {
+                final id = (data['id_client_request'] ?? data['id'])
+                    ?.toString();
+                final status = (data['status'] ?? '')?.toString();
+                if (id != null && status!.isNotEmpty) {
+                  add(
+                    SocketTripStatusReceived(
+                      idClientRequest: id,
+                      status: status,
+                    ),
+                  );
+                }
+              }
+            } catch (e) {
+              // safe ignore
+              debugPrint('Error parsing status message on $channel: $e');
+            }
+          },
+          onError: (e, st) =>
+              addError(Exception('Stream error on $channel: $e')),
+        );
+        print('SocketBloc: subscribed to $channel');
         _channelSubscriptions[channel] = sub;
       },
     );
@@ -397,6 +449,37 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
         lat: event.lat,
         lng: event.lng,
       ),
+    );
+  }
+
+  Future<void> _onSendTripStatusRequested(
+    SendTripStatusRequested event,
+    Emitter<SocketState> emit,
+  ) async {
+    try {
+      await _socketUseCases.sendSocketMessageUseCase('update_status_trip', {
+        'id_client_request': event.idClientRequest,
+        'status': event.status,
+      });
+    } catch (e) {
+      emit(SocketError('Error sending trip status: $e'));
+    }
+  }
+
+  Future<void> _onSocketTripStatusReceived(
+    SocketTripStatusReceived event,
+    Emitter<SocketState> emit,
+  ) async {
+    print('SocketBloc: _onSocketTripStatusReceived event=$event');
+
+    emit(
+      SocketTripStatusUpdated(
+        idClientRequest: event.idClientRequest,
+        status: event.status,
+      ),
+    );
+    print(
+      'SocketBloc: emitted SocketTripStatusUpdated for ${event.idClientRequest} -> ${event.status}',
     );
   }
 
@@ -696,11 +779,17 @@ class SocketBloc extends Bloc<SocketEvent, SocketState> {
 
   @override
   Future<void> close() async {
-    for (final t in _pendingRemovals.values) t.cancel();
+    for (final t in _pendingRemovals.values) {
+      t.cancel();
+    }
     _pendingRemovals.clear();
-    for (final s in _socketSubscriptions) await s.cancel();
+    for (final s in _socketSubscriptions) {
+      await s.cancel();
+    }
     _socketSubscriptions.clear();
-    for (final s in _channelSubscriptions.values) await s.cancel();
+    for (final s in _channelSubscriptions.values) {
+      await s.cancel();
+    }
     _channelSubscriptions.clear();
     _initialDriversAttached = false;
     _initialDriversRetryTimer?.cancel();

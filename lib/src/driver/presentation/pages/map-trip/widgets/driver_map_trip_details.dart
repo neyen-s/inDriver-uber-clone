@@ -1,10 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/icon_row_info.dart';
 import 'package:indriver_uber_clone/core/common/widgets/user_profile_img.dart';
+import 'package:indriver_uber_clone/core/enums/enums.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/route_phases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/bloc/driver_map_trip_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/widgets/trip_button.dart';
 
 class DriverMapTripDetails extends StatefulWidget {
   const DriverMapTripDetails({required this.clientRequest, super.key});
@@ -56,6 +61,8 @@ class _DriverMapTripDetailsState extends State<DriverMapTripDetails> {
 
     final media = MediaQuery.of(context);
     final maxHeight = min(media.size.height * 0.57, 320.h);
+
+    bool startTrip;
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -157,26 +164,106 @@ class _DriverMapTripDetailsState extends State<DriverMapTripDetails> {
                     const SizedBox(height: 12),
 
                     // actions row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // TODO: implement call action
-                            },
-                            child: const Text('Call'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // TODO: implement "Arrived" action
-                            },
-                            child: const Text('Arrived'),
-                          ),
-                        ),
-                      ],
+                    BlocSelector<DriverMapTripBloc, DriverMapTripState, String>(
+                      selector: (s) =>
+                          s.clientRequestResponse?.status?.toUpperCase() ?? '',
+                      builder: (context, status) {
+                        final isAcceptedOrOnTheWay =
+                            status == 'ACCEPTED' || status == 'ON_THE_WAY';
+                        final isArrived = status == 'ARRIVED';
+                        final isTravelling = status == 'TRAVELLING';
+
+                        // Si quieres deshabilitar botones mientras se actualiza el status,
+                        // añades a state un bool isUpdatingStatus y usas BlocSelector para leerlo.
+                        final isUpdating = context.select(
+                          (DriverMapTripBloc b) => (b.state).isLoading ?? false,
+                        );
+
+                        VoidCallback? send(RoutePhases p) {
+                          if (isUpdating) return null;
+                          return () => sendStatus(p);
+                        }
+
+                        if (isTravelling) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: TripButton(
+                                  onPressed: send(RoutePhases.canceled),
+                                  danger: true,
+                                  child: const Text('Cancel trip'),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        if (isArrived) {
+                          return Row(
+                            children: [
+                              const SizedBox(width: 8),
+                              Expanded(
+                                flex: 2,
+                                child: TripButton(
+                                  onPressed: send(RoutePhases.travelling),
+                                  child: const Text('Start trip'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TripButton(
+                                  onPressed: () async {
+                                    final conf = await _confirmDialog(
+                                      context,
+                                      title: 'Cancel trip',
+                                      body:
+                                          'Are you sure you want to cancel'
+                                          ' the trip?',
+                                    );
+                                    if (conf ?? false) {
+                                      sendStatus(RoutePhases.canceled);
+                                    }
+                                  },
+                                  danger: true,
+                                  child: const Text('Cancel'),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        // default: CREATED / ACCEPTED / ON_THE_WAY
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: TripButton(
+                                onPressed: () {
+                                  /* abrir telefono */
+                                },
+                                child: const Text('Call'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () async {
+                                  final conf = await _confirmDialog(
+                                    context,
+                                    title: 'Driver arrived',
+                                    body:
+                                        'Have you arrived at the'
+                                        ' pickup location?',
+                                  );
+                                  if (conf ?? false) {
+                                    sendStatus(RoutePhases.arrived);
+                                  }
+                                },
+                                child: const Text('Arrived'),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     SizedBox(height: 8.h),
                   ],
@@ -185,6 +272,34 @@ class _DriverMapTripDetailsState extends State<DriverMapTripDetails> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  void sendStatus(RoutePhases phase) {
+    context.read<DriverMapTripBloc>().add(UpdateTripStatus(phase));
+  }
+
+  Future<bool?> _confirmDialog(
+    BuildContext ctx, {
+    required String title,
+    required String body,
+  }) {
+    return showDialog<bool>(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm'),
+          ),
+        ],
       ),
     );
   }

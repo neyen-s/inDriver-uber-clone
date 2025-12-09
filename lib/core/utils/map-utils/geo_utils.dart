@@ -35,6 +35,7 @@ double distanceBetweenMeters(LatLng a, LatLng b) {
 /// Generic approx equality using meters threshold.
 /// By default uses Geolocator.distanceBetween for simplicity.
 bool approxSameLatLng(LatLng a, LatLng b, {double metersThreshold = 5.0}) {
+  //TODO CHECK the actual need of this function
   final d = distanceBetweenMeters(a, b);
   return d <= metersThreshold;
 }

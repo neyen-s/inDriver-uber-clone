@@ -4,7 +4,7 @@ sealed class DriverMapTripEvent extends Equatable {
   const DriverMapTripEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class GetClientRequestById extends DriverMapTripEvent {
@@ -44,4 +44,18 @@ class StartTrip extends DriverMapTripEvent {
 class ResetRoute extends DriverMapTripEvent {
   //TODO check utility later
   const ResetRoute();
+}
+
+class UpdateTripStatus extends DriverMapTripEvent {
+  const UpdateTripStatus(this.status);
+  final RoutePhases status;
+  @override
+  List<Object?> get props => [status];
+}
+
+class TripStatusReceivedFromSocketDriver extends DriverMapTripEvent {
+  const TripStatusReceivedFromSocketDriver({required this.status});
+  final String status;
+  @override
+  List<Object?> get props => [status];
 }

@@ -16,7 +16,7 @@ void main() async {
   await SecureStorageAdapter.init();
   await init();
   //***FOR TESTING***
-  // await SessionManager.clearSession();
+  // await SessionManager.clearSessi on();
   // Lock to portrait only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

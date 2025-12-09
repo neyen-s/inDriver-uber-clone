@@ -1,4 +1,5 @@
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_usecase.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/update_trip_status_use_case.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/get_client_request_by_id_use_case.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/get_driver_trip_offers_by_client_request_use_case.dart';
@@ -13,6 +14,7 @@ class ClientRequestsUsecases {
     required this.getDriverTripOffersByClientRequestUseCase,
     required this.updateDriverAssignedUseCase,
     required this.getClientRequestByIdUseCase,
+    required this.updateTripStatusUseCase,
   });
 
   final GetTimeAndDistanceValuesUsecase getTimeAndDistanceValuesUsecase;
@@ -22,4 +24,5 @@ class ClientRequestsUsecases {
   getDriverTripOffersByClientRequestUseCase;
   final UpdateDriverAssignedUseCase updateDriverAssignedUseCase;
   final GetClientRequestByIdUseCase getClientRequestByIdUseCase;
+  final UpdateTripStatusUseCase updateTripStatusUseCase;
 }

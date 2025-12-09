@@ -1,4 +1,5 @@
 import 'package:indriver_uber_clone/core/domain/entities/time_and_distance_values_entity.dart';
+import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/typedefs.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
@@ -33,4 +34,6 @@ abstract class ClientRequestRepository {
   ResultFuture<ClientRequestResponseEntity> getClientRequestById(
     int idClientRequest,
   );
+
+  ResultFuture<bool> updateTripStatus(int idClientRequest, String status);
 }

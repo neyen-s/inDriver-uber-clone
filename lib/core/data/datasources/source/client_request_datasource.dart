@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_values_dto.dart';
+import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/client_request_response_dto.dart';
@@ -34,6 +35,8 @@ sealed class ClientRequestDataSource {
   );
 
   Future<ClientRequestResponseDto> getClientRequestById(int idClientRequest);
+
+  Future<bool> updateTripStatus(int idClientRequest, String status);
 }
 
 class ClientRequestDataSourceImpl implements ClientRequestDataSource {
@@ -224,5 +227,24 @@ class ClientRequestDataSourceImpl implements ClientRequestDataSource {
     } catch (e) {
       throw Exception('Error parsing ClientRequestResponseDto: $e');
     }
+  }
+
+  @override
+  Future<bool> updateTripStatus(int idClientRequest, String status) async {
+    debugPrint('**updateTripStatus');
+    final response = await apiClient.put(
+      path: '/client-requests/update_status/',
+      body: {'id_client_request': idClientRequest, 'status': status},
+    );
+
+    debugPrint('**updateTripStatus RESPONSE: $response');
+    if (response['success'] == true) {
+      return true;
+    }
+    if (response.containsKey('message')) {
+      throw Exception(response['message']?.toString() ?? 'Server error');
+    }
+
+    return false;
   }
 }

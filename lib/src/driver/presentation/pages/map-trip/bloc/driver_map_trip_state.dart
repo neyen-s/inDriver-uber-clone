@@ -10,7 +10,7 @@ class DriverMapTripState extends Equatable {
     this.polylines = const {},
     this.driverMarker,
     this.routeDrawn = false,
-    this.routePhase = RoutePhase.none,
+    this.routePhases = RoutePhases.created,
   });
 
   final bool isLoading;
@@ -21,7 +21,7 @@ class DriverMapTripState extends Equatable {
   final Map<PolylineId, Polyline> polylines;
   final Marker? driverMarker;
   final bool routeDrawn;
-  final RoutePhase routePhase;
+  final RoutePhases routePhases;
 
   DriverMapTripState copyWith({
     bool? isLoading,
@@ -32,7 +32,7 @@ class DriverMapTripState extends Equatable {
     Map<PolylineId, Polyline>? polylines,
     Marker? driverMarker,
     bool? routeDrawn,
-    RoutePhase? routePhase,
+    RoutePhases? routePhases,
   }) {
     return DriverMapTripState(
       isLoading: isLoading ?? this.isLoading,
@@ -44,7 +44,7 @@ class DriverMapTripState extends Equatable {
       polylines: polylines ?? this.polylines,
       driverMarker: driverMarker ?? this.driverMarker,
       routeDrawn: routeDrawn ?? this.routeDrawn,
-      routePhase: routePhase ?? this.routePhase,
+      routePhases: routePhases ?? this.routePhases,
     );
   }
 
@@ -58,6 +58,6 @@ class DriverMapTripState extends Equatable {
     polylines,
     driverMarker,
     routeDrawn,
-    routePhase,
+    routePhases,
   ];
 }

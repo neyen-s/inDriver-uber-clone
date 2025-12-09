@@ -42,3 +42,11 @@ class StopLocalEtaCountdown extends ClientMapTripEvent {
 class EtaTick extends ClientMapTripEvent {
   const EtaTick();
 }
+
+class TripStatusReceivedFromSocket extends ClientMapTripEvent {
+  const TripStatusReceivedFromSocket({required this.status});
+  final String status;
+
+  @override
+  List<Object?> get props => [status];
+}

@@ -9,8 +9,9 @@ import 'package:indriver_uber_clone/core/data/repositories/socket_repository_imp
 import 'package:indriver_uber_clone/core/domain/repositories/client_request_repository.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/geolocator_repository.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/socket_repository.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_usecase.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_use_case.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/update_trip_status_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/create_marker_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/find_position_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
@@ -127,6 +128,7 @@ Future<void> _initCore() async {
     )
     ..registerLazySingleton(() => UpdateDriverAssignedUseCase(sl()))
     ..registerLazySingleton(() => GetClientRequestByIdUseCase(sl()))
+    ..registerLazySingleton(() => UpdateTripStatusUseCase(sl()))
     ..registerLazySingleton(
       () => ClientRequestsUsecases(
         getTimeAndDistanceValuesUsecase: sl(),
@@ -135,6 +137,7 @@ Future<void> _initCore() async {
         getDriverTripOffersByClientRequestUseCase: sl(),
         updateDriverAssignedUseCase: sl(),
         getClientRequestByIdUseCase: sl(),
+        updateTripStatusUseCase: sl(),
       ),
     )
     //Socket

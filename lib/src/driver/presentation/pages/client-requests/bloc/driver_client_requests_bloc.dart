@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_use_cases.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';

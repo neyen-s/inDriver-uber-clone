@@ -84,3 +84,15 @@ class SocketTripDriverPositionUpdated extends SocketState {
   @override
   List<Object?> get props => [idSocket, lat, lng];
 }
+
+class SocketTripStatusUpdated extends SocketState {
+  const SocketTripStatusUpdated({
+    required this.idClientRequest,
+    required this.status,
+  });
+  final String idClientRequest;
+  final String status;
+
+  @override
+  List<Object?> get props => [idClientRequest, status];
+}

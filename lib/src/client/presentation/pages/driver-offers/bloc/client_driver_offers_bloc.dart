@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_use_cases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/driver_trip_request_entity.dart';
 
 part 'client_driver_offers_event.dart';
@@ -26,7 +26,7 @@ class ClientDriverOffersBloc
 
   final ClientRequestsUsecases clientRequestsUsecases;
   final SocketBloc socketBloc;
-  StreamSubscription? _socketSub;
+  StreamSubscription<dynamic>? _socketSub;
 
   void _handleSocketState(SocketState s) {
     if (s is SocketDriverOfferArrived) {

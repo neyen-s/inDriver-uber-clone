@@ -209,3 +209,34 @@ class SocketTripDriverPositionReceived extends SocketEvent {
   @override
   List<Object?> get props => [idSocket, lat, lng];
 }
+
+class SendTripStatusRequested extends SocketEvent {
+  const SendTripStatusRequested({
+    required this.idClientRequest,
+    required this.status,
+  });
+  final String idClientRequest;
+  final String status;
+
+  @override
+  List<Object?> get props => [idClientRequest, status];
+}
+
+class SocketTripStatusReceived extends SocketEvent {
+  const SocketTripStatusReceived({
+    required this.idClientRequest,
+    required this.status,
+  });
+  final String idClientRequest;
+  final String status;
+
+  @override
+  List<Object?> get props => [idClientRequest, status];
+}
+
+class ListenTripStatusChannel extends SocketEvent {
+  const ListenTripStatusChannel(this.id);
+  final String? id;
+  @override
+  List<Object?> get props => [id];
+}

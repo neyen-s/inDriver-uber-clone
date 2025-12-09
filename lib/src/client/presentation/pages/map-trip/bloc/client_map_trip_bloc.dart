@@ -10,11 +10,12 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/domain/entities/time_and_distance_values_entity.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_usecases.dart';
-import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_usecase.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/client_requests_use_cases.dart';
+import 'package:indriver_uber_clone/core/domain/usecases/client-requests/get_time_and_distance_values_use_case.dart';
 import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/geo_utils.dart';
+import 'package:indriver_uber_clone/core/utils/map-utils/route_phases.dart';
 import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
@@ -30,6 +31,8 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
     on<GetClientRequestById>(_onGetClientRequestById);
     on<DrawRouteForTrip>(_onDrawRouteForTrip);
     on<SocketDriverPositionUpdated>(_onSocketDriverPositionUpdated);
+    on<TripStatusReceivedFromSocket>(_onTripStatusReceivedFromSocket);
+
     //Timer methods
     on<StartLocalEtaCountdown>(_onStartLocalEtaCountdown);
     on<StopLocalEtaCountdown>(_onStopLocalEtaCountdown);
@@ -58,18 +61,19 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
   final Duration _localTick = const Duration(seconds: 1);
 
   void _listenToSocket() {
-    // Listen to socketBloc stream and convert relevant
-    // states into internal events.
     try {
       _socketSub = _socketBloc.stream.listen((socketState) {
-        // If socket provides a drivers snapshot (map),
-        // extract assigned driver's pos
+        // debug genérico + runtimeType para ver TODO lo que llega
+        print(
+          'CLIENT MAP TRIP LISTEN TO SOCKET -> runtimeType=${socketState.runtimeType} value=$socketState',
+        );
+
+        // Driver positions (ya ok)
         if (socketState is SocketDriverPositionsUpdated) {
           final assigned = state.clientRequestResponse?.idDriver?.toString();
           if (assigned != null && socketState.drivers.containsKey(assigned)) {
             final pos = socketState.drivers[assigned];
             if (pos != null) {
-              // normalize into the same internal event
               add(
                 SocketDriverPositionUpdated(
                   assigned,
@@ -82,10 +86,27 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
           return;
         }
 
-        // TODO: replace `SocketDriverArrivedState with the real state class once the api call is finished
+        // Trip status
+        if (socketState is SocketTripStatusUpdated) {
+          final rawId = socketState.idClientRequest;
+          final idFromSocket = rawId.toString();
+          final localRequestId = state.clientRequestResponse?.id.toString();
 
-        // If socket gives a trip-specific driver position update,
-        // handle it similarly
+          // debug detallado de ids (esto te dirá exactamente por qué falla)
+          debugPrint(
+            '[ClientMap][_listenToSocket] incoming status rawId=$rawId idFromSocket=$idFromSocket localRequestId=$localRequestId status=${socketState.status}',
+          );
+
+          if (localRequestId != null && localRequestId == idFromSocket) {
+            add(TripStatusReceivedFromSocket(status: socketState.status));
+          } else {
+            debugPrint(
+              '[ClientMap][_listenToSocket] ignored status: id mismatch (local=$localRequestId socket=$idFromSocket)',
+            );
+          }
+          return;
+        }
+
         if (socketState is SocketTripDriverPositionUpdated) {
           add(
             SocketDriverPositionUpdated(
@@ -98,6 +119,7 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
         }
       });
 
+      // initial snapshot handling (sin cambios)
       final cur = _socketBloc.state;
       if (cur is SocketDriverPositionsUpdated) {
         final drivers = cur.drivers;
@@ -157,15 +179,23 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
             origin: origin,
             destination: destination,
             routeDrawn: false,
-            routePhase: RoutePhase.none,
+            routePhases: RoutePhases.created,
             errorMessage: null,
           ),
         );
         try {
           // ask socket to listen to the trip channel
-          _socketBloc.add(
-            ListenTripDriverPositionChannel(fetchedRequest.idClient.toString()),
-          );
+          debugPrint('------------ fetchedRequest.id: ${fetchedRequest.id}');
+
+          // suscribir posiciones (usa idClient)
+          _socketBloc
+            ..add(
+              ListenTripDriverPositionChannel(
+                fetchedRequest.idClient.toString(),
+              ),
+            )
+            // suscribir cambios de estado del viaje (usa id del request)
+            ..add(ListenTripStatusChannel(fetchedRequest.id.toString()));
         } catch (e) {
           debugPrint('Error requesting trip channel listen: $e');
         }
@@ -195,12 +225,14 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
         // haven't drawn the route yet,
         // request route drawing once. _isDrawingRoute protects against
         //concurrent double calls.
-        if (!approxSameLatLng(routeOrigin, origin) &&
-            !state.routeDrawn &&
-            !_isDrawingRoute) {
-          _isDrawingRoute = true;
-          // Start drawing route
-          add(DrawRouteForTrip(origin: routeOrigin, destination: origin));
+        if (!approxSameLatLng(routeOrigin, origin)) {
+          // draw once if not drawn already
+          if (!state.routeDrawn) {
+            _isDrawingRoute = false; // asegurar
+            // setea fase ON_THE_WAY antes de enviar evento a dibujar
+            emit(state.copyWith(routePhases: RoutePhases.onTheWay));
+            add(DrawRouteForTrip(origin: routeOrigin, destination: origin));
+          }
         }
       },
     );
@@ -210,12 +242,12 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
     DrawRouteForTrip event,
     Emitter<ClientMapTripState> emit,
   ) async {
-    // If start and end are effectively the same (tiny distance), don't draw.
     if (approxSameLatLng(event.origin, event.destination, metersThreshold: 2)) {
       emit(state.copyWith(isLoading: false));
+      _isDrawingRoute = false;
       return;
     }
-    emit(state.copyWith(isLoading: true));
+    emit(state.copyWith(isLoading: true, polylines: {}));
 
     try {
       final timeResult = await _clientRequestUsecases
@@ -246,14 +278,21 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
         emit(state.copyWith(isLoading: false, errorMessage: 'No route found'));
         return;
       }
-
       final route = response.routes.first;
       final latLngPoints = (route.polylinePoints ?? [])
           .map((p) => LatLng(p.latitude, p.longitude))
           .toList();
 
+      // elegir id base en función de la fase actual
+      final idName = switch (state.routePhases) {
+        RoutePhases.created => 'route_driver_to_pickup',
+        RoutePhases.onTheWay => 'route_driver_to_pickup',
+        RoutePhases.travelling => 'route_pickup_to_destination',
+        _ => 'route',
+      };
+
       final polyline = Polyline(
-        polylineId: const PolylineId('route'),
+        polylineId: PolylineId(idName),
         width: 5,
         color: Colors.blue,
         points: latLngPoints,
@@ -261,13 +300,17 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
 
       final newPolys = {...state.polylines, polyline.polylineId: polyline};
 
+      final phase = (state.routePhases == RoutePhases.created)
+          ? RoutePhases.onTheWay
+          : state.routePhases;
+
+      // time/distance fallback handling
       var distanceKm = 0.0;
       var durationMinutes = 0;
       TimeAndDistanceValuesEntity? timeAndDistanceValues;
 
       timeResult.fold(
         (failure) {
-          // fallback using route metrics if available
           distanceKm = (route.distanceMeters ?? 0) / 1000;
           durationMinutes = ((route.duration ?? 0) / 60).round();
         },
@@ -277,10 +320,6 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
           durationMinutes = val.duration.value.round();
         },
       );
-
-      final phase = (state.routePhase == RoutePhase.none)
-          ? RoutePhase.driverToPickup
-          : state.routePhase;
 
       final seconds = durationMinutes * 60;
 
@@ -292,7 +331,7 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
           distanceKm: distanceKm,
           estimatedTripDurationSeconds: seconds,
           routeDrawn: true,
-          routePhase: phase,
+          routePhases: phase,
           errorMessage: null,
         ),
       );
@@ -315,6 +354,9 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
     Emitter<ClientMapTripState> emit,
   ) async {
     final newPos = LatLng(event.lat, event.lng);
+    debugPrint(
+      '[ClientMap] _onSocketDriverPositionUpdated -> id=${event.idSocket} lat=${event.lat} lng=${event.lng}',
+    );
 
     // Cache last position
     _lastPositionSent = newPos;
@@ -332,12 +374,106 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
     );
 
     emit(state.copyWith(driverMarker: marker));
+    debugPrint(
+      '[ClientMap] emitted driverMarker -> markerId=${marker.markerId.value} pos=${marker.position}',
+    );
 
     // If we haven't drawn the driver->pickup route yet, draw it once.
     if (state.origin != null && !state.routeDrawn && !_isDrawingRoute) {
       _isDrawingRoute = true;
+      emit(state.copyWith(routePhases: RoutePhases.onTheWay));
       add(DrawRouteForTrip(origin: newPos, destination: state.origin!));
     }
+  }
+
+  Future<void> _onTripStatusReceivedFromSocket(
+    TripStatusReceivedFromSocket event,
+    Emitter<ClientMapTripState> emit,
+  ) async {
+    final status = event.status.toUpperCase();
+    debugPrint(
+      '[ClientMap][_onTripStatusReceivedFromSocket] status=$status, currentRequestId=${state.clientRequestResponse?.id}',
+    );
+
+    final receivedPhase =
+        routePhaseFromServerString(status) ?? state.routePhases;
+    final updatedEntity = state.clientRequestResponse?.copyWith(status: status);
+
+    // update entity + phase in one emit
+    emit(
+      state.copyWith(
+        clientRequestResponse: updatedEntity,
+        routePhases: receivedPhase,
+      ),
+    );
+
+    // Act based on the canonical phase (mirrors Driver behaviour)
+    if (receivedPhase == RoutePhases.onTheWay) {
+      debugPrint(
+        '[ClientMap] received TRAVELLING — requesting draw pickup->destination',
+      );
+      // attempt to draw driver -> pickup using cached driver pos
+      final driverPos = state.driverMarker?.position ?? _lastPositionSent;
+      if (driverPos != null && state.origin != null && !_isDrawingRoute) {
+        _isDrawingRoute = true;
+        add(DrawRouteForTrip(origin: driverPos, destination: state.origin!));
+      } else {
+        debugPrint(
+          '[ClientMap] cannot draw travelling route origin=${state.origin} dest=${state.destination} _isDrawingRoute=$_isDrawingRoute',
+        );
+      }
+      return;
+    }
+
+    if (receivedPhase == RoutePhases.arrived) {
+      debugPrint('[ClientMap] received ARRIVED');
+      emit(state.copyWith(estimatedTripDurationSeconds: 0));
+      add(const StopLocalEtaCountdown());
+      return;
+    }
+
+    if (receivedPhase == RoutePhases.travelling) {
+      debugPrint('[ClientMap] received TRAVELLING');
+      // Clear previous driver->pickup and draw pickup->destination
+      // set phase to travelling before requesting draw
+      emit(state.copyWith(routePhases: RoutePhases.travelling));
+      if (state.origin != null &&
+          state.destination != null &&
+          !_isDrawingRoute) {
+        _isDrawingRoute = true;
+        add(
+          DrawRouteForTrip(
+            origin: state.origin!,
+            destination: state.destination!,
+          ),
+        );
+      } else {
+        debugPrint(
+          '[ClientMap] cannot draw travelling route (origin/dest null or already drawing)',
+        );
+      }
+      return;
+    }
+
+    if (receivedPhase == RoutePhases.canceled ||
+        receivedPhase == RoutePhases.finished) {
+      debugPrint('[ClientMap] received FINISHED/CANCELLED');
+      add(const StopLocalEtaCountdown());
+      add(
+        const StopLocalEtaCountdown(),
+      ); // safe guard (no-op if already stopped)
+      // reset route UI
+      emit(
+        state.copyWith(
+          routeDrawn: false,
+          polylines: {},
+          routePhases: RoutePhases.canceled,
+        ),
+      );
+      return;
+    }
+
+    debugPrint('[ClientMap] status not handled explicitly: $status');
   }
 
   // ETA handling strategy functionality (prototype):
