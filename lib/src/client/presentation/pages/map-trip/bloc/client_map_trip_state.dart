@@ -10,7 +10,7 @@ class ClientMapTripState extends Equatable {
     this.originAddress,
     this.destinationAddress,
     this.polylines = const {},
-    this.driverMarker, // Marker? nullable
+    this.driverMarker,
     this.distanceKm,
     this.estimatedTripDurationSeconds,
     this.timeAndDistanceValues,

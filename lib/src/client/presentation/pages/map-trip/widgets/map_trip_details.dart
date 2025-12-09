@@ -56,6 +56,8 @@ class _ClientMapTripDetailsState extends State<ClientMapTripDetails> {
     final media = MediaQuery.of(context);
     final maxHeight = min(media.size.height * 0.57, 320.h);
 
+    final status = widget.clientMapTripState.clientRequestResponse?.status
+        .toUpperCase();
     final secs = widget.clientMapTripState.estimatedTripDurationSeconds ?? 0;
     final watchValue = secs;
 
@@ -63,6 +65,16 @@ class _ClientMapTripDetailsState extends State<ClientMapTripDetails> {
       final m = (secs ~/ 60).toString();
       final s = (secs % 60).toString().padLeft(2, '0');
       return '$m:$s';
+    }
+
+    String arrivalText() {
+      if (status == 'ARRIVED') {
+        return 'Your driver has arrived';
+      }
+      if (secs <= 0) {
+        return 'Your driver should arrive soon...';
+      }
+      return 'Will arrive in ${etaText()}';
     }
 
     return Align(
@@ -167,9 +179,7 @@ class _ClientMapTripDetailsState extends State<ClientMapTripDetails> {
                         // increase blink frequency: shorter duration
                         duration: const Duration(milliseconds: 280),
                         child: Text(
-                          secs <= 0
-                              ? 'Your driver should arrive soon...'
-                              : 'Will arrive in ${etaText()}',
+                          arrivalText(),
                           style: TextStyle(fontSize: 12.h),
                         ),
                       ),
