@@ -1,17 +1,14 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/domain/entities/user_entity.dart';
 import 'package:indriver_uber_clone/core/extensions/context_extensions.dart';
-import 'package:indriver_uber_clone/src/profile/presentation/pages/update/viewmodels/profile_update_view_model.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/image_picker_button.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/network_avatar.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/widgets/profile_textfield.dart';
 
-class CardUserInfo extends StatelessWidget {
-  const CardUserInfo({
-    required this.vm,
+class ProfileInfoCard extends StatelessWidget {
+  const ProfileInfoCard({
     required this.user,
     required this.imageFile,
     required this.nameController,
@@ -24,10 +21,12 @@ class CardUserInfo extends StatelessWidget {
     required this.onLastnameChanged,
     required this.onPhoneChanged,
     required this.onImagePicked,
+    this.nameError,
+    this.lastnameError,
+    this.phoneError,
     super.key,
   });
 
-  final ProfileUpdateViewModel vm;
   final UserEntity? user;
   final File? imageFile;
 
@@ -45,6 +44,10 @@ class CardUserInfo extends StatelessWidget {
 
   final Future<void> Function() onImagePicked;
 
+  final String? nameError;
+  final String? lastnameError;
+  final String? phoneError;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -52,35 +55,15 @@ class CardUserInfo extends StatelessWidget {
       width: context.width,
       height: 300.h,
       child: Card(
-        //margin: EdgeInsets.only(top: 20.h),
         color: Colors.white,
         child: Padding(
           padding: EdgeInsets.only(top: 20.h),
           child: Column(
             children: [
-              SizedBox(
-                width: 100.w,
-                height: 100.w,
-                child: Stack(
-                  children: [
-                    SizedBox.expand(
-                      child: ClipOval(
-                        child: imageFile != null
-                            ? Image.file(imageFile!, fit: BoxFit.cover)
-                            : NetworkAvatar(
-                                imageUrl: user?.image,
-                                size: 100.w,
-                                assetFallback: 'assets/img/user.png',
-                              ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: ImagePickerButton(onTap: onImagePicked),
-                    ),
-                  ],
-                ),
+              _AvatarSection(
+                imageFile: imageFile,
+                user: user,
+                onImagePicked: onImagePicked,
               ),
               SizedBox(height: 10.h),
               ProfileTextField(
@@ -88,9 +71,7 @@ class CardUserInfo extends StatelessWidget {
                 focusNode: nameFocus,
                 hintText: 'Name',
                 prefixIcon: Icons.person,
-                errorText: !vm.name.isPure && vm.name.isNotValid
-                    ? vm.name.error?.toString()
-                    : null,
+                errorText: nameError,
                 onFocusLost: () => onNameChanged(nameController.text),
               ),
               SizedBox(height: 10.h),
@@ -99,9 +80,7 @@ class CardUserInfo extends StatelessWidget {
                 focusNode: lastNameFocus,
                 hintText: 'Last name',
                 prefixIcon: Icons.person_outline,
-                errorText: !vm.lastname.isPure && vm.lastname.isNotValid
-                    ? vm.lastname.error?.toString()
-                    : null,
+                errorText: lastnameError,
                 onFocusLost: () => onLastnameChanged(lastNameController.text),
               ),
               SizedBox(height: 10.h),
@@ -111,14 +90,51 @@ class CardUserInfo extends StatelessWidget {
                 hintText: 'Phone',
                 prefixIcon: Icons.phone,
                 keyboardType: TextInputType.phone,
-                errorText: !vm.phone.isPure && vm.phone.isNotValid
-                    ? vm.phone.error?.toString()
-                    : null,
+                errorText: phoneError,
                 onFocusLost: () => onPhoneChanged(phoneController.text),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AvatarSection extends StatelessWidget {
+  const _AvatarSection({
+    required this.imageFile,
+    required this.user,
+    required this.onImagePicked,
+  });
+  final File? imageFile;
+  final UserEntity? user;
+  final Future<void> Function() onImagePicked;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 100.w,
+      height: 100.w,
+      child: Stack(
+        children: [
+          SizedBox.expand(
+            child: ClipOval(
+              child: imageFile != null
+                  ? Image.file(imageFile!, fit: BoxFit.cover)
+                  : NetworkAvatar(
+                      imageUrl: user?.image,
+                      size: 100.w,
+                      assetFallback: 'assets/img/user.png',
+                    ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: ImagePickerButton(onTap: onImagePicked),
+          ),
+        ],
       ),
     );
   }

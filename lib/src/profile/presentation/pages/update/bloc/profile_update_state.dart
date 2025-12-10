@@ -1,60 +1,49 @@
 part of 'profile_update_bloc.dart';
 
-sealed class ProfileUpdateState extends Equatable {
-  const ProfileUpdateState();
-
-  @override
-  List<Object?> get props => [];
-}
-
-final class ProfileUpdateInitial extends ProfileUpdateState {
-  const ProfileUpdateInitial({
-    this.name = const NameEntity.pure(),
-    this.lastname = const LastnameEntity.pure(),
-    this.phone = const PhoneEntity.pure(),
+class ProfileUpdateState extends Equatable {
+  const ProfileUpdateState({
+    this.name = const NameInput.pure(),
+    this.lastname = const LastnameInput.pure(),
+    this.phone = const PhoneInput.pure(),
+    this.isLoading = false,
+    this.updateSuccess = false,
+    this.errorMessage,
   });
-  final NameEntity name;
-  final LastnameEntity lastname;
-  final PhoneEntity phone;
+
+  final NameInput name;
+  final LastnameInput lastname;
+  final PhoneInput phone;
+  final bool isLoading;
+  final bool updateSuccess;
+  final String? errorMessage;
+
+  bool get isValid => Formz.validate([name, lastname, phone]);
+
+  ProfileUpdateState copyWith({
+    NameInput? name,
+    LastnameInput? lastname,
+    PhoneInput? phone,
+    bool? isLoading,
+    bool? updateSuccess,
+    String? errorMessage,
+  }) {
+    return ProfileUpdateState(
+      name: name ?? this.name,
+      lastname: lastname ?? this.lastname,
+      phone: phone ?? this.phone,
+      isLoading: isLoading ?? this.isLoading,
+      updateSuccess: updateSuccess ?? this.updateSuccess,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
 
   @override
-  List<Object?> get props => [name, lastname, phone];
-}
-
-final class ProfileUpdateValidating extends ProfileUpdateState {
-  const ProfileUpdateValidating({
-    required this.name,
-    required this.lastname,
-    required this.phone,
-  });
-  final NameEntity name;
-  final LastnameEntity lastname;
-  final PhoneEntity phone;
-
-  @override
-  List<Object?> get props => [name, lastname, phone];
-}
-
-final class ProfileUpdateSubmitting extends ProfileUpdateState {
-  const ProfileUpdateSubmitting({
-    required this.name,
-    required this.lastname,
-    required this.phone,
-  });
-  final NameEntity name;
-  final LastnameEntity lastname;
-  final PhoneEntity phone;
-
-  @override
-  List<Object?> get props => [name, lastname, phone];
-}
-
-final class ProfileUpdateSuccess extends ProfileUpdateState {}
-
-final class ProfileUpdateFailure extends ProfileUpdateState {
-  const ProfileUpdateFailure(this.message);
-  final String message;
-
-  @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [
+    name,
+    lastname,
+    phone,
+    isLoading,
+    updateSuccess,
+    errorMessage,
+  ];
 }

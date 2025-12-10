@@ -27,13 +27,7 @@ class ProfileInfoContent extends StatelessWidget {
               icon: Icons.edit,
               ontTap: () => _navigateToUpdateProfile(context),
             ),
-            actionProfile(
-              option: 'Sign out',
-              icon: Icons.settings_power,
-              ontTap: () {
-                print('sign out FUNCTION HERE');
-              },
-            ),
+
             SizedBox(height: 20.h),
           ],
         ),
@@ -70,11 +64,7 @@ class ProfileInfoContent extends StatelessWidget {
               margin: EdgeInsets.only(top: 15.h, bottom: 0.h),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: NetworkAvatar(
-                  imageUrl: user?.image,
-                  size: 100.w,
-                  assetFallback: 'assets/img/user.png',
-                ),
+                child: NetworkAvatar(imageUrl: user?.image, size: 100.w),
               ),
             ),
             Text(

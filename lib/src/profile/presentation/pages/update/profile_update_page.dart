@@ -23,17 +23,23 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: BlocConsumer<ProfileUpdateBloc, ProfileUpdateState>(
+        listenWhen: (prev, state) =>
+            prev.isLoading != state.isLoading ||
+            prev.updateSuccess != state.updateSuccess ||
+            prev.errorMessage != state.errorMessage,
         listener: (context, state) {
-          if (state is ProfileUpdateSubmitting) {
+          if (state.isLoading) {
             LoadingService.show(context, message: 'Updating profile...');
           } else {
             LoadingService.hide(context);
           }
-          if (state is ProfileUpdateSuccess) {
+          if (state.updateSuccess) {
             Navigator.pop(context, true);
           }
-          if (state is ProfileUpdateFailure) {
-            debugPrint('*** ProfileUpdateFailure ERROR: ${state.message} ***');
+          if (state.errorMessage != null) {
+            debugPrint(
+              '*** ProfileUpdateFailure ERROR: ${state.errorMessage} ***',
+            );
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -45,7 +51,7 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
           }
         },
         builder: (context, state) {
-          return ProfileUpdateContent(user: user, state: state);
+          return ProfileUpdateContent(user: user);
         },
       ),
     );
