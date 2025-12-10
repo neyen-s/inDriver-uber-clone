@@ -1,6 +1,6 @@
 part of 'driver_car_info_bloc.dart';
 
-sealed class DriverCarInfoEvent {}
+class DriverCarInfoEvent {}
 
 final class BrandChanged extends DriverCarInfoEvent {
   BrandChanged(this.brand);
