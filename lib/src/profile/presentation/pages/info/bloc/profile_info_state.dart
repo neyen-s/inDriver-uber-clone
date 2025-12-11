@@ -1,6 +1,6 @@
 part of 'profile_info_bloc.dart';
 
-sealed class ProfileInfoState extends Equatable {
+class ProfileInfoState extends Equatable {
   const ProfileInfoState();
 
   @override

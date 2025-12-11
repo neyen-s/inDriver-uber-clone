@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/src/auth/data/datasource/remote/user_dto.dart';
 
-sealed class ProfileRemoteDataSource {
+abstract class ProfileRemoteDataSource {
   const ProfileRemoteDataSource();
 
   Future<UserDTO> updateProfile(UserDTO user, String token, File? file);

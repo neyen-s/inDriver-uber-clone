@@ -7,6 +7,11 @@ class AuthResponseEntity {
     this.refreshToken,
   });
 
+  AuthResponseEntity.empty()
+    : user = const UserEntity.empty(),
+      token = '',
+      refreshToken = null;
+
   final UserEntity user;
   final String token;
   final String? refreshToken;

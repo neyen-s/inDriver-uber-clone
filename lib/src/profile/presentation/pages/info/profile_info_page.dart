@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:indriver_uber_clone/core/common/widgets/dynamic_lottie_and_msg.dart';
 import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_content.dart';
@@ -42,7 +43,24 @@ class _ProfileInfoPageState extends State<ProfileInfoPage> {
               },
             );
           } else if (state is ProfileInfoError) {
-            return Center(child: Text('Error: ${state.message}'));
+            return Center(
+              child: Column(
+                children: [
+                  DynamicLottieAndMsg(
+                    message: 'Error: Something went wrong...',
+                    onPressed: () {
+                      context.read<ProfileInfoBloc>().add(
+                        const LoadUserProfile(),
+                      );
+                    },
+                    child: const Text(
+                      'try again',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
           return const SizedBox.shrink();
         },
