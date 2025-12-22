@@ -1,13 +1,13 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:indriver_uber_clone/src/auth/domain/entities/auth_response_entity.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_content.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/profile_info_page.dart';
 import 'package:mocktail/mocktail.dart';
+
+import '../../../../../helpers/test_app.dart';
 
 class FakeProfileInfoEvent extends Fake implements ProfileInfoEvent {}
 
@@ -30,20 +30,6 @@ void main() {
   setUp(() {
     mockBloc = MockProfileInfoBloc();
   });
-  Widget createTestWidget({required Widget child}) {
-    return ScreenUtilInit(
-      builder: (_, _) {
-        return MaterialApp(
-          home: Scaffold(
-            body: BlocProvider<ProfileInfoBloc>.value(
-              value: mockBloc,
-              child: child,
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   testWidgets('shows loader dialog when ProfileInfoLoading is emitted', (
     tester,
@@ -58,7 +44,12 @@ void main() {
       initialState: initial,
     );
 
-    await tester.pumpWidget(createTestWidget(child: const ProfileInfoPage()));
+    await tester.pumpWidget(
+      makeTestApp(
+        child: const ProfileInfoPage(),
+        blocProviders: [BlocProvider<ProfileInfoBloc>.value(value: mockBloc)],
+      ),
+    );
 
     await tester.pump();
 
@@ -80,7 +71,12 @@ void main() {
       initialState: initial,
     );
 
-    await tester.pumpWidget(createTestWidget(child: const ProfileInfoPage()));
+    await tester.pumpWidget(
+      makeTestApp(
+        child: const ProfileInfoPage(),
+        blocProviders: [BlocProvider<ProfileInfoBloc>.value(value: mockBloc)],
+      ),
+    );
     await tester.pump();
 
     expect(find.byType(ProfileInfoContent), findsOneWidget);
@@ -100,7 +96,12 @@ void main() {
         initialState: initial,
       );
 
-      await tester.pumpWidget(createTestWidget(child: const ProfileInfoPage()));
+      await tester.pumpWidget(
+        makeTestApp(
+          child: const ProfileInfoPage(),
+          blocProviders: [BlocProvider<ProfileInfoBloc>.value(value: mockBloc)],
+        ),
+      );
       await tester.pump();
 
       expect(find.text('Error: Something went wrong...'), findsOneWidget);

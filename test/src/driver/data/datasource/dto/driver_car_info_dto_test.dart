@@ -20,17 +20,22 @@ void main() {
       expect(dto.plate, '0768 OWJ');
     });
 
-    test('fromJson throws when required field brand is missing', () {
+    test('fromJson sets empty brand when missing', () {
       final json = {
         'id_driver': 1,
-        // 'brand' omitted on purpose
+        // 'brand' omitted
         'color': 'Red',
         'plate': '0768 OWJ',
       };
 
-      // fromJson uses `json['brand'] as String` so it will throw (TypeError / NoSuchMethod)
-      expect(() => DriverCarInfoDTO.fromJson(json), throwsA(isA<Error>()));
+      final dto = DriverCarInfoDTO.fromJson(json);
+
+      expect(dto.idDriver, 1);
+      expect(dto.brand, ''); // ahora esto es lo esperado
+      expect(dto.color, 'Red');
+      expect(dto.plate, '0768 OWJ');
     });
+
     test('fromJson throws error when idDriver field is wrong', () {
       final json = {
         'iddriver': 1, // este test falla

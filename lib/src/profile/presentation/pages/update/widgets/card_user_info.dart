@@ -58,42 +58,44 @@ class ProfileInfoCard extends StatelessWidget {
         color: Colors.white,
         child: Padding(
           padding: EdgeInsets.only(top: 20.h),
-          child: Column(
-            children: [
-              _AvatarSection(
-                imageFile: imageFile,
-                user: user,
-                onImagePicked: onImagePicked,
-              ),
-              SizedBox(height: 10.h),
-              ProfileTextField(
-                controller: nameController,
-                focusNode: nameFocus,
-                hintText: 'Name',
-                prefixIcon: Icons.person,
-                errorText: nameError,
-                onFocusLost: () => onNameChanged(nameController.text),
-              ),
-              SizedBox(height: 10.h),
-              ProfileTextField(
-                controller: lastNameController,
-                focusNode: lastNameFocus,
-                hintText: 'Last name',
-                prefixIcon: Icons.person_outline,
-                errorText: lastnameError,
-                onFocusLost: () => onLastnameChanged(lastNameController.text),
-              ),
-              SizedBox(height: 10.h),
-              ProfileTextField(
-                controller: phoneController,
-                focusNode: phoneFocus,
-                hintText: 'Phone',
-                prefixIcon: Icons.phone,
-                keyboardType: TextInputType.phone,
-                errorText: phoneError,
-                onFocusLost: () => onPhoneChanged(phoneController.text),
-              ),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _AvatarSection(
+                  imageFile: imageFile,
+                  user: user,
+                  onImagePicked: onImagePicked,
+                ),
+                SizedBox(height: 10.h),
+                ProfileTextField(
+                  controller: nameController,
+                  focusNode: nameFocus,
+                  hintText: 'Name',
+                  prefixIcon: Icons.person,
+                  errorText: nameError,
+                  onFocusLost: () => onNameChanged(nameController.text),
+                ),
+                SizedBox(height: 10.h),
+                ProfileTextField(
+                  controller: lastNameController,
+                  focusNode: lastNameFocus,
+                  hintText: 'Last name',
+                  prefixIcon: Icons.person_outline,
+                  errorText: lastnameError,
+                  onFocusLost: () => onLastnameChanged(lastNameController.text),
+                ),
+                SizedBox(height: 10.h),
+                ProfileTextField(
+                  controller: phoneController,
+                  focusNode: phoneFocus,
+                  hintText: 'Phone',
+                  prefixIcon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  errorText: phoneError,
+                  onFocusLost: () => onPhoneChanged(phoneController.text),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -122,11 +124,7 @@ class _AvatarSection extends StatelessWidget {
             child: ClipOval(
               child: imageFile != null
                   ? Image.file(imageFile!, fit: BoxFit.cover)
-                  : NetworkAvatar(
-                      imageUrl: user?.image,
-                      size: 100.w,
-                      assetFallback: 'assets/img/user.png',
-                    ),
+                  : NetworkAvatar(imageUrl: user?.image, size: 100.w),
             ),
           ),
           Positioned(

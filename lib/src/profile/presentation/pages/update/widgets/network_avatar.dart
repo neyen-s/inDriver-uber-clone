@@ -20,8 +20,7 @@ String? _normalizeUrl(String? raw) {
   final scheme = trimmed.substring(0, idx + 3); // 'http://'
   var rest = trimmed.substring(idx + 3);
 
-  // Reemplazar secuencias de slashes múltiples por una sola slash en el resto
-  //replaces
+  //replaces multiple slashes with a single slash in the  rest
   rest = rest.replaceAll(RegExp('/{2,}'), '/');
 
   return '$scheme$rest';
