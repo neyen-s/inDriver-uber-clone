@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:google_places_flutter/model/prediction.dart';
-import 'package:indriver_uber_clone/secrets.dart';
 
 class GooglePlaceAutocompleteField extends StatelessWidget {
   const GooglePlaceAutocompleteField({
@@ -43,7 +42,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
       ),
       child: GooglePlaceAutoCompleteTextField(
         textEditingController: controller,
-        googleAPIKey: googleMapsApiKey,
+        googleAPIKey: const String.fromEnvironment('GOOGLE_MAPS_API_KEY'),
         inputDecoration: InputDecoration(
           suffixIcon: suffixIcon,
           hintText: hintText,

@@ -4,7 +4,6 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,7 +15,6 @@ import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.da
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/geo_utils.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/route_phases.dart';
-import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
 part 'driver_map_trip_event.dart';
@@ -197,7 +195,9 @@ class DriverMapTripBloc extends Bloc<DriverMapTripEvent, DriverMapTripState> {
     emit(state.copyWith(isLoading: true, polylines: {}));
 
     try {
-      final polylineService = PolylinePoints(apiKey: googleMapsApiKey);
+      final polylineService = PolylinePoints(
+        apiKey: const String.fromEnvironment('GOOGLE_MAPS_API_KEY'),
+      );
       final request = RoutesApiRequest(
         origin: PointLatLng(event.origin.latitude, event.origin.longitude),
         destination: PointLatLng(
