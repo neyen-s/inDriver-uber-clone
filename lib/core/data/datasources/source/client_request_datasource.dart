@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_values_dto.dart';
-import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/network/api_client.dart';
 import 'package:indriver_uber_clone/src/client/data/datasources/dto/client_request_dto.dart';
 import 'package:indriver_uber_clone/src/driver/data/datasource/dto/client_request_response_dto.dart';

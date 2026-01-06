@@ -7,6 +7,8 @@ import 'package:indriver_uber_clone/core/utils/constants.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/move_map_camera.dart';
 
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map/bloc/driver_map_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map/cubit/driver_map_life_cycle_cubit.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map/handlers/update_driver_loader.dart';
 
 class DriverMapPage extends StatefulWidget {
   const DriverMapPage({super.key});
@@ -50,6 +52,8 @@ class _DriverMapPageState extends State<DriverMapPage> {
     return Scaffold(
       body: BlocListener<DriverMapBloc, DriverMapState>(
         listener: (context, state) async {
+          updateDriverLoader(context);
+
           if (state is DriverMapLoaded) {
             await _updateMarkerAndCamera(state.markers.first);
           }
@@ -59,29 +63,20 @@ class _DriverMapPageState extends State<DriverMapPage> {
             ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
-        child: Stack(
-          children: [
-            GoogleMap(
-              style: customMapStyle,
-              initialCameraPosition: _initialPosition,
-              markers: _markers,
-              myLocationEnabled: true,
-              onMapCreated: (controller) async {
-                if (!_mapController.isCompleted) {
-                  _mapController.complete(controller);
-                }
-              },
-            ),
-            Positioned(
-              bottom: 20,
-              child: ElevatedButton(
-                onPressed: () {
-                  //print('ConnectSocketIo');
-                },
-                child: const Text('socket test'),
-              ),
-            ),
-          ],
+        child: GoogleMap(
+          style: customMapStyle,
+          initialCameraPosition: _initialPosition,
+          markers: _markers,
+          myLocationEnabled: true,
+          onMapCreated: (controller) async {
+            try {
+              if (!_mapController.isCompleted) {
+                _mapController.complete(controller);
+              }
+
+              context.read<DriverMapLifeCycleCubit>().markReady();
+            } catch (_) {}
+          },
         ),
       ),
     );
