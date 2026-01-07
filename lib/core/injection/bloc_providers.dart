@@ -11,6 +11,7 @@ import 'package:indriver_uber_clone/src/client/presentation/pages/map/cubit/map_
 import 'package:indriver_uber_clone/src/driver/presentation/pages/car-info/bloc/driver_car_info_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/client-requests/bloc/driver_client_requests_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/bloc/driver_map_trip_bloc.dart';
+import 'package:indriver_uber_clone/src/driver/presentation/pages/map/cubit/driver_map_life_cycle_cubit.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/info/bloc/profile_info_bloc.dart';
 import 'package:indriver_uber_clone/src/profile/presentation/pages/update/bloc/profile_update_bloc.dart';
 import 'package:indriver_uber_clone/src/roles/presentation/bloc/roles_bloc.dart';
@@ -35,5 +36,8 @@ class BlocProviders {
     ),
     BlocProvider<ClientMapTripBloc>(create: (_) => sl<ClientMapTripBloc>()),
     BlocProvider<DriverMapTripBloc>(create: (_) => sl<DriverMapTripBloc>()),
+    BlocProvider<DriverMapLifeCycleCubit>(
+      create: (_) => sl<DriverMapLifeCycleCubit>(),
+    ),
   ];
 }

@@ -112,7 +112,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     Emitter<SignUpState> emit,
   ) async {
     print(
-      '_onSubmitted ENTER. current state: $state, bloc hash: ${this.hashCode}',
+      '_onSubmitted ENTER. current state: $state, bloc hash: $hashCode',
     );
 
     if (state is SignUpLoading) return;

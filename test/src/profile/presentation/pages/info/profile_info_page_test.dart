@@ -88,7 +88,7 @@ void main() {
       const initial = ProfileInfoInitial();
       const error = ProfileInfoError('Some error occurred');
 
-      when(() => mockBloc.state).thenReturn(initial);
+      when(() => mockBloc.state).thenReturn(error);
 
       whenListen(
         mockBloc,
@@ -102,7 +102,9 @@ void main() {
           blocProviders: [BlocProvider<ProfileInfoBloc>.value(value: mockBloc)],
         ),
       );
+
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Error: Something went wrong...'), findsOneWidget);
 
@@ -111,6 +113,7 @@ void main() {
 
       await tester.tap(retryFinder);
       await tester.pump();
+
       verify(() => mockBloc.add(const LoadUserProfile())).called(2);
     },
   );

@@ -33,7 +33,9 @@ class _ProfileUpdatePageState extends State<ProfileUpdatePage> {
           } else {
             LoadingService.hide(context);
           }
-          if (state.updateSuccess) {
+          if (state.updateSuccess &&
+              Navigator.of(context).canPop() &&
+              mounted) {
             Navigator.pop(context, true);
           }
           if (state.errorMessage != null) {

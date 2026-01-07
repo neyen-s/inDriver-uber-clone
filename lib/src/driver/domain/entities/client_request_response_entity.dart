@@ -131,7 +131,7 @@ class PositionEntity {
   final double lng;
   final double lat;
   PositionEntity copyWith({double? x, double? y}) {
-    return PositionEntity(lng: x ?? this.lng, lat: y ?? this.lat);
+    return PositionEntity(lng: x ?? lng, lat: y ?? lat);
   }
 
   @override
