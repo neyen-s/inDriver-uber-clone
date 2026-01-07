@@ -278,26 +278,13 @@ class _ClientMapSeekerPageState extends State<ClientMapSeekerPage>
       bottomSheet: BlocBuilder<ClientMapSeekerBloc, ClientMapSeekerState>(
         builder: (context, state) {
           if (state is ClientMapSeekerSuccess) {
-            print(
-              'DE POLYLINE: state.durationMinutes ?? 0 : ${state.durationMinutes ?? 0}',
+            debugPrint(
+              'ORIGIN addres: '
+              '  ${state.timeAndDistanceValues?.originAddresses}',
             );
-            print(
-              'DE POLYLINE: state.distanceKm ?? 0.0 : ${state.distanceKm ?? 0}',
-            );
-            print(
-              'STATE.timeAndDistanceValues?.DURATION.text ?? "" : ${state.timeAndDistanceValues?.duration.text ?? ""}',
-            );
-            print(
-              'STATE.timeAndDistanceValues?.DISTANCE.text ?? "" : ${state.timeAndDistanceValues?.distance.text ?? ""}',
-            );
-            print(
-              'STATE.timeAndDistanceValues?.RECOMENDED VALUE.text ?? "" : ${state.timeAndDistanceValues?.recommendedValue ?? ""}',
-            );
-            print(
-              '_____________________ ORIGIN  state.timeAndDistanceValues?.destinationAddresses , ${state.timeAndDistanceValues?.originAddresses}',
-            );
-            print(
-              '_____________________ destinationAddress state.timeAndDistanceValues?.destinationAddresses , ${state.timeAndDistanceValues?.destinationAddresses}',
+            debugPrint(
+              'DESTINATION addres: '
+              ' ${state.timeAndDistanceValues?.destinationAddresses}',
             );
           }
           if (state is ClientMapSeekerSuccess &&

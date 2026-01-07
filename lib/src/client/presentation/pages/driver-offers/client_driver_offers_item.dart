@@ -40,7 +40,7 @@ class ClientDriverOffersItem extends StatelessWidget {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('"5.0 **"'),
+                const Text('"5.0 **"'),
                 Text(driverTripRequest?.carInfo?.brand ?? ''),
               ],
             ),

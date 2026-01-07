@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:google_places_flutter/model/prediction.dart';
-import 'package:indriver_uber_clone/secrets.dart';
 
 class GooglePlaceAutocompleteField extends StatelessWidget {
   const GooglePlaceAutocompleteField({
@@ -24,7 +23,6 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
   final bool isSelected;
   final void Function(LatLng) onPlaceSelected;
 
-  /// Nuevo callback: cuando el usuario hace click en una sugerencia
   final void Function(Prediction)? onPredictionSelected;
 
   @override
@@ -43,7 +41,7 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
       ),
       child: GooglePlaceAutoCompleteTextField(
         textEditingController: controller,
-        googleAPIKey: googleMapsApiKey,
+        googleAPIKey: const String.fromEnvironment('GOOGLE_MAPS_API_KEY'),
         inputDecoration: InputDecoration(
           suffixIcon: suffixIcon,
           hintText: hintText,
@@ -69,7 +67,6 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
             TextPosition(offset: controller.text.length),
           );
 
-          // Evitar llamar dos veces: usa la lat/lng del prediction si existe
           final lat = double.tryParse(prediction.lat ?? '');
           final lng = double.tryParse(prediction.lng ?? '');
           if (lat != null && lng != null) {
