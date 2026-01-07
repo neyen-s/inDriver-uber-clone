@@ -78,6 +78,7 @@ void main() {
       ),
     );
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(ProfileUpdateContent), findsOneWidget);
   });
@@ -88,7 +89,7 @@ void main() {
       const initial = ProfileUpdateState();
       final error = initial.copyWith(errorMessage: 'Something went wrong...');
 
-      when(() => mockBloc.state).thenReturn(initial);
+      when(() => mockBloc.state).thenReturn(error);
 
       whenListen(
         mockBloc,
@@ -104,7 +105,8 @@ void main() {
           ],
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
       expect(
         find.text(
           'An error occurred while updating your profile, try again later',
@@ -112,6 +114,7 @@ void main() {
         findsOneWidget,
       );
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
     },
   );
 }

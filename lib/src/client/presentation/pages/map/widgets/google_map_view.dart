@@ -31,7 +31,7 @@ class GoogleMapView extends StatelessWidget {
     return GoogleMap(
       initialCameraPosition: initialPosition,
       style: customMapStyle,
-      onMapCreated: (controller) {
+      onMapCreated: (controller) async {
         if (!mapController.isCompleted) {
           mapController.complete(controller);
         }

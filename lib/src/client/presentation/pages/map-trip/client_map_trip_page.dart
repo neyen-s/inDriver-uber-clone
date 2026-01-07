@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:indriver_uber_clone/core/bloc/socket-bloc/bloc/socket_bloc.dart';
 import 'package:indriver_uber_clone/core/common/widgets/dynamic_lottie_and_msg.dart';
 import 'package:indriver_uber_clone/core/services/loader_service.dart';
 import 'package:indriver_uber_clone/src/auth/presentation/widgets/auth_background.dart';

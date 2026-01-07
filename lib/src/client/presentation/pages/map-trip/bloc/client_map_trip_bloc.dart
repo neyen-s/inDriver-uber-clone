@@ -15,7 +15,6 @@ import 'package:indriver_uber_clone/core/domain/usecases/geolocator_use_cases.da
 import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/geo_utils.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/route_phases.dart';
-import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/client/presentation/pages/map-trip/utils/map_trip_utils.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 
@@ -270,7 +269,9 @@ class ClientMapTripBloc extends Bloc<ClientMapTripEvent, ClientMapTripState> {
       }
 
       // gets polylines
-      final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
+      final polylinePoints = PolylinePoints(
+        apiKey: const String.fromEnvironment('GOOGLE_MAPS_API_KEY'),
+      );
       final request = RoutesApiRequest(
         origin: PointLatLng(event.origin.latitude, event.origin.longitude),
         destination: PointLatLng(
