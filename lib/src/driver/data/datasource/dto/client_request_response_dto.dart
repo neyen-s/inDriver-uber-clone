@@ -23,16 +23,40 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
     super.carInfo,
   });
 
+  factory ClientRequestResponseDto.fromEntity(
+    ClientRequestResponseEntity entity,
+  ) {
+    return ClientRequestResponseDto(
+      id: entity.id,
+      idClient: entity.idClient,
+      fareOffered: entity.fareOffered,
+      pickupDescription: entity.pickupDescription,
+      destinationDescription: entity.destinationDescription,
+      status: entity.status,
+      updatedAt: entity.updatedAt,
+      pickupPosition: entity.pickupPosition,
+      destinationPosition: entity.destinationPosition,
+      distance: entity.distance,
+      timeDifference: entity.timeDifference,
+      client: entity.client,
+      googleDistanceMatrix: entity.googleDistanceMatrix,
+      idDriver: entity.idDriver,
+      fareAssigned: entity.fareAssigned,
+      carInfo: entity.carInfo,
+      driver: entity.driver,
+    );
+  }
+
   factory ClientRequestResponseDto.fromJson(Map<String, dynamic> json) {
     // helpers
-    double? _toDouble(dynamic v) {
+    double? toDouble(dynamic v) {
       if (v == null) return null;
       if (v is double) return v;
       if (v is num) return v.toDouble();
       return double.tryParse(v.toString());
     }
 
-    int? _toInt(dynamic v) {
+    int? toInt(dynamic v) {
       if (v == null) return null;
       if (v is int) return v;
       if (v is num) return v.toInt();
@@ -40,9 +64,9 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
     }
 
     // required fields (be defensive: throw only on truly missing minimal ones)
-    final id = _toInt(json['id']);
-    final idClient = _toInt(json['id_client']);
-    final fareOffered = _toDouble(json['fare_offered']);
+    final id = toInt(json['id']);
+    final idClient = toInt(json['id_client']);
+    final fareOffered = toDouble(json['fare_offered']);
 
     if (id == null || idClient == null || fareOffered == null) {
       throw Exception(
@@ -106,12 +130,12 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
     }
 
     // fareAssigned
-    final fareAssigned = _toDouble(
+    final fareAssigned = toDouble(
       json['fare_assigned'] ?? json['fareAssigned'],
     );
 
     // ATTENTION HERE: backend uses id_driver_assigned in some endpoints
-    final idDriver = _toInt(
+    final idDriver = toInt(
       json['id_driver_assigned'] ?? json['id_driver'] ?? json['idDriver'],
     );
 
@@ -161,8 +185,8 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
       pickupPosition: parsePos(json['pickup_position']),
       destinationPosition: parsePos(json['destination_position']),
       client: client,
-      timeDifference: _toInt(json['time_difference']),
-      distance: _toDouble(json['distance']),
+      timeDifference: toInt(json['time_difference']),
+      distance: toDouble(json['distance']),
       driver: driver,
       googleDistanceMatrix: googleDistance,
       idDriver: idDriver,
@@ -206,34 +230,10 @@ class ClientRequestResponseDto extends ClientRequestResponseEntity {
       'id_driver_assigned': idDriver,
     },
     'car': (carInfo is DriverCarInfoDTO)
-        ? (carInfo as DriverCarInfoDTO).toJson()
+        ? (carInfo! as DriverCarInfoDTO).toJson()
         : null,
-    'driver': (driver is ClientDto) ? (driver as ClientDto).toMap() : null,
+    'driver': (driver is ClientDto) ? (driver! as ClientDto).toMap() : null,
   };
-
-  factory ClientRequestResponseDto.fromEntity(
-    ClientRequestResponseEntity entity,
-  ) {
-    return ClientRequestResponseDto(
-      id: entity.id,
-      idClient: entity.idClient,
-      fareOffered: entity.fareOffered,
-      pickupDescription: entity.pickupDescription,
-      destinationDescription: entity.destinationDescription,
-      status: entity.status,
-      updatedAt: entity.updatedAt,
-      pickupPosition: entity.pickupPosition,
-      destinationPosition: entity.destinationPosition,
-      distance: entity.distance,
-      timeDifference: entity.timeDifference,
-      client: entity.client,
-      googleDistanceMatrix: entity.googleDistanceMatrix,
-      idDriver: entity.idDriver,
-      fareAssigned: entity.fareAssigned,
-      carInfo: entity.carInfo,
-      driver: entity.driver,
-    );
-  }
   static List<ClientRequestResponseDto> listFromJson(List<dynamic> json) => json
       .map((e) => ClientRequestResponseDto.fromJson(e as Map<String, dynamic>))
       .toList();

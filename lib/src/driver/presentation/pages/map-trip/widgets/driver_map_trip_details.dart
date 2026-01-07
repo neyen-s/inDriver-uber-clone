@@ -6,7 +6,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:indriver_uber_clone/core/common/widgets/icon_row_info.dart';
 import 'package:indriver_uber_clone/core/common/widgets/user_profile_img.dart';
 import 'package:indriver_uber_clone/core/enums/enums.dart';
-import 'package:indriver_uber_clone/core/utils/map-utils/route_phases.dart';
 import 'package:indriver_uber_clone/src/driver/domain/entities/client_request_response_entity.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/bloc/driver_map_trip_bloc.dart';
 import 'package:indriver_uber_clone/src/driver/presentation/pages/map-trip/widgets/trip_button.dart';
@@ -166,7 +165,7 @@ class _DriverMapTripDetailsState extends State<DriverMapTripDetails> {
                     // actions row
                     BlocSelector<DriverMapTripBloc, DriverMapTripState, String>(
                       selector: (s) =>
-                          s.clientRequestResponse?.status?.toUpperCase() ?? '',
+                          s.clientRequestResponse?.status.toUpperCase() ?? '',
                       builder: (context, status) {
                         final isAcceptedOrOnTheWay =
                             status == 'ACCEPTED' || status == 'ON_THE_WAY';
@@ -176,7 +175,7 @@ class _DriverMapTripDetailsState extends State<DriverMapTripDetails> {
                         // Si quieres deshabilitar botones mientras se actualiza el status,
                         // añades a state un bool isUpdatingStatus y usas BlocSelector para leerlo.
                         final isUpdating = context.select(
-                          (DriverMapTripBloc b) => (b.state).isLoading ?? false,
+                          (DriverMapTripBloc b) => b.state.isLoading ?? false,
                         );
 
                         VoidCallback? send(RoutePhases p) {
