@@ -18,7 +18,6 @@ import 'package:indriver_uber_clone/core/errors/faliures.dart';
 import 'package:indriver_uber_clone/core/utils/fold_or_emit_error.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/deboncer_location.dart';
 import 'package:indriver_uber_clone/core/utils/map-utils/harvesine_distance.dart';
-import 'package:indriver_uber_clone/secrets.dart';
 import 'package:indriver_uber_clone/src/auth/domain/usecase/auth_use_cases.dart';
 import 'package:indriver_uber_clone/src/client/domain/entities/client_request_entity.dart';
 import 'package:indriver_uber_clone/src/client/domain/usecases/create_client_request_use_case.dart';
@@ -341,7 +340,9 @@ class ClientMapSeekerBloc
             ),
           );
 
-      final polylinePoints = PolylinePoints(apiKey: googleMapsApiKey);
+      final polylinePoints = PolylinePoints(
+        apiKey: const String.fromEnvironment('GOOGLE_MAPS_API_KEY'),
+      );
       final request = RoutesApiRequest(
         origin: PointLatLng(event.origin.latitude, event.origin.longitude),
         destination: PointLatLng(

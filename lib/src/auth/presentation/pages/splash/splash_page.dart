@@ -29,7 +29,6 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red,
       body: BlocListener<SignInBloc, SignInState>(
         listener: (context, state) async {
           debugPrint('------SplashPage Listener-----');

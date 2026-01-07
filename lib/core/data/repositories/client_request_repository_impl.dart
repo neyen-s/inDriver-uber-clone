@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:indriver_uber_clone/core/data/datasources/dto/time_and_distance_values_dto.dart';
 import 'package:indriver_uber_clone/core/data/datasources/source/client_request_datasource.dart';
 import 'package:indriver_uber_clone/core/domain/repositories/client_request_repository.dart';
-import 'package:indriver_uber_clone/core/enums/enums.dart';
 import 'package:indriver_uber_clone/core/errors/error_mapper.dart';
 import 'package:indriver_uber_clone/core/errors/faliures.dart';
 
