@@ -44,7 +44,7 @@ void main() {
       ),
     );
 
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.byType(HeaderProfile), findsOneWidget);
     expect(find.byType(ProfileInfoCard), findsOneWidget);
@@ -92,7 +92,7 @@ void main() {
       ),
     );
 
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     // Tap botón
     await tester.tap(find.text('UPDATE PROFILE'));

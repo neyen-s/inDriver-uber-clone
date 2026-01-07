@@ -34,6 +34,11 @@ migrate_working_dir/
 .pub/
 /build/
 
+# keys / secrets
+.vscode/launch.json
+local.properties
+ios/Runner/Secrets.plist
+
 # Symbolication related
 app.*.symbols
 

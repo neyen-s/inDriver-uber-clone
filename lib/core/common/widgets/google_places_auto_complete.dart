@@ -23,7 +23,6 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
   final bool isSelected;
   final void Function(LatLng) onPlaceSelected;
 
-  /// Nuevo callback: cuando el usuario hace click en una sugerencia
   final void Function(Prediction)? onPredictionSelected;
 
   @override
@@ -68,7 +67,6 @@ class GooglePlaceAutocompleteField extends StatelessWidget {
             TextPosition(offset: controller.text.length),
           );
 
-          // Evitar llamar dos veces: usa la lat/lng del prediction si existe
           final lat = double.tryParse(prediction.lat ?? '');
           final lng = double.tryParse(prediction.lng ?? '');
           if (lat != null && lng != null) {
